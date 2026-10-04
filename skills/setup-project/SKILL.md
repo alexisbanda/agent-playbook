@@ -28,6 +28,7 @@ Deja un repositorio listo para trabajar con el playbook. No toca código de la a
    - Modo de los hooks: `warn` (por defecto: el gate de modelos avisa y el de seguridad pide confirmación), `block` u `off`. Ver `docs/HOOKS.md` del plugin.
    - Patrones de escritura en producción (`hooks.production_patterns`), si el proyecto tiene comandos que tocan producción (por ejemplo `--env=production`). Puede quedar vacío.
    - Entorno: URL de dev y comando de verificación de deploy, si existen. En un proyecto nuevo pueden quedar vacíos.
+   - Journeys de regresión: 2 o 3 recorridos de usuario que protegen el producto, cada uno con un comando que sale con 0 si pasa (un test e2e, un script de `curl`, un comando del proyecto). Propón candidatos a partir de lo que veas en el repo. Pueden quedar vacíos.
 4. **Deducir el resto.** `tracker.github.repo` sale de `origin`.
 5. **Comando de tests: deducir, ejecutar y solo entonces guardar.** Lee `<plugin>/references/test-runtimes.md` (con `<plugin>` = `${CLAUDE_SKILL_DIR}/../..`). Detecta dónde corren los tests (local, Laravel Sail, Docker Compose), propone `environment.test_command` y `environment.worktree_test_command` según esa referencia, y **ejecuta `test_command`** en el clon principal.
    - Si termina y el resultado tiene sentido (los tests corren, aunque alguno falle por motivos del código), guárdalo y anota el resumen (pasan/fallan) para el usuario.

@@ -20,7 +20,7 @@ El playbook arranca en **perfil reducido** (`"profile": "reduced"` en `.claude/a
 | 3 · Hooks | Gate de modelos, gate de seguridad y telemetría con métricas por corrida, en modo `warn`. Ver [HOOKS.md](HOOKS.md) | Además: validación de tickets, recordatorios de convenciones, métricas por fase | Subir `hooks.mode` a `block` cuando la telemetría muestre pocos falsos positivos. Cada hook nuevo entra primero en `warn` |
 | 4 · Motor | Un coder a la vez, baseline, reviewer solo en `critical`, review bot opcional ([REVIEW_BOT.md](REVIEW_BOT.md)), merge con `merge_gate.py` (4 condiciones, vigilante con `--watch`) | Coders en paralelo (uno por repo), patriots, reviewer por coder, gate concurrente, merges por tiers con vigilante | Activar paralelismo cuando un ticket toque más de un repo. El archivo de estado `RUN_STATE.md` ya tiene la forma del motor completo |
 | 5 · Cierre | Prueba en vivo con chequeos `http` y `test`, evidencia en el ticket, LÍMITES, 2 o 3 journeys | Chequeos `e2e` y `mobile`, journeys completos, extensión a producción (rollback, flags, monitoreo) | Añadir entradas a `journeys` en la configuración del repo |
-| Mejora continua | `metrics.jsonl` local y revisión manual | Tuning wave periódica, tripwires, panel de métricas | Activar el skill `tuning-wave` cuando haya al menos 10 corridas registradas |
+| Mejora continua | `metrics.jsonl` por repo, `metrics_report.py` y tuning wave manual ([METRICS.md](METRICS.md)) | Tuning wave programada sobre las métricas de todos los repos, tripwires recalibrados, panel | Pasar a `tuning-wave` todos los `metrics.jsonl` y programarla con `schedule` cuando haya varios repos y al menos 10 corridas |
 
 ## Señales para subir de nivel
 

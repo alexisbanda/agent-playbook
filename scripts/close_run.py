@@ -16,7 +16,16 @@ import os
 import sys
 
 STATE_DIR = ".agent-playbook"
-SCHEMA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "config", "metrics.schema.json")
+PLUGIN_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+SCHEMA = os.path.join(PLUGIN_ROOT, "config", "metrics.schema.json")
+
+
+def playbook_version():
+    try:
+        with open(os.path.join(PLUGIN_ROOT, ".claude-plugin", "plugin.json")) as fh:
+            return json.load(fh)["version"]
+    except (OSError, ValueError, KeyError):
+        return "unknown"
 
 
 def parse_ts(value):
@@ -122,6 +131,7 @@ def build_metrics(run, events, e2e_first_pass):
 
     return {
         "run": run,
+        "playbook_version": playbook_version(),
         "closed_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
         "started_at": run_events[0]["ts"],
         "ended_at": run_events[-1]["ts"],

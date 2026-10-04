@@ -22,6 +22,7 @@ Activa la auto-actualización del marketplace en `/plugin` → Marketplaces para
 1. Abre Claude Code en el repo y ejecuta `/agent-playbook:setup-project`. Crea `.claude/agent-playbook.json`.
 2. Versiona ese archivo para que todo el equipo use la misma configuración.
 3. Para resolver un ticket: `/agent-playbook:resolve-issue <número o URL>`. También se activa solo si pides resolver o implementar un issue.
+4. Cada semana, o cada 10 corridas: `/agent-playbook:tuning-wave` para revisar las métricas y mejorar los manuales. Ver [docs/METRICS.md](docs/METRICS.md).
 
 | Opción | Valores | Por defecto |
 | --- | --- | --- |
@@ -39,14 +40,15 @@ El esquema completo está en [config/agent-playbook.schema.json](config/agent-pl
 
 ```
 .claude-plugin/   manifiesto del plugin y del marketplace
-skills/           procedimientos que se invocan (setup-project, resolve-issue)
+skills/           procedimientos que se invocan (setup-project, resolve-issue, tuning-wave)
 references/       capítulos compartidos que los skills leen por fases: preflight, motor, cierre, adaptadores de trackers
 templates/        RUN_STATE, HANDBACK, briefs de coder y reviewer, cuerpo de PR, evidencia, workflow del review bot
 hooks/            gate de modelos, gate de seguridad y telemetría (ver docs/HOOKS.md)
 routing/          tabla de ruteo de modelos (routing.json), su esquema y su explicación
+metrics/          precios para el coste estimado y umbrales (tripwires) de la tuning wave
 config/           esquema y ejemplo de la configuración por repo
-docs/             escalado, gestores de tickets, hooks, review bot
-scripts/          utilidades de CI y de las corridas (route.py resuelve el modelo de cada subagente; merge_gate.py comprueba las condiciones de merge; close_run.py escribe las métricas)
+docs/             escalado, gestores de tickets, hooks, review bot, métricas
+scripts/          utilidades de CI y de las corridas (route.py: modelo de cada subagente; merge_gate.py: condiciones de merge; run_journeys.py: regresión; close_run.py y metrics_report.py: métricas)
 tests/            tests de los scripts
 ```
 
@@ -60,7 +62,7 @@ tests/            tests de los scripts
 | 2 | `routing.json` con las tablas reducida y completa, resolvedor y tests | Hecho |
 | 3 | Hooks: gate de modelos, gate de seguridad, telemetría y métricas por corrida | Hecho |
 | 4 | Motor: gate de merge con vigilante, review bot opcional con Claude Code Action | Hecho |
-| 5 | Cierre con evidencia, journeys, métricas y tuning wave | Pendiente |
+| 5 | Journeys con evidencia, informe de métricas con coste estimado, tripwires y skill `tuning-wave` | Hecho |
 
 ## Cómo cambiar el playbook
 

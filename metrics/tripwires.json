@@ -1,0 +1,15 @@
+{
+  "description": "Umbrales que la tuning wave compara con las métricas. Un tripwire que salta no es un fallo: es la señal para revisar los manuales. Cada umbral se evalúa sobre las últimas `window` corridas.",
+  "window": 10,
+  "min_runs": 3,
+  "tripwires": {
+    "e2e_first_pass_rate_min": { "value": 0.8, "why": "Si las pruebas en vivo dejan de pasar a la primera, el cambio llega enfermo al cierre: revisar criterios, brief del coder o verificación." },
+    "human_wait_share_max": { "value": 0.5, "why": "Si más de la mitad del tiempo se espera al humano, las aprobaciones frenan el flujo: revisar qué se pregunta y cuándo." },
+    "compaction_runs_share_max": { "value": 0.2, "why": "Compactar en muchas corridas indica sesiones demasiado largas o agentes demasiado pesados." },
+    "cost_per_run_usd_max": { "value": 5.0, "why": "Coste estimado por corrida por encima del presupuesto: mirar dónde se relee contexto." },
+    "cache_read_share_max": { "value": 0.97, "why": "Casi todo el gasto en relectura de caché: contexto que se arrastra; considerar más lectores baratos o sesiones más cortas." },
+    "overrides_per_run_max": { "value": 1.0, "why": "Muchos overrides: la tabla de ruteo no encaja con el trabajo real, o se está saltando." },
+    "model_blocks_per_run_max": { "value": 1.0, "why": "El gate de modelos bloquea a menudo: el manual no deja claro qué modelo usar." },
+    "untracked_runs_max": { "value": 0, "why": "Corridas sin tokens medidos: la telemetría está rota." }
+  }
+}
