@@ -29,7 +29,7 @@ Activa la auto-actualización del marketplace en `/plugin` → Marketplaces para
 | `tracker.type` | `github`, `notion` (`jira`, `linear` reservados) | — |
 | `hooks.mode` | `off`, `warn`, `block` | `warn` |
 | `hooks.production_patterns` | expresiones de comandos que tocan producción | `[]` |
-| `review_bot.enabled` | `true`, `false` | `false` |
+| `review_bot.enabled` | `true`, `false` (ver [docs/REVIEW_BOT.md](docs/REVIEW_BOT.md)) | `false` |
 | `environment` | `dev_url`, `test_command`, `worktree_test_command`, `deploy_check` | vacío |
 | `journeys` | lista de `{name, command}` | `[]` |
 
@@ -41,12 +41,12 @@ El esquema completo está en [config/agent-playbook.schema.json](config/agent-pl
 .claude-plugin/   manifiesto del plugin y del marketplace
 skills/           procedimientos que se invocan (setup-project, resolve-issue)
 references/       capítulos compartidos que los skills leen por fases: preflight, motor, cierre, adaptadores de trackers
-templates/        RUN_STATE, HANDBACK, briefs de coder y reviewer, cuerpo de PR, evidencia
+templates/        RUN_STATE, HANDBACK, briefs de coder y reviewer, cuerpo de PR, evidencia, workflow del review bot
 hooks/            gate de modelos, gate de seguridad y telemetría (ver docs/HOOKS.md)
 routing/          tabla de ruteo de modelos (routing.json), su esquema y su explicación
 config/           esquema y ejemplo de la configuración por repo
-docs/             escalado, gestores de tickets, hooks
-scripts/          utilidades de CI y de las corridas (route.py resuelve el modelo de cada subagente; close_run.py escribe las métricas)
+docs/             escalado, gestores de tickets, hooks, review bot
+scripts/          utilidades de CI y de las corridas (route.py resuelve el modelo de cada subagente; merge_gate.py comprueba las condiciones de merge; close_run.py escribe las métricas)
 tests/            tests de los scripts
 ```
 
@@ -59,7 +59,7 @@ tests/            tests de los scripts
 | 1b | Skill `bootstrap-project` para arrancar proyectos nuevos | Pendiente |
 | 2 | `routing.json` con las tablas reducida y completa, resolvedor y tests | Hecho |
 | 3 | Hooks: gate de modelos, gate de seguridad, telemetría y métricas por corrida | Hecho |
-| 4 | Motor: worktrees, baseline, review, merge gate, review bot opcional | Pendiente |
+| 4 | Motor: gate de merge con vigilante, review bot opcional con Claude Code Action | Hecho |
 | 5 | Cierre con evidencia, journeys, métricas y tuning wave | Pendiente |
 
 ## Cómo cambiar el playbook

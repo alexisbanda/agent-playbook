@@ -120,12 +120,17 @@
         "enabled": {
           "type": "boolean",
           "default": false,
-          "description": "Si es true, se exige el veredicto de Claude Code Action para mergear y setup-project instala el workflow."
+          "description": "Si es true, setup-project instala el workflow del review bot (Claude Code Action) y merge_gate.py exige su veredicto. false: el veredicto es la revisión interna. Ver docs/REVIEW_BOT.md."
         },
         "workflow": {
           "type": "string",
           "default": ".github/workflows/claude-review.yml",
           "description": "Ruta del workflow del review bot en el repo."
+        },
+        "check_name": {
+          "type": "string",
+          "default": "claude-review",
+          "description": "Nombre del check que publica el review bot; merge_gate.py lo busca sobre el HEAD del PR."
         }
       }
     },

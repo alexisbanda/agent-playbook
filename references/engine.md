@@ -49,10 +49,12 @@ Cuando el coder termina, tú verificas, no confías en su resumen:
 
 ## 5. Review
 
-| Clase | Review |
-| --- | --- |
-| `standard` | Tu verificación más el review bot si `review_bot.enabled` |
-| `critical` | Reviewer independiente (`ROLE: reviewer · CLASS: review`, `model: opus` porque revisa trabajo crítico, prompt `templates/REVIEW_BRIEF.md`) más el review bot si está activado |
+| Clase | Review | Orden con el review bot |
+| --- | --- | --- |
+| `standard` | Tu verificación más el review bot si `review_bot.enabled` | Concurrente: promueves en cuanto tu verificación pasa y el bot revisa mientras tanto |
+| `critical` | Reviewer independiente (`ROLE: reviewer · CLASS: review`, `model: opus` porque revisa trabajo crítico, prompt `templates/REVIEW_BRIEF.md`) más el review bot si está activado | En serie: primero el reviewer interno da `APPROVE`, después promueves para que corra el bot |
+
+Hacen falta las dos aprobaciones en cualquier caso; lo concurrente solo ahorra la espera.
 
 El reviewer ve el ticket, los criterios y el diff. Devuelve solo `APPROVE` o `CHANGES_REQUESTED` con la lista de problemas. Las sugerencias menores no bloquean y nunca toca código. Con `CHANGES_REQUESTED`, el coder corrige y el reviewer revisa de nuevo. **Máximo 3 rondas**: si no converge, detente y muéstralo.
 
@@ -60,28 +62,30 @@ El reviewer ve el ticket, los criterios y el diff. Devuelve solo `APPROVE` o `CH
 
 Cuando la rama está verde y revisada:
 
-1. `gh pr ready <pr>` y anota la hora en `RUN_STATE.md` (`promoted_at`). Esa hora prueba después que el veredicto del bot es posterior.
+1. `gh pr ready <pr>` y anota la hora UTC en `RUN_STATE.md` (`promoted_at`, por ejemplo con `date -u +%FT%TZ`). Esa hora prueba después que el veredicto del bot es posterior.
 2. Si hay que re-disparar al review bot, haz un ciclo `gh pr ready --undo` → `gh pr ready`. **Nunca re-ejecutes la review** desde la UI o la API: revisaría el commit viejo con fecha nueva.
 3. No empujes cambios a un PR en borrador para promoverlo enseguida: la review puede saltarse. Empuja, espera a que la CI arranque y después promueve.
 
-## 7. Merge: checklist de 4 condiciones
+## 7. Merge: gate de 4 condiciones
 
-Solo tú mergeas, y solo con OK explícito del usuario.
-
-| # | Condición | Cómo se comprueba |
-| --- | --- | --- |
-| 1 | Veredicto fresco y anclado | Con review bot: su review `APPROVED` tiene `submitted_at` posterior a `promoted_at` y `commit_id` igual al HEAD del PR. Sin bot: el `APPROVE` del reviewer (o tu verificación en `standard`) es sobre el HEAD actual |
-| 2 | Checks en verde | `gh pr checks <pr>` sin fallos ni pendientes |
-| 3 | Mergeable | `gh pr view <pr> --json mergeable,mergeStateStatus` → `MERGEABLE` y no `BEHIND`/`DIRTY` |
-| 4 | Espaciado de deploys | No hay un deploy en curso del mismo repo (`environment.deploy_check`, o `gh run list` del workflow de deploy) |
-
-Muestra la tabla con el resultado de cada fila y el SHA. Con el OK:
+Solo tú mergeas, y solo con OK explícito del usuario. Las condiciones las comprueba `<plugin>/scripts/merge_gate.py`, desde la raíz del clon principal:
 
 ```bash
-gh pr merge <pr> --squash --delete-branch --match-head-commit <sha>
+python3 <plugin>/scripts/merge_gate.py <pr> --promoted-at <promoted_at>
 ```
 
-`--match-head-commit` ata el merge al commit revisado: si alguien empujó después, falla.
+| # | Condición | Qué mira |
+| --- | --- | --- |
+| 1 | Veredicto fresco y anclado | Con review bot: el check `claude-review` sobre el HEAD actual del PR, en verde y terminado después de `promoted_at`. Sin bot: tu revisión interna sobre ese HEAD |
+| 2 | Checks en verde | Ningún check del HEAD fallido ni pendiente. Sin checks configurados pasa, pero va a LÍMITES |
+| 3 | Mergeable | Sin conflictos, no por detrás de la base, no en borrador |
+| 4 | Espaciado de deploys | `environment.deploy_check`, o ningún workflow en curso en la rama base |
+
+Resultados: código 0 = listo (imprime el comando de merge exacto, con `--match-head-commit`); 1 = todavía no; 2 = no se puede sin un cambio (PR cerrado, cambios pedidos por el bot, check fallido): **detén la corrida** y muestra la tabla.
+
+**Vigilante.** Si hay que esperar al bot o a la CI, no te quedes esperando: lanza el gate en segundo plano con `--watch` (repite cada 30 s, hasta 1 hora) y sigue con otra cosa o termina tu turno. Te avisará cuando salga con 0 o 2.
+
+Con el gate en 0, muestra su tabla y el SHA, pide el OK y ejecuta el comando que imprimió. `--match-head-commit` ata el merge al commit revisado: si alguien empujó después, falla.
 
 ## 8. Nada de agentes estacionados
 

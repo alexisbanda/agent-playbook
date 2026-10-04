@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0
+
+- **Gate de merge** (`scripts/merge_gate.py`): comprueba las 4 condiciones (veredicto fresco y anclado, checks en verde, mergeable, espaciado de deploys), imprime el comando de merge con `--match-head-commit` y distingue "todavía no" (1) de "no se puede sin un cambio" (2). Con `--watch` hace de vigilante en segundo plano.
+- **Review bot opcional** (`templates/workflows/claude-review.yml`, Claude Code Action `@v1`): revisa los PRs que no están en borrador contra el ticket y sus criterios; su veredicto es el check `claude-review`, ligado al commit. Se monta y desmonta con `review_bot.enabled` y `setup-project`. `docs/REVIEW_BOT.md`.
+- Motor: review concurrente con el bot en `standard`, en serie en `critical`; `promoted_at` en UTC; vigilante en lugar de esperar.
+- Config: `review_bot.check_name`. Tests del gate de merge (74 en total).
+
 ## 0.4.1
 
 Correcciones de la segunda corrida real (pokemon-visiotech#3):
