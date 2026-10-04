@@ -21,6 +21,7 @@ Activa la auto-actualización del marketplace en `/plugin` → Marketplaces para
 
 1. Abre Claude Code en el repo y ejecuta `/agent-playbook:setup-project`. Crea `.claude/agent-playbook.json`.
 2. Versiona ese archivo para que todo el equipo use la misma configuración.
+3. Para resolver un ticket: `/agent-playbook:resolve-issue <número o URL>`. También se activa solo si pides resolver o implementar un issue.
 
 | Opción | Valores | Por defecto |
 | --- | --- | --- |
@@ -37,7 +38,9 @@ El esquema completo está en [config/agent-playbook.schema.json](config/agent-pl
 
 ```
 .claude-plugin/   manifiesto del plugin y del marketplace
-skills/           procedimientos (un directorio por skill, con references/)
+skills/           procedimientos que se invocan (setup-project, resolve-issue)
+references/       capítulos compartidos que los skills leen por fases: preflight, motor, cierre, adaptadores de trackers
+templates/        RUN_STATE, HANDBACK, briefs de coder y reviewer, cuerpo de PR, evidencia
 config/           esquema y ejemplo de la configuración por repo
 docs/             escalado, gestores de tickets
 scripts/          utilidades de CI y de las corridas
@@ -48,7 +51,8 @@ scripts/          utilidades de CI y de las corridas
 | Fase | Contenido | Estado |
 | --- | --- | --- |
 | 0 | Esqueleto, marketplace, configuración por repo, CI | Hecho |
-| 1 | Skill `resolve-issue`, adaptadores de GitHub Issues y Notion, plantillas | Pendiente |
+| 1 | Skill `resolve-issue`, adaptadores de GitHub Issues y Notion, motor y cierre reducidos, plantillas | Hecho |
+| 1b | Skill `bootstrap-project` para arrancar proyectos nuevos | Pendiente |
 | 2 | `routing.json` con las tablas reducida y completa | Pendiente |
 | 3 | Hooks: gate de modelos, gate de seguridad, telemetría | Pendiente |
 | 4 | Motor: worktrees, baseline, review, merge gate, review bot opcional | Pendiente |

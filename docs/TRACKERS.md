@@ -1,13 +1,13 @@
 # Gestores de tickets
 
-Los skills nunca llaman directamente a un gestor de tickets. Usan un conjunto fijo de **operaciones**, y cada gestor las implementa en un adaptador (`skills/resolve-issue/references/trackers/<tipo>.md`). El gestor se elige con `tracker.type` en `.claude/agent-playbook.json`.
+Los skills nunca llaman directamente a un gestor de tickets. Usan un conjunto fijo de **operaciones**, y cada gestor las implementa en un adaptador (`references/trackers/<tipo>.md`). El gestor se elige con `tracker.type` en `.claude/agent-playbook.json`.
 
 ## Estado
 
 | Tipo | Estado | Herramienta |
 | --- | --- | --- |
 | `github` | Soportado | `gh` CLI |
-| `notion` | Soportado | Conector de Notion (requiere autorizarlo en claude.ai) |
+| `notion` | Soportado, pendiente de probar contra una base real | Conector de Notion (requiere autorizarlo en claude.ai) |
 | `jira` | Reservado | Conector de Atlassian |
 | `linear` | Reservado | Conector de Linear |
 
@@ -24,7 +24,7 @@ Los skills nunca llaman directamente a un gestor de tickets. Usan un conjunto fi
 
 ## Añadir un gestor nuevo
 
-1. Escribir `skills/resolve-issue/references/trackers/<tipo>.md` con las seis operaciones, cada una con el comando o la llamada al conector exacta.
+1. Escribir `references/trackers/<tipo>.md` con las seis operaciones, cada una con el comando o la llamada al conector exacta.
 2. Añadir el bloque de configuración de `<tipo>` en `config/agent-playbook.schema.json`.
 3. Marcarlo como soportado en la tabla de arriba y en `setup-project`.
 4. Bump de versión y entrada en `CHANGELOG.md`.
