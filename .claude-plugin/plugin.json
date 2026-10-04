@@ -1,0 +1,11 @@
+{
+  "name": "agent-playbook",
+  "version": "0.1.0",
+  "description": "Manuales versionados, ruteo de modelos, hooks y cierre con evidencia para orquestar el desarrollo de software con agentes Claude.",
+  "author": {
+    "name": "Alexis Banda"
+  },
+  "repository": "https://github.com/alexisbanda/agent-playbook",
+  "license": "UNLICENSED",
+  "keywords": ["orchestration", "skills", "hooks", "routing", "workflow"]
+}

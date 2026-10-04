@@ -1,0 +1,4 @@
+.agent-playbook/
+__pycache__/
+*.pyc
+.DS_Store

@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/alexisbanda/agent-playbook/config/agent-playbook.schema.json",
+  "title": "agent-playbook project config",
+  "description": "Configuración por repositorio del playbook. Vive en <repo>/.claude/agent-playbook.json.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "profile", "tracker"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": {
+      "const": 1,
+      "description": "Versión del formato de este archivo."
+    },
+    "profile": {
+      "enum": ["reduced", "full"],
+      "default": "reduced",
+      "description": "reduced: 4 clases de ruteo, un coder a la vez, reviewer solo en clase crítica. full: las 10 clases y el motor completo. Ver docs/SCALING.md."
+    },
+    "tracker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "enum": ["github", "notion", "jira", "linear"],
+          "description": "Gestor de tickets. github y notion están soportados; jira y linear están reservados (ver docs/TRACKERS.md)."
+        },
+        "github": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "repo": { "type": "string", "pattern": "^[^/]+/[^/]+$", "description": "owner/name. Por defecto, el remoto origin." },
+            "in_progress_label": { "type": "string", "default": "in-progress" }
+          }
+        },
+        "notion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["database_url"],
+          "properties": {
+            "database_url": { "type": "string", "description": "URL de la base de datos de tickets en Notion." },
+            "status_property": { "type": "string", "default": "Status" },
+            "in_progress_value": { "type": "string", "default": "In progress" },
+            "done_value": { "type": "string", "default": "Done" }
+          }
+        },
+        "jira": { "type": "object" },
+        "linear": { "type": "object" }
+      }
+    },
+    "hooks": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "enum": ["off", "warn", "block"],
+          "default": "warn",
+          "description": "warn: los gates avisan sin frenar. block: los gates bloquean (exit 2). off: solo telemetría."
+        }
+      }
+    },
+    "review_bot": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Si es true, se exige el veredicto de Claude Code Action para mergear y setup-project instala el workflow."
+        },
+        "workflow": {
+          "type": "string",
+          "default": ".github/workflows/claude-review.yml",
+          "description": "Ruta del workflow del review bot en el repo."
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dev_url": { "type": "string", "description": "URL base del entorno de desarrollo desplegado, para las pruebas en vivo." },
+        "test_command": { "type": "string", "description": "Comando que corre la suite de tests (baseline y verificación)." },
+        "deploy_check": { "type": "string", "description": "Comando que sale con 0 cuando el último deploy a dev terminó en verde." }
+      }
+    },
+    "journeys": {
+      "type": "array",
+      "description": "Recorridos de regresión que protegen el producto.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "command"],
+        "properties": {
+          "name": { "type": "string" },
+          "command": { "type": "string" }
+        }
+      }
+    }
+  }
+}
