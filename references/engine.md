@@ -32,8 +32,8 @@ Antes de tocar nada, córrelo y guarda la salida en `.agent-playbook/runs/<ticke
 
 Uno a la vez. Lánzalo con el Agent tool:
 
-- primera línea del prompt: `ROLE: coder · CLASS: <standard|critical>`;
-- `model`: `sonnet` en ambas clases (`opus` nunca escribe código);
+- primera línea del prompt: `ROLE: coder · CLASS: <clase del ticket>`;
+- `model`: el de la clase según `routing/ROUTING.md` (`sonnet` en `standard`, `opus` en `critical`). `fable` nunca escribe código;
 - el resto del prompt: `templates/CODER_BRIEF.md` rellenado.
 
 Pásale en el brief el comando de tests del worktree ya resuelto (paso 2). El coder trabaja solo en su worktree, hace commits convencionales (`feat: …`, `fix: …`), corre los tests, arregla las fallas que él causó, empuja su rama y abre el PR **en borrador** con `templates/PR_BODY.md`. La aprobación del plan ya cubre esos commits, el push de la rama del ticket y el PR en borrador: no se vuelve a pedir OK. Nunca empuja a la rama base, nunca promueve y nunca mergea.
@@ -52,7 +52,7 @@ Cuando el coder termina, tú verificas, no confías en su resumen:
 | Clase | Review |
 | --- | --- |
 | `standard` | Tu verificación más el review bot si `review_bot.enabled` |
-| `critical` | Reviewer independiente (`ROLE: reviewer · CLASS: critical`, `model: opus`, prompt `templates/REVIEW_BRIEF.md`) más el review bot si está activado |
+| `critical` | Reviewer independiente (`ROLE: reviewer · CLASS: review`, `model: opus` porque revisa trabajo crítico, prompt `templates/REVIEW_BRIEF.md`) más el review bot si está activado |
 
 El reviewer ve el ticket, los criterios y el diff. Devuelve solo `APPROVE` o `CHANGES_REQUESTED` con la lista de problemas. Las sugerencias menores no bloquean y nunca toca código. Con `CHANGES_REQUESTED`, el coder corrige y el reviewer revisa de nuevo. **Máximo 3 rondas**: si no converge, detente y muéstralo.
 

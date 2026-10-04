@@ -1,4 +1,4 @@
-ROLE: reviewer · CLASS: <clase>
+ROLE: reviewer · CLASS: review
 
 Revisa el PR <url> del ticket <id>. No escribiste este código y **no lo tocas**: solo lo revisas.
 

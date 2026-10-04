@@ -41,9 +41,11 @@ El esquema completo está en [config/agent-playbook.schema.json](config/agent-pl
 skills/           procedimientos que se invocan (setup-project, resolve-issue)
 references/       capítulos compartidos que los skills leen por fases: preflight, motor, cierre, adaptadores de trackers
 templates/        RUN_STATE, HANDBACK, briefs de coder y reviewer, cuerpo de PR, evidencia
+routing/          tabla de ruteo de modelos (routing.json), su esquema y su explicación
 config/           esquema y ejemplo de la configuración por repo
 docs/             escalado, gestores de tickets
-scripts/          utilidades de CI y de las corridas
+scripts/          utilidades de CI y de las corridas (route.py resuelve el modelo de cada subagente)
+tests/            tests de los scripts
 ```
 
 ## Roadmap
@@ -53,7 +55,7 @@ scripts/          utilidades de CI y de las corridas
 | 0 | Esqueleto, marketplace, configuración por repo, CI | Hecho |
 | 1 | Skill `resolve-issue`, adaptadores de GitHub Issues y Notion, motor y cierre reducidos, plantillas | Hecho |
 | 1b | Skill `bootstrap-project` para arrancar proyectos nuevos | Pendiente |
-| 2 | `routing.json` con las tablas reducida y completa | Pendiente |
+| 2 | `routing.json` con las tablas reducida y completa, resolvedor y tests | Hecho |
 | 3 | Hooks: gate de modelos, gate de seguridad, telemetría | Pendiente |
 | 4 | Motor: worktrees, baseline, review, merge gate, review bot opcional | Pendiente |
 | 5 | Cierre con evidencia, journeys, métricas y tuning wave | Pendiente |
