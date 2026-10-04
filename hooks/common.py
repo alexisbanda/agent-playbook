@@ -7,6 +7,7 @@ Hooks fail open: an internal error is logged and never breaks the session.
 import datetime
 import json
 import os
+import re
 import subprocess
 import sys
 import traceback
@@ -16,6 +17,25 @@ sys.path.insert(0, os.path.join(PLUGIN_ROOT, "scripts"))
 
 CONFIG_REL = os.path.join(".claude", "agent-playbook.json")
 STATE_DIR = ".agent-playbook"
+
+# Where a command starts: line start, after ; & | ( or $(, optionally behind
+# `env -u X ...`, VAR=value assignments or `command`. Matching only here keeps
+# text that merely mentions a command (grep patterns, heredocs) from counting.
+CMD_START = (
+    r"(?:^|[;&|(\n]|\$\()\s*"
+    r"(?:env\b(?:\s+(?:-u\s+\S+|-i|[A-Za-z_]\w*=\S*))*\s+)?"
+    r"(?:[A-Za-z_]\w*=\S*\s+)*(?:command\s+)?"
+)
+# gh itself, a path to it, or a variable holding it ($GH, ${GH}).
+GH_BIN = r"(?:\S*/)?(?:gh|\$\{?[A-Za-z_]\w*\}?)(?:\s+(?:-R|--repo)(?:\s+|=)\S+)?"
+GIT_BIN = r"(?:\S*/)?(?:git|\$\{?[A-Za-z_]\w*\}?)(?:\s+-[Cc]\s+\S+)*"
+
+
+def gh_pr(verb):
+    return re.compile(CMD_START + GH_BIN + r"\s+pr\s+" + verb + r"\b", re.MULTILINE)
+
+
+GIT_PUSH = re.compile(CMD_START + GIT_BIN + r"\s+push\b", re.MULTILINE)
 
 
 def read_input():
@@ -54,12 +74,30 @@ def mode(config):
     return (config.get("hooks") or {}).get("mode", "warn")
 
 
-def active_run(root):
+def read_marker(root):
+    """Returns (run, owner_session) from .agent-playbook/active-run, or (None, None).
+
+    The marker is "<run> <session id>"; the session part is optional.
+    """
     try:
         with open(os.path.join(root, STATE_DIR, "active-run")) as fh:
-            return fh.read().strip() or None
+            parts = fh.read().split()
     except OSError:
+        return None, None
+    if not parts:
+        return None, None
+    return parts[0], (parts[1] if len(parts) > 1 else None)
+
+
+def active_run(root, session_id=None):
+    """The open run, but only for the session that opened it (and its subagents).
+
+    Other sessions working in the same repo are not part of the run.
+    """
+    run, owner = read_marker(root)
+    if run and owner and session_id and owner != session_id:
         return None
+    return run
 
 
 def now():
@@ -72,7 +110,7 @@ def log_event(root, payload, event, **fields):
         "event": event,
         "session_id": payload.get("session_id"),
         "agent_id": payload.get("agent_id"),
-        "run": active_run(root),
+        "run": active_run(root, payload.get("session_id")),
     }
     record.update({k: v for k, v in fields.items() if v is not None})
     os.makedirs(os.path.join(root, STATE_DIR), exist_ok=True)

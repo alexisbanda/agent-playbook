@@ -63,7 +63,7 @@ Si `installed` es menor que `latest`, avisa: el usuario debe actualizar el plugi
 
 | Síntoma | Causa | Qué hacer |
 | --- | --- | --- |
-| `gh auth status` dice que el token es inválido, o `gh` responde 401, aunque el usuario hizo `gh auth login` | Hay una variable `GITHUB_TOKEN` (o `GH_TOKEN`) exportada en el entorno, que `gh` usa antes que las credenciales guardadas | Comprueba `env -u GITHUB_TOKEN -u GH_TOKEN gh auth status`. Si así está en verde, usa ese prefijo en **todos** los comandos `gh` de la corrida y anótalo en `RUN_STATE.md`. Sugiere al usuario quitar la variable de su perfil del shell. No imprimas el valor del token |
+| `gh auth status` dice que el token es inválido, o `gh` responde 401, aunque el usuario hizo `gh auth login` | Hay una variable `GITHUB_TOKEN` (o `GH_TOKEN`) exportada en el entorno, que `gh` usa antes que las credenciales guardadas | Comprueba `env -u GITHUB_TOKEN -u GH_TOKEN gh auth status`. Si así está en verde, escribe ese prefijo **literal** delante de cada comando `gh` de la corrida (`env -u GITHUB_TOKEN -u GH_TOKEN gh pr merge …`) y anótalo en `RUN_STATE.md`. No lo guardes en una variable (`GH=...; $GH pr ...`): los hooks reconocen los comandos por su texto. Sugiere al usuario quitar la variable de su perfil del shell. No imprimas el valor del token |
 
 ## Resultado
 

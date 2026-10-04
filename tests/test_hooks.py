@@ -40,16 +40,18 @@ class HookTestCase(unittest.TestCase):
         with open(os.path.join(self.repo, ".claude", "agent-playbook.json"), "w") as fh:
             json.dump(config, fh)
 
-    def start_run(self, run="1"):
+    def start_run(self, run="1", session="s1"):
         os.makedirs(os.path.join(self.repo, ".agent-playbook"), exist_ok=True)
         with open(os.path.join(self.repo, ".agent-playbook", "active-run"), "w") as fh:
-            fh.write(run)
+            fh.write(f"{run} {session}\n" if session else run)
 
     def hook(self, name, payload, cwd=None):
         payload = {"session_id": "s1", "cwd": cwd or self.repo, **payload}
+        # Hermetic: the developer's own pinned model aliases must not leak in.
+        env = {k: v for k, v in os.environ.items() if not k.startswith("ANTHROPIC_DEFAULT_")}
         out = subprocess.run(
             [sys.executable, os.path.join(HOOKS, name)],
-            input=json.dumps(payload), capture_output=True, text=True, cwd=cwd or self.repo,
+            input=json.dumps(payload), capture_output=True, text=True, cwd=cwd or self.repo, env=env,
         )
         self.assertEqual(out.returncode, 0, out.stderr)
         return json.loads(out.stdout) if out.stdout.strip() else None
@@ -102,6 +104,25 @@ class ModelGateTest(HookTestCase):
         self.assertIsNone(self.agent("ROLE: reader · CLASS: reader\nOVERRIDE: monorepo enorme", "opus"))
         self.assertEqual(self.events()[-1]["override"], "monorepo enorme")
 
+    def test_gate_ignores_sessions_that_do_not_own_the_run(self):
+        self.start_run(session="owner")
+        self.assertIsNone(self.hook("model_gate.py", {
+            "hook_event_name": "PreToolUse", "tool_name": "Agent", "session_id": "observer",
+            "tool_input": {"prompt": "sin encabezado", "model": "fable"},
+        }))
+
+    def test_subagents_of_the_owner_session_are_gated(self):
+        self.start_run(session="owner")
+        out = self.hook("model_gate.py", {
+            "hook_event_name": "PreToolUse", "tool_name": "Agent", "session_id": "owner", "agent_id": "a1",
+            "tool_input": {"prompt": "sin encabezado", "model": "sonnet"},
+        })
+        self.assertEqual(self.decision(out), "deny")
+
+    def test_legacy_marker_without_session_still_gates(self):
+        self.start_run(session=None)
+        self.assertEqual(self.decision(self.agent("sin encabezado", "sonnet")), "deny")
+
     def test_inactive_without_config(self):
         os.remove(os.path.join(self.repo, ".claude", "agent-playbook.json"))
         self.start_run()
@@ -148,6 +169,20 @@ class SafetyGateTest(HookTestCase):
         git(self.repo, "checkout", "-q", "-b", "feat/x")
         self.assertIsNone(self.bash("git push origin feat/x && rm -f tmp.txt"))
 
+    def test_commands_behind_variables_or_git_dash_c_are_caught(self):
+        git(self.repo, "checkout", "-q", "-b", "feat/x")
+        self.assertEqual(self.decision(self.bash('$GH pr merge 4 -R o/r --squash')), "deny")
+        self.assertEqual(self.decision(self.bash('${GH} pr ready 4', agent_id="a1")), "deny")
+        self.assertEqual(self.decision(self.bash("env -u GITHUB_TOKEN gh pr merge 4")), "deny")
+        self.assertEqual(self.decision(self.bash("git -C . push origin main")), "deny")
+        self.assertEqual(self.decision(self.bash("$GIT push --force origin feat/x")), "deny")
+
+    def test_bare_push_with_dash_c_uses_that_checkout(self):
+        worktree = self.repo + ".worktrees/1-x"
+        git(self.repo, "worktree", "add", "-q", "-b", "feat/1-x", worktree)
+        self.assertIsNone(self.bash(f"git -C {worktree} push"))
+        self.assertEqual(self.decision(self.bash(f"git -C {self.repo} push", cwd=worktree)), "deny")
+
     def test_subagent_cannot_merge_or_promote(self):
         self.assertEqual(self.decision(self.bash("gh pr merge 3 --squash --match-head-commit abc", agent_id="a1")), "deny")
         self.assertEqual(self.decision(self.bash("gh pr ready 3", agent_id="a1")), "deny")
@@ -190,11 +225,47 @@ class TelemetryTest(HookTestCase):
     def test_records_facts_without_contents(self):
         self.start_run("7")
         self.hook("telemetry.py", {"hook_event_name": "UserPromptSubmit", "prompt": "secreto 123"})
-        self.hook("telemetry.py", {"hook_event_name": "PostToolUse", "tool_name": "Bash", "tool_input": {"command": "gh pr create --draft --title x"}})
+        self.hook("telemetry.py", {
+            "hook_event_name": "PostToolUse", "tool_name": "Bash",
+            "tool_input": {"command": "gh pr create --draft --title x"},
+            "tool_response": {"stdout": "https://github.com/o/r/pull/12\n", "stderr": ""},
+        })
         events = self.events()
         self.assertEqual([e["event"] for e in events], ["user_prompt", "pr_opened"])
+        self.assertEqual(events[-1]["pr"], "12")
         self.assertTrue(all(e["run"] == "7" for e in events))
         self.assertNotIn("secreto", json.dumps(events))
+
+    def bash_done(self, command, stdout="", session="s1"):
+        self.hook("telemetry.py", {
+            "hook_event_name": "PostToolUse", "tool_name": "Bash", "session_id": session,
+            "tool_input": {"command": command}, "tool_response": {"stdout": stdout, "stderr": ""},
+        })
+
+    def test_pr_opened_needs_the_pr_url_in_the_output(self):
+        self.bash_done("gh pr create --draft --title x", stdout="pull request create failed")
+        self.assertEqual(self.events(), [])
+
+    def test_mentions_of_a_command_do_not_count(self):
+        self.bash_done("grep -c 'gh pr merge' notes.md; echo 'git worktree add x'", stdout="https://github.com/o/r/pull/3")
+        self.bash_done("cat > brief.md <<'EOF'\nNunca uses gh pr ready ni gh pr merge\nEOF")
+        self.assertEqual(self.events(), [])
+
+    def test_gh_behind_a_variable_or_env_prefix_counts(self):
+        self.bash_done('GH="env -u GITHUB_TOKEN gh"; $GH pr ready 4 -R o/r')
+        self.bash_done("env -u GITHUB_TOKEN -u GH_TOKEN gh pr merge 4 --squash --match-head-commit abc")
+        self.bash_done("cd ../wt && git worktree remove ../wt")
+        self.assertEqual([e["event"] for e in self.events()], ["pr_promoted", "pr_merged", "worktree_removed"])
+
+    def test_ready_undo_is_not_a_promotion(self):
+        self.bash_done("gh pr ready 4 --undo")
+        self.assertEqual(self.events(), [])
+
+    def test_other_sessions_are_not_part_of_the_run(self):
+        self.start_run("5", session="owner")
+        self.hook("telemetry.py", {"hook_event_name": "UserPromptSubmit", "prompt": "x", "session_id": "owner"})
+        self.hook("telemetry.py", {"hook_event_name": "UserPromptSubmit", "prompt": "x", "session_id": "observer"})
+        self.assertEqual([e["run"] for e in self.events()], ["5", None])
 
     def test_session_start_warns_about_missing_pins(self):
         out = self.hook("telemetry.py", {"hook_event_name": "SessionStart", "source": "startup"})

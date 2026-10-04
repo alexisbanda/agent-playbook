@@ -11,10 +11,14 @@ import subprocess
 
 import common
 
-PUSH_RE = re.compile(r"\bgit\s+push\b")
+# Deliberately broad (not anchored to command start): a false positive only asks
+# or denies, a false negative lets the action through. Covers `git -C dir push`,
+# and gh or git behind a variable ($GH, ${GIT}).
+PUSH_RE = re.compile(r"(?:\bgit|\$\{?[A-Za-z_]\w*\}?)(?:\s+-[Cc]\s+\S+)*\s+push\b")
 FORCE_RE = re.compile(r"(\s--force(-with-lease)?\b|\s-f\b|\s\+\S+)")
-MERGE_RE = re.compile(r"\bgh\s+pr\s+merge\b")
-READY_RE = re.compile(r"\bgh\s+pr\s+ready\b(?![^;&|]*--undo)")
+GH_RE = r"(?:\bgh|\$\{?[A-Za-z_]\w*\}?)(?:\s+(?:-R|--repo)(?:\s+|=)\S+)?\s+pr\s+"
+MERGE_RE = re.compile(GH_RE + r"merge\b")
+READY_RE = re.compile(GH_RE + r"ready\b(?![^;&|]*--undo)")
 RM_RE = re.compile(r"\brm\s+([^;&|]*)")
 
 
@@ -53,9 +57,16 @@ def pushes_to_base(command, cwd, bases):
             words = shlex.split(segment)
         except ValueError:
             words = segment.split()
-        args = [w for w in words[words.index("push") + 1:] if not w.startswith("-")] if "push" in words else []
+        if "push" not in words:
+            continue
+        at = words.index("push")
+        where = cwd
+        for i, word in enumerate(words[:at]):
+            if word == "-C" and i + 1 < at:
+                where = os.path.join(cwd, words[i + 1])
+        args = [w for w in words[at + 1:] if not w.startswith("-")]
         targets = [ref.split(":")[-1].lstrip("+").replace("refs/heads/", "") for ref in args[1:]]
-        if not targets and current_branch(cwd) in bases:
+        if not targets and current_branch(where) in bases:
             return True
         if any(t in bases for t in targets):
             return True

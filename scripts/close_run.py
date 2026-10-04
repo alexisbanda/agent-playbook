@@ -106,7 +106,8 @@ def build_metrics(run, events, e2e_first_pass):
             gates["safety"] += 1
 
     subagents = collections.Counter(
-        e.get("model") or "default" for e in run_events if e["event"] == "subagent_done"
+        # subagent_done: name used by 0.4.0 for the same event.
+        e.get("model") or "default" for e in run_events if e["event"] in ("subagent_launched", "subagent_done")
     )
 
     usage = collections.defaultdict(collections.Counter)
@@ -178,8 +179,9 @@ def main():
     marker = os.path.join(root, STATE_DIR, "active-run")
     try:
         with open(marker) as fh:
-            if fh.read().strip() == args.run:
-                os.remove(marker)
+            parts = fh.read().split()
+        if parts and parts[0] == args.run:
+            os.remove(marker)
     except OSError:
         pass
 

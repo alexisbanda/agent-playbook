@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.1
+
+Correcciones de la segunda corrida real (pokemon-visiotech#3):
+
+- **Gate de seguridad**: reconoce `gh` y `git` detrás de una variable (`$GH pr merge`), de `env -u …` o con `git -C <dir> push` (comprobando la rama de ese directorio). Antes, un `$GH pr merge` se saltaba las reglas de merge y promoción.
+- **Corridas por sesión**: el marcador `active-run` guarda `$CLAUDE_CODE_SESSION_ID`. Otra sesión en el mismo repo ya no contamina las métricas ni pasa por el gate de modelos de la corrida.
+- **Telemetría precisa**: los comandos solo cuentan en posición de comando (no si aparecen en un `grep` o un heredoc); `pr_opened` exige la URL del PR en la salida.
+- `subagent_done` pasa a `subagent_launched` (marca el lanzamiento; los subagentes corren en segundo plano). `close_run.py` acepta los dos nombres.
+- El preflight y `resolve-issue` piden escribir `gh` y `git` literales, sin variables.
+- Tests: 57, incluidos los casos de la corrida. Los comandos reales de esa corrida, repasados con los patrones nuevos, dan exactamente 1 worktree, 1 PR abierto, promovido y mergeado.
+
 ## 0.4.0
 
 - Hooks (`hooks/hooks.json`), inactivos en repos sin `.claude/agent-playbook.json`:

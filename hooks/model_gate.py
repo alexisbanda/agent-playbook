@@ -20,7 +20,7 @@ def main():
     model = tool_input.get("model")
     hook_mode = common.mode(config)
 
-    if not common.active_run(root) or hook_mode == "off":
+    if not common.active_run(root, payload.get("session_id")) or hook_mode == "off":
         common.log_event(root, payload, "subagent_launch", model=model, gated=False)
         common.emit(None)
 
