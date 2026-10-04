@@ -1,0 +1,68 @@
+# Review bot del agent-playbook (Claude Code Action).
+# Lo instala setup-project cuando review_bot.enabled es true; se desmonta borrando
+# este archivo y poniendo review_bot.enabled en false.
+#
+# El veredicto es el propio check "claude-review" de este job, atado al commit:
+# pasa con APPROVE y falla con CHANGES_REQUESTED. scripts/merge_gate.py lo exige
+# fresco (posterior a la promoción) y anclado (sobre el HEAD actual del PR).
+# Requiere el secreto ANTHROPIC_API_KEY en el repositorio.
+name: claude-review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  claude-review:
+    # Un borrador no dispara la review: abrirlo temprano no cuesta nada.
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+            HEAD SHA: ${{ github.event.pull_request.head.sha }}
+
+            Eres el review bot independiente de este repositorio. No escribiste este código y no lo tocas.
+            La rama del PR ya está en el directorio de trabajo.
+
+            1. Lee el PR (`gh pr view`) y el ticket que cierra (`gh issue view <n>`, si el cuerpo dice "Closes #n"),
+               con sus criterios de aceptación.
+            2. Lee el diff (`gh pr diff`) y los archivos que haga falta.
+            3. Revisa: ¿cumple cada criterio? ¿algo del ticket se malinterpretó? corrección y casos borde,
+               seguridad (entrada no validada, IDOR, secretos), tests que prueben los criterios y no solo el camino feliz,
+               cambios fuera del alcance del ticket.
+            4. Publica un único comentario con `gh pr comment` que empiece por `APPROVE <sha>` o
+               `CHANGES_REQUESTED <sha>` (usa el HEAD SHA de arriba), seguido de los problemas que bloquean,
+               numerados, con archivo:línea. Las sugerencias menores van aparte bajo "No bloquea".
+            5. Escribe el veredicto en el archivo `.claude-review/verdict`: una sola línea, `APPROVE` o `CHANGES_REQUESTED`.
+               Ante la duda sobre un problema que bloquea, CHANGES_REQUESTED.
+          claude_args: |
+            --model claude-sonnet-5
+            --allowedTools "Read,Grep,Glob,Write,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh issue view:*)"
+
+      - name: Veredicto
+        run: |
+          verdict="$(head -n 1 .claude-review/verdict 2>/dev/null | tr -d '[:space:]')"
+          echo "Veredicto: ${verdict:-ninguno}"
+          if [ "$verdict" != "APPROVE" ]; then
+            echo "::error::claude-review: ${verdict:-sin veredicto}"
+            exit 1
+          fi
