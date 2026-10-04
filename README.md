@@ -29,7 +29,7 @@ Activa la auto-actualización del marketplace en `/plugin` → Marketplaces para
 | `tracker.type` | `github`, `notion` (`jira`, `linear` reservados) | — |
 | `hooks.mode` | `off`, `warn`, `block` | `warn` |
 | `review_bot.enabled` | `true`, `false` | `false` |
-| `environment` | `dev_url`, `test_command`, `deploy_check` | vacío |
+| `environment` | `dev_url`, `test_command`, `worktree_test_command`, `deploy_check` | vacío |
 | `journeys` | lista de `{name, command}` | `[]` |
 
 El esquema completo está en [config/agent-playbook.schema.json](config/agent-playbook.schema.json).

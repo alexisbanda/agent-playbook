@@ -46,6 +46,8 @@ Lee cada referencia **solo cuando llegues a su fase**. No las cargues por adelan
    - riesgos y dudas.
 
    **Detente y espera la aprobación explícita.** Es el único punto en que esperas al humano. Sin aprobación no se construye nada.
+
+   Al presentar el plan, di qué autoriza aprobarlo: commits en la rama del ticket, push de esa rama y PR **en borrador**, sin volver a preguntar. Esto prevalece sobre una regla general de "pedir OK antes de commit o push" para esta corrida. No autoriza: push a la rama base, promover a listo si el review bot está activado sin pasar por la checklist, mergear ni escribir en producción.
 5. **Construcción.** Lee `references/engine.md`: worktree, baseline, coder, verificación, review y PR en borrador.
 6. **Merge.** Sigue la checklist de merge de `references/engine.md`. Muestra el resultado y **pide OK explícito** antes de mergear. Los coders nunca mergean.
 7. **Cierre.** Lee `references/closure.md`: gate de deploy, prueba en vivo, evidencia en el ticket, LÍMITES, journeys e informe final. Ejecuta `finish` solo con la evidencia publicada.

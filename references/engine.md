@@ -15,11 +15,15 @@ Uno por ticket y por repositorio. Lo creas tú, a mano, no con la opción autom�
    git worktree add -b <tipo>/<ticket>-<slug> ../<repo>.worktrees/<ticket>-<slug> origin/<rama-base>
    ```
    `<tipo>` es `feat` o `fix`. `<rama-base>` es la rama por defecto del repo salvo que el ticket diga otra cosa.
-4. Revisa excepciones del entorno: archivos no versionados que el proyecto necesita (`.env`, dependencias instaladas) y volúmenes de Docker que montan solo el clon principal. Copia o enlaza lo necesario y anótalo en `RUN_STATE.md`. Nunca copies secretos a un archivo versionado.
+4. Revisa excepciones del entorno (detalle por entorno en `references/test-runtimes.md`):
+   - Archivos no versionados que el proyecto necesita (`.env`, dependencias instaladas). Copia, enlaza o monta lo necesario y anótalo en `RUN_STATE.md`. Nunca copies secretos a un archivo versionado.
+   - Contenedores que montan solo el clon principal (Sail, Docker Compose). Ahí los tests del worktree se corren **siempre** con `environment.worktree_test_command`. Si los tests corren en un contenedor y ese campo está vacío, detente: sin él, el baseline y la verificación probarían el clon principal.
 
 ## 2. Baseline
 
-Antes de tocar nada, corre `environment.test_command` en el worktree y guarda la salida en `.agent-playbook/runs/<ticket>/baseline.log`, con un resumen de qué falla.
+**Comando de tests del worktree** (lo usan el baseline, el coder y la verificación): `environment.worktree_test_command` con `{worktree}` sustituido por la ruta absoluta del worktree, ejecutado desde la raíz del clon principal. Si está vacío, `environment.test_command` con el worktree como directorio de trabajo.
+
+Antes de tocar nada, córrelo y guarda la salida en `.agent-playbook/runs/<ticket>/baseline.log`, con un resumen de qué falla. En la primera corrida de un repo, comprueba que de verdad prueba el worktree: por ejemplo, que el listado de tests incluye un archivo que solo existe ahí, o que la ruta en las trazas es la del worktree. Anótalo en `RUN_STATE.md`.
 
 - Las fallas del baseline son **preexistentes**: no son culpa del coder.
 - Si no hay `test_command` (por ejemplo, en un proyecto nuevo), anótalo: irá a la sección LÍMITES del cierre.
@@ -32,7 +36,7 @@ Uno a la vez. Lánzalo con el Agent tool:
 - `model`: `sonnet` en ambas clases (`opus` nunca escribe código);
 - el resto del prompt: `templates/CODER_BRIEF.md` rellenado.
 
-El coder trabaja solo en su worktree, hace commits convencionales (`feat: …`, `fix: …`), corre los tests, arregla las fallas que él causó, empuja su rama y abre el PR **en borrador** con `templates/PR_BODY.md`. Nunca promueve ni mergea.
+Pásale en el brief el comando de tests del worktree ya resuelto (paso 2). El coder trabaja solo en su worktree, hace commits convencionales (`feat: …`, `fix: …`), corre los tests, arregla las fallas que él causó, empuja su rama y abre el PR **en borrador** con `templates/PR_BODY.md`. La aprobación del plan ya cubre esos commits, el push de la rama del ticket y el PR en borrador: no se vuelve a pedir OK. Nunca empuja a la rama base, nunca promueve y nunca mergea.
 
 Las fallas preexistentes no las arregla: las lista en su informe. Tú las publicas en el ticket con `comment` o abres un ticket nuevo con `create_ticket`.
 
@@ -40,7 +44,7 @@ Las fallas preexistentes no las arregla: las lista en su informe. Tú las public
 
 Cuando el coder termina, tú verificas, no confías en su resumen:
 
-1. Corre `test_command` en el worktree y compara con el baseline. Cualquier falla nueva vuelve al coder.
+1. Corre el comando de tests del worktree (paso 2) y compara con el baseline. Cualquier falla nueva vuelve al coder.
 2. Revisa el diff contra el plan aprobado. Si se salió del plan, vuelve al coder o, si el cambio es razonable, avísalo al usuario.
 
 ## 5. Review

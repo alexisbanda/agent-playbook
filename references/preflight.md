@@ -31,14 +31,27 @@ Si `installed` es menor que `latest`, avisa: el usuario debe actualizar el plugi
 
 ## 4. Herramientas y permisos
 
-- `gh auth status` en verde, con el scope `repo`.
+- `gh auth status` en verde, con el scope `repo`. Si falla por un token de entorno, ver [Problemas conocidos](#problemas-conocidos).
 - `git remote get-url origin` apunta a GitHub.
 - Si el tracker es `notion`, el conector de Notion responde (por ejemplo, una búsqueda de la base de datos configurada). Si no está autorizado, detente y pide al usuario que lo autorice en los conectores de claude.ai.
 
 ## 5. Estado del clon principal
 
-- `git status --porcelain` vacío en el clon principal. Si hay cambios, pregunta: no los muevas ni los descartes por tu cuenta.
 - `git fetch origin` sin errores.
+- `git status --porcelain` en el clon principal:
+  - vacío: OK;
+  - solo `.claude/agent-playbook.json` y `.gitignore` (lo que deja `setup-project`): AVISO, sigue, y recuerda al usuario que conviene versionarlos;
+  - cualquier otro cambio: pregunta. No los muevas ni los descartes por tu cuenta.
+- **Rama base al día con el remoto.** `git log --oneline origin/<base>..<base>` y `git log --oneline <base>..origin/<base>`, con `<base>` la rama por defecto:
+  - sin salida: OK;
+  - commits locales sin push: AVISO. Enuméralos y explica que el worktree parte de `origin/<base>`, así que **no estarán en el PR**. Pregunta si hacer push antes o seguir sin ellos;
+  - el local va por detrás: OK (el worktree parte de `origin`), pero menciónalo.
+
+## Problemas conocidos
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| `gh auth status` dice que el token es inválido, o `gh` responde 401, aunque el usuario hizo `gh auth login` | Hay una variable `GITHUB_TOKEN` (o `GH_TOKEN`) exportada en el entorno, que `gh` usa antes que las credenciales guardadas | Comprueba `env -u GITHUB_TOKEN -u GH_TOKEN gh auth status`. Si así está en verde, usa ese prefijo en **todos** los comandos `gh` de la corrida y anótalo en `RUN_STATE.md`. Sugiere al usuario quitar la variable de su perfil del shell. No imprimas el valor del token |
 
 ## Resultado
 
