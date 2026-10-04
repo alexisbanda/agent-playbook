@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.0
+
+- **Journeys de regresión** con evidencia: `scripts/run_journeys.py` corre los `journeys` de la configuración, guarda los logs por ticket e imprime la tabla para el comentario de evidencia. `setup-project` propone candidatos.
+- **Informe de métricas** (`scripts/metrics_report.py`): tabla por corrida con coste estimado (tarifas en `metrics/prices.json`) y evaluación de 8 tripwires (`metrics/tripwires.json`) sobre las últimas 10 corridas.
+- **Skill `tuning-wave`**: lee las métricas de uno o varios repos, mira detrás de cada tripwire que salta y propone de 1 a 3 cambios atados a una métrica, que con OK lleva a un PR en este repositorio.
+- Cada línea de métricas registra `playbook_version`, para comparar antes y después de un cambio en los manuales.
+- `docs/METRICS.md`, con la tabla de impacto medido de la guía. Tests: 87.
+
 ## 0.5.0
 
 - **Gate de merge** (`scripts/merge_gate.py`): comprueba las 4 condiciones (veredicto fresco y anclado, checks en verde, mergeable, espaciado de deploys), imprime el comando de merge con `--match-head-commit` y distingue "todavía no" (1) de "no se puede sin un cambio" (2). Con `--watch` hace de vigilante en segundo plano.

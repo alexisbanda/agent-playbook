@@ -27,7 +27,13 @@ Cada criterio de aceptación se convierte en una prueba, con el chequeo que se a
 
 ## 3. Journeys de regresión
 
-Corre cada entrada de `journeys` de la configuración. Un ticket no se cierra si rompió uno. Si la lista está vacía, decláralo en LÍMITES y sugiere 2 o 3 recorridos para añadir.
+Desde la raíz del clon principal, con el código mergeado:
+
+```bash
+python3 <plugin>/scripts/run_journeys.py <ticket>
+```
+
+Corre cada entrada de `journeys` de la configuración, guarda su log en `.agent-playbook/runs/<ticket>/journeys/` e imprime la tabla para la evidencia. Sale con 1 si alguno falla: **un ticket no se cierra si rompió un journey**; trátalo como una prueba en vivo fallida (paso 2). Si la lista está vacía, decláralo en LÍMITES y sugiere 2 o 3 recorridos concretos para añadir a `journeys`.
 
 ## 4. Evidencia en el ticket
 

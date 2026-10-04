@@ -4,45 +4,143 @@
   "description": "Una línea de .agent-playbook/metrics.jsonl, escrita por scripts/close_run.py.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["run", "closed_at", "started_at", "ended_at", "wall_minutes", "human_wait_minutes", "human_waits", "sessions", "subagents", "subagents_by_model", "prs_opened", "prs_promoted", "prs_merged", "worktrees_created", "worktrees_removed", "compactions", "gate_events", "overrides", "tokens_by_model", "tokens_measured", "e2e_first_pass", "e2e_first_pass_source"],
+  "required": [
+    "run",
+    "playbook_version",
+    "closed_at",
+    "started_at",
+    "ended_at",
+    "wall_minutes",
+    "human_wait_minutes",
+    "human_waits",
+    "sessions",
+    "subagents",
+    "subagents_by_model",
+    "prs_opened",
+    "prs_promoted",
+    "prs_merged",
+    "worktrees_created",
+    "worktrees_removed",
+    "compactions",
+    "gate_events",
+    "overrides",
+    "tokens_by_model",
+    "tokens_measured",
+    "e2e_first_pass",
+    "e2e_first_pass_source"
+  ],
   "$defs": {
-    "count": { "type": "integer", "minimum": 0 },
-    "minutes": { "type": "number", "minimum": 0 }
+    "count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "minutes": {
+      "type": "number",
+      "minimum": 0
+    }
   },
   "properties": {
-    "run": { "type": "string", "minLength": 1 },
-    "closed_at": { "type": "string" },
-    "started_at": { "type": "string" },
-    "ended_at": { "type": "string" },
-    "wall_minutes": { "$ref": "#/$defs/minutes" },
-    "human_wait_minutes": { "$ref": "#/$defs/minutes" },
-    "human_waits": { "$ref": "#/$defs/count" },
-    "sessions": { "$ref": "#/$defs/count" },
-    "subagents": { "$ref": "#/$defs/count" },
-    "subagents_by_model": { "type": "object", "additionalProperties": { "$ref": "#/$defs/count" } },
-    "prs_opened": { "$ref": "#/$defs/count" },
-    "prs_promoted": { "$ref": "#/$defs/count" },
-    "prs_merged": { "$ref": "#/$defs/count" },
-    "worktrees_created": { "$ref": "#/$defs/count" },
-    "worktrees_removed": { "$ref": "#/$defs/count" },
-    "compactions": { "$ref": "#/$defs/count" },
-    "gate_events": { "type": "object", "additionalProperties": { "$ref": "#/$defs/count" } },
-    "overrides": { "type": "array", "items": { "type": "string" } },
+    "run": {
+      "type": "string",
+      "minLength": 1
+    },
+    "playbook_version": {
+      "type": "string",
+      "description": "Versión del plugin que midió la corrida. Las líneas sin este campo son de la 0.4.x o anterior."
+    },
+    "closed_at": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "ended_at": {
+      "type": "string"
+    },
+    "wall_minutes": {
+      "$ref": "#/$defs/minutes"
+    },
+    "human_wait_minutes": {
+      "$ref": "#/$defs/minutes"
+    },
+    "human_waits": {
+      "$ref": "#/$defs/count"
+    },
+    "sessions": {
+      "$ref": "#/$defs/count"
+    },
+    "subagents": {
+      "$ref": "#/$defs/count"
+    },
+    "subagents_by_model": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/count"
+      }
+    },
+    "prs_opened": {
+      "$ref": "#/$defs/count"
+    },
+    "prs_promoted": {
+      "$ref": "#/$defs/count"
+    },
+    "prs_merged": {
+      "$ref": "#/$defs/count"
+    },
+    "worktrees_created": {
+      "$ref": "#/$defs/count"
+    },
+    "worktrees_removed": {
+      "$ref": "#/$defs/count"
+    },
+    "compactions": {
+      "$ref": "#/$defs/count"
+    },
+    "gate_events": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/count"
+      }
+    },
+    "overrides": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "tokens_by_model": {
       "type": "object",
       "additionalProperties": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "input_tokens": { "$ref": "#/$defs/count" },
-          "output_tokens": { "$ref": "#/$defs/count" },
-          "cache_read_input_tokens": { "$ref": "#/$defs/count" },
-          "cache_creation_input_tokens": { "$ref": "#/$defs/count" }
+          "input_tokens": {
+            "$ref": "#/$defs/count"
+          },
+          "output_tokens": {
+            "$ref": "#/$defs/count"
+          },
+          "cache_read_input_tokens": {
+            "$ref": "#/$defs/count"
+          },
+          "cache_creation_input_tokens": {
+            "$ref": "#/$defs/count"
+          }
         }
       }
     },
-    "tokens_measured": { "type": "boolean" },
-    "e2e_first_pass": { "enum": ["yes", "no", "na"] },
-    "e2e_first_pass_source": { "const": "declared" }
+    "tokens_measured": {
+      "type": "boolean"
+    },
+    "e2e_first_pass": {
+      "enum": [
+        "yes",
+        "no",
+        "na"
+      ]
+    },
+    "e2e_first_pass_source": {
+      "const": "declared"
+    }
   }
 }
