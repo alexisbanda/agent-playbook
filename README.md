@@ -15,6 +15,8 @@ En Claude Code:
 /plugin install agent-playbook@agent-playbook
 ```
 
+El mismo marketplace publica [ticket-studio](https://github.com/alexisbanda/ticket-studio), para que el PM escriba tickets que cumplan el contrato que este playbook espera (`/plugin install ticket-studio@agent-playbook`).
+
 Activa la auto-actualización del marketplace en `/plugin` → Marketplaces para que cada versión nueva llegue sola.
 
 ## Uso en un repositorio
