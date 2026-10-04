@@ -1,4 +1,4 @@
-ROLE: coder · CLASS: <standard|critical>
+ROLE: coder · CLASS: <clase del ticket>
 
 Eres el coder del ticket <id>: <título>.
 

@@ -1,0 +1,163 @@
+{
+  "$schema": "./routing.schema.json",
+  "version": 1,
+  "tiers": {
+    "economy": {
+      "alias": "haiku",
+      "model_id": "claude-haiku-4-5",
+      "pin_env": "ANTHROPIC_DEFAULT_HAIKU_MODEL"
+    },
+    "standard": {
+      "alias": "sonnet",
+      "model_id": "claude-sonnet-5",
+      "pin_env": "ANTHROPIC_DEFAULT_SONNET_MODEL"
+    },
+    "premium": {
+      "alias": "opus",
+      "model_id": "claude-opus-5-5",
+      "pin_env": "ANTHROPIC_DEFAULT_OPUS_MODEL"
+    },
+    "flagship": {
+      "alias": "fable",
+      "model_id": "claude-fable-5-1",
+      "pin_env": "ANTHROPIC_DEFAULT_FABLE_MODEL"
+    }
+  },
+  "writer_roles": [
+    "coder",
+    "patriot"
+  ],
+  "writer_forbidden_tiers": [
+    "flagship"
+  ],
+  "session_tiers_accepted": [
+    "standard",
+    "premium",
+    "flagship"
+  ],
+  "profiles": {
+    "reduced": {
+      "classes": {
+        "reader": {
+          "default": "economy",
+          "allowed": [
+            "economy",
+            "standard"
+          ]
+        },
+        "standard": {
+          "default": "standard",
+          "allowed": [
+            "standard",
+            "premium"
+          ]
+        },
+        "critical": {
+          "default": "premium",
+          "allowed": [
+            "premium"
+          ]
+        },
+        "review": {
+          "default": "standard",
+          "allowed": [
+            "standard",
+            "premium"
+          ]
+        },
+        "orchestrate": {
+          "default": "standard",
+          "allowed": [
+            "standard",
+            "premium",
+            "flagship"
+          ]
+        }
+      },
+      "class_aliases": {
+        "mechanical": "standard",
+        "port": "standard",
+        "root-cause": "critical",
+        "contract": "critical",
+        "money": "critical",
+        "security": "critical"
+      }
+    },
+    "full": {
+      "classes": {
+        "reader": {
+          "default": "economy",
+          "allowed": [
+            "economy",
+            "standard"
+          ]
+        },
+        "mechanical": {
+          "default": "standard",
+          "allowed": [
+            "standard"
+          ]
+        },
+        "port": {
+          "default": "standard",
+          "allowed": [
+            "standard",
+            "premium"
+          ]
+        },
+        "standard": {
+          "default": "standard",
+          "allowed": [
+            "standard",
+            "premium"
+          ]
+        },
+        "root-cause": {
+          "default": "premium",
+          "allowed": [
+            "premium",
+            "standard"
+          ]
+        },
+        "contract": {
+          "default": "premium",
+          "allowed": [
+            "premium"
+          ]
+        },
+        "money": {
+          "default": "premium",
+          "allowed": [
+            "premium"
+          ]
+        },
+        "security": {
+          "default": "premium",
+          "allowed": [
+            "premium"
+          ]
+        },
+        "critical": {
+          "default": "premium",
+          "allowed": [
+            "premium"
+          ]
+        },
+        "review": {
+          "default": "standard",
+          "allowed": [
+            "standard",
+            "premium"
+          ]
+        },
+        "orchestrate": {
+          "default": "flagship",
+          "allowed": [
+            "flagship"
+          ]
+        }
+      },
+      "class_aliases": {}
+    }
+  }
+}

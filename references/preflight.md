@@ -4,12 +4,19 @@ Se ejecuta antes de cualquier otra cosa. Cada control falla con un mensaje concr
 
 ## 1. Modelo de la sesión
 
-Comprueba el modelo con el que corre la sesión (lo indica tu propio contexto de sistema).
+Comprueba el modelo con el que corre la sesión (lo indica tu propio contexto de sistema):
 
-| Modelo de la sesión | Resultado |
+```bash
+python3 <plugin>/scripts/route.py --session-model <id del modelo de la sesión>
+```
+
+| Resultado | Qué hacer |
 | --- | --- |
-| Familia `sonnet`, `opus` o `fable` | OK |
-| Cualquier otro (por ejemplo `haiku`) | **Detente.** Pide al usuario que cambie el modelo de la sesión |
+| `allow` | OK |
+| `block` (por ejemplo `haiku`) | **Detente.** Pide al usuario que cambie el modelo de la sesión |
+| `missing_pins` no vacío | AVISO, no bloquea: los alias no están fijados a una versión exacta. Indica las variables que faltan (ver `<plugin>/routing/ROUTING.md`) |
+
+En el perfil `full`, la clase `orchestrate` pide `fable`: si la sesión usa otro modelo, avisa.
 
 Si el usuario pasó `--override-model "<motivo>"`, continúa y anota el motivo en `RUN_STATE.md` (sección Overrides).
 

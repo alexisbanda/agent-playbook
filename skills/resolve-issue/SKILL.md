@@ -23,16 +23,18 @@ Eres el **orquestador** (jefe de obra). Lees, planificas, repartes, verificas y 
 
 Lee cada referencia **solo cuando llegues a su fase**. No las cargues por adelantado.
 
-## Clases de tarea (perfil `reduced`)
+## Ruteo de modelos
 
-| Clase | Para qué | Modelo |
-| --- | --- | --- |
-| `reader` | Leer y resumir, sin decidir | `haiku` (o `sonnet`) |
-| `standard` | Un feature o fix normal | `sonnet` (o `opus`) |
-| `critical` | Dinero, contratos entre servicios, seguridad, migraciones de datos o un bug de causa desconocida | `opus` |
-| `orchestrate` | Tú | `sonnet`; `opus` si el ticket es grande o ambiguo |
+La tabla de clases y modelos está en `<plugin>/routing/ROUTING.md` (fuente de verdad: `routing.json`). Léela al clasificar el ticket. En el perfil `reduced`:
 
-`opus` nunca escribe código como coder. Cada lanzamiento de subagente empieza con la línea `ROLE: <rol> · CLASS: <clase>`, y pasa `model` explícitamente.
+| Clase | Modelo por defecto |
+| --- | --- |
+| `reader` | `haiku` |
+| `standard` | `sonnet` |
+| `critical` (dinero, contratos, seguridad, migraciones de datos, causa desconocida) | `opus` |
+| `review` | `sonnet`; `opus` si revisa trabajo `critical` |
+
+Cada lanzamiento de subagente empieza con la línea `ROLE: <rol> · CLASS: <clase>` y pasa `model` explícitamente. `fable` nunca escribe código. Para salirte de la tabla, añade `OVERRIDE: <motivo>` en la segunda línea y anótalo en `RUN_STATE.md`.
 
 ## Fases
 

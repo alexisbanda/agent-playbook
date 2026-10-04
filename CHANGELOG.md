@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+
+- Ruteo de modelos: `routing/routing.json` (fuente de verdad) con cuatro niveles (`haiku`, `sonnet`, `opus`, `fable`) y las tablas de los perfiles `reduced` y `full`, su esquema y `routing/ROUTING.md`.
+- `scripts/route.py`: decide para cada lanzamiento de subagente si inyecta, permite o bloquea el modelo, comprueba el modelo de la sesión y avisa de los alias sin fijar. Lo usará el gate de modelos de la fase 3.
+- Reglas: encabezado `ROLE · CLASS` obligatorio, `OVERRIDE: <motivo>` registrado, `fable` nunca escribe código (no se puede saltar), clases de alto riesgo solo en `opus` en ambos perfiles.
+- `resolve-issue`, el motor y las plantillas usan la tabla en lugar de modelos fijos. El coder de clase `critical` pasa a `opus`; el reviewer usa la clase `review`.
+- CI: valida `routing.json` contra su esquema y corre los tests de `tests/`.
+
 ## 0.2.1
 
 Correcciones de la primera corrida real (pokemon-visiotech#1):

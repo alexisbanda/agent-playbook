@@ -38,6 +38,13 @@ jobs:
         run: |
           python -c "import json, jsonschema; jsonschema.validate(json.load(open('config/agent-playbook.example.json')), json.load(open('config/agent-playbook.schema.json')))"
 
+      - name: Validate routing table against schema
+        run: |
+          python -c "import json, jsonschema; jsonschema.validate(json.load(open('routing/routing.json')), json.load(open('routing/routing.schema.json')))"
+
+      - name: Run tests
+        run: python -m unittest discover -s tests -v
+
       - name: Check version bump
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
