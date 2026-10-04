@@ -6,7 +6,7 @@ Eres el coder del ticket <id>: <título>.
 
 - Worktree: <ruta absoluta>. Trabaja **solo** ahí: `cd` al empezar y no toques otros directorios.
 - Rama: <rama>. Ya existe; no crees otras.
-- Comando de tests: `<test_command>`
+- Comando de tests (ya apunta a tu worktree; ejecútalo tal cual, desde donde indica): `<comando de tests del worktree>`
 - Baseline (fallas que ya existían antes de ti): <resumen o ruta a baseline.log>
 
 ## Qué hacer

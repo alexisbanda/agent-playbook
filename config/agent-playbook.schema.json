@@ -81,7 +81,8 @@
       "additionalProperties": false,
       "properties": {
         "dev_url": { "type": "string", "description": "URL base del entorno de desarrollo desplegado, para las pruebas en vivo." },
-        "test_command": { "type": "string", "description": "Comando que corre la suite de tests (baseline y verificación)." },
+        "test_command": { "type": "string", "description": "Comando que corre la suite de tests en el clon principal. setup-project lo ejecuta antes de guardarlo." },
+        "worktree_test_command": { "type": "string", "description": "Comando que corre los tests contra un worktree; {worktree} se sustituye por su ruta absoluta. Obligatorio cuando los tests corren en un contenedor que monta solo el clon principal (Sail, Docker Compose). Vacío: se usa test_command dentro del worktree." },
         "deploy_check": { "type": "string", "description": "Comando que sale con 0 cuando el último deploy a dev terminó en verde." }
       }
     },

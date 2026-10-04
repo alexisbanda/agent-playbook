@@ -17,6 +17,7 @@
   "environment": {
     "dev_url": "",
     "test_command": "",
+    "worktree_test_command": "",
     "deploy_check": ""
   },
   "journeys": []
