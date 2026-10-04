@@ -5,48 +5,89 @@
   "description": "Configuración por repositorio del playbook. Vive en <repo>/.claude/agent-playbook.json.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "profile", "tracker"],
+  "required": [
+    "version",
+    "profile",
+    "tracker"
+  ],
   "properties": {
-    "$schema": { "type": "string" },
+    "$schema": {
+      "type": "string"
+    },
     "version": {
       "const": 1,
       "description": "Versión del formato de este archivo."
     },
     "profile": {
-      "enum": ["reduced", "full"],
+      "enum": [
+        "reduced",
+        "full"
+      ],
       "default": "reduced",
       "description": "reduced: 4 clases de ruteo, un coder a la vez, reviewer solo en clase crítica. full: las 10 clases y el motor completo. Ver docs/SCALING.md."
     },
     "tracker": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type"],
+      "required": [
+        "type"
+      ],
       "properties": {
         "type": {
-          "enum": ["github", "notion", "jira", "linear"],
+          "enum": [
+            "github",
+            "notion",
+            "jira",
+            "linear"
+          ],
           "description": "Gestor de tickets. github y notion están soportados; jira y linear están reservados (ver docs/TRACKERS.md)."
         },
         "github": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "repo": { "type": "string", "pattern": "^[^/]+/[^/]+$", "description": "owner/name. Por defecto, el remoto origin." },
-            "in_progress_label": { "type": "string", "default": "in-progress" }
+            "repo": {
+              "type": "string",
+              "pattern": "^[^/]+/[^/]+$",
+              "description": "owner/name. Por defecto, el remoto origin."
+            },
+            "in_progress_label": {
+              "type": "string",
+              "default": "in-progress"
+            }
           }
         },
         "notion": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["database_url"],
+          "required": [
+            "database_url"
+          ],
           "properties": {
-            "database_url": { "type": "string", "description": "URL de la base de datos de tickets en Notion." },
-            "status_property": { "type": "string", "default": "Status" },
-            "in_progress_value": { "type": "string", "default": "In progress" },
-            "done_value": { "type": "string", "default": "Done" }
+            "database_url": {
+              "type": "string",
+              "description": "URL de la base de datos de tickets en Notion."
+            },
+            "status_property": {
+              "type": "string",
+              "default": "Status"
+            },
+            "in_progress_value": {
+              "type": "string",
+              "default": "In progress"
+            },
+            "done_value": {
+              "type": "string",
+              "default": "Done"
+            }
           }
         },
-        "jira": { "type": "object" },
-        "linear": { "type": "object" }
+        "jira": {
+          "type": "object"
+        },
+        "linear": {
+          "type": "object"
+        }
       }
     },
     "hooks": {
@@ -54,9 +95,21 @@
       "additionalProperties": false,
       "properties": {
         "mode": {
-          "enum": ["off", "warn", "block"],
+          "enum": [
+            "off",
+            "warn",
+            "block"
+          ],
           "default": "warn",
-          "description": "warn: los gates avisan sin frenar. block: los gates bloquean (exit 2). off: solo telemetría."
+          "description": "warn: el gate de modelos avisa sin frenar y el de seguridad pide confirmación. block: ambos bloquean. off: solo telemetría."
+        },
+        "production_patterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Expresiones regulares sobre comandos de shell que se consideran escrituras en producción (por ejemplo '--env=production', 'psql .*prod'). El gate de seguridad pide confirmación o bloquea al detectarlas."
         }
       }
     },
@@ -80,10 +133,22 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "dev_url": { "type": "string", "description": "URL base del entorno de desarrollo desplegado, para las pruebas en vivo." },
-        "test_command": { "type": "string", "description": "Comando que corre la suite de tests en el clon principal. setup-project lo ejecuta antes de guardarlo." },
-        "worktree_test_command": { "type": "string", "description": "Comando que corre los tests contra un worktree; {worktree} se sustituye por su ruta absoluta. Obligatorio cuando los tests corren en un contenedor que monta solo el clon principal (Sail, Docker Compose). Vacío: se usa test_command dentro del worktree." },
-        "deploy_check": { "type": "string", "description": "Comando que sale con 0 cuando el último deploy a dev terminó en verde." }
+        "dev_url": {
+          "type": "string",
+          "description": "URL base del entorno de desarrollo desplegado, para las pruebas en vivo."
+        },
+        "test_command": {
+          "type": "string",
+          "description": "Comando que corre la suite de tests en el clon principal. setup-project lo ejecuta antes de guardarlo."
+        },
+        "worktree_test_command": {
+          "type": "string",
+          "description": "Comando que corre los tests contra un worktree; {worktree} se sustituye por su ruta absoluta. Obligatorio cuando los tests corren en un contenedor que monta solo el clon principal (Sail, Docker Compose). Vacío: se usa test_command dentro del worktree."
+        },
+        "deploy_check": {
+          "type": "string",
+          "description": "Comando que sale con 0 cuando el último deploy a dev terminó en verde."
+        }
       }
     },
     "journeys": {
@@ -92,10 +157,17 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["name", "command"],
+        "required": [
+          "name",
+          "command"
+        ],
         "properties": {
-          "name": { "type": "string" },
-          "command": { "type": "string" }
+          "name": {
+            "type": "string"
+          },
+          "command": {
+            "type": "string"
+          }
         }
       }
     }

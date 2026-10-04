@@ -1,0 +1,19 @@
+{
+  "description": "agent-playbook: gate de modelos, gate de seguridad y telemetría. Inactivos en repos sin .claude/agent-playbook.json.",
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Agent|Task", "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/model_gate.py\"", "timeout": 10 }] },
+      { "matcher": "Bash", "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/safety_gate.py\"", "timeout": 10 }] }
+    ],
+    "PostToolUse": [
+      { "matcher": "Bash|Agent|Task|AskUserQuestion", "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/telemetry.py\"", "timeout": 10 }] }
+    ],
+    "SessionStart": [{ "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/telemetry.py\"", "timeout": 10 }] }],
+    "SessionEnd": [{ "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/telemetry.py\"", "timeout": 10 }] }],
+    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/telemetry.py\"", "timeout": 10 }] }],
+    "Stop": [{ "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/telemetry.py\"", "timeout": 10 }] }],
+    "SubagentStart": [{ "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/telemetry.py\"", "timeout": 10 }] }],
+    "SubagentStop": [{ "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/telemetry.py\"", "timeout": 10 }] }],
+    "PreCompact": [{ "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/telemetry.py\"", "timeout": 10 }] }]
+  }
+}

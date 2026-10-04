@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0
+
+- Hooks (`hooks/hooks.json`), inactivos en repos sin `.claude/agent-playbook.json`:
+  - **Gate de modelos** (`PreToolUse` sobre `Agent`/`Task`): aplica `routing.json` durante una corrida; inyecta el modelo que falta, avisa o bloquea según `hooks.mode`, registra los overrides.
+  - **Gate de seguridad** (`PreToolUse` sobre `Bash`): push a la rama base, push forzado, merges y promociones desde subagentes, merges sin `--match-head-commit`, `rm -rf` fuera del repo y patrones de producción configurables. En `warn` pide confirmación; en `block` deniega.
+  - **Telemetría**: hechos de cada evento en `.agent-playbook/events.jsonl`, sin guardar prompts ni comandos. Aviso al iniciar sesión si los alias de modelo no están fijados.
+- `scripts/close_run.py`: al cerrar la corrida, cruza eventos y transcripts y añade una línea validada a `metrics.jsonl` (tiempos, espera al humano, subagentes, PRs, gates, tokens por modelo).
+- Corridas con marcador `.agent-playbook/active-run`: lo abre `resolve-issue` tras el preflight y lo quita `close_run.py`.
+- Config: `hooks.production_patterns`. Esquema de métricas en `config/metrics.schema.json`.
+- `docs/HOOKS.md`. Tests de los hooks en `tests/test_hooks.py` (fallan si un hook registra un error interno).
+
 ## 0.3.0
 
 - Ruteo de modelos: `routing/routing.json` (fuente de verdad) con cuatro niveles (`haiku`, `sonnet`, `opus`, `fable`) y las tablas de los perfiles `reduced` y `full`, su esquema y `routing/ROUTING.md`.

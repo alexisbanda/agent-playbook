@@ -38,7 +38,7 @@ Cada lanzamiento de subagente empieza con la línea `ROLE: <rol> · CLASS: <clas
 
 ## Fases
 
-1. **Preflight.** Lee `references/preflight.md` y cúmplelo entero. Si algo falla, detente.
+1. **Preflight.** Lee `references/preflight.md` y cúmplelo entero. Si algo falla, detente. Al terminar, abre la corrida: `mkdir -p .agent-playbook && echo <ticket> > .agent-playbook/active-run`. Desde ese momento los hooks hacen cumplir el ruteo y etiquetan la telemetría con el ticket.
 2. **Ticket.** Lee `references/trackers/<tracker.type>.md` y ejecuta `read_ticket`. Si el ticket no tiene criterios de aceptación verificables, propónlos en el plan. Ejecuta `start`.
 3. **Medir el terreno.** Lanza 1 a 3 lectores (`ROLE: reader · CLASS: reader`, `subagent_type: Explore`) en el mismo mensaje. Cada uno devuelve archivos afectados, riesgos y tests existentes. No leas el repositorio entero tú mismo.
 4. **Plan y aprobación.** Copia `templates/RUN_STATE.md` a la carpeta de la corrida y rellénalo. Presenta al usuario:
@@ -63,5 +63,7 @@ Detente y muestra el estado exacto (desde `RUN_STATE.md`) si ocurre cualquiera d
 - el PR se cierra o aparece otra rama que toca lo mismo;
 - una prueba en vivo falla (avisa en el ticket en ese momento, no al final);
 - haría falta escribir en producción (un UPDATE, un backfill, un cambio de flag): requiere confirmación explícita aparte.
+
+Si un hook bloquea o avisa (gate de modelos o de seguridad), no lo esquives: corrige la llamada o, si de verdad hace falta salirse de la regla, explícalo al usuario. Los detalles de los hooks están en `<plugin>/docs/HOOKS.md`.
 
 Si la sesión se compacta o un agente se cuelga, reoriéntate leyendo `RUN_STATE.md`. Lo que no esté escrito ahí no existe: actualízalo al terminar cada fase.
