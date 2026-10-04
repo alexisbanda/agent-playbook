@@ -25,6 +25,8 @@ Deja un repositorio listo para trabajar con el playbook. No toca código de la a
    - Si es `notion`: la URL de la base de datos de tickets y los nombres de la propiedad de estado y sus valores.
    - Perfil: `reduced` (por defecto) o `full`.
    - Review bot (Claude Code Action): activado o no. Por defecto, desactivado.
+   - Modo de los hooks: `warn` (por defecto: el gate de modelos avisa y el de seguridad pide confirmación), `block` u `off`. Ver `docs/HOOKS.md` del plugin.
+   - Patrones de escritura en producción (`hooks.production_patterns`), si el proyecto tiene comandos que tocan producción (por ejemplo `--env=production`). Puede quedar vacío.
    - Entorno: URL de dev y comando de verificación de deploy, si existen. En un proyecto nuevo pueden quedar vacíos.
 4. **Deducir el resto.** `tracker.github.repo` sale de `origin`.
 5. **Comando de tests: deducir, ejecutar y solo entonces guardar.** Lee `<plugin>/references/test-runtimes.md` (con `<plugin>` = `${CLAUDE_SKILL_DIR}/../..`). Detecta dónde corren los tests (local, Laravel Sail, Docker Compose), propone `environment.test_command` y `environment.worktree_test_command` según esa referencia, y **ejecuta `test_command`** en el clon principal.

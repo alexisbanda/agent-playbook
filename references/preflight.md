@@ -54,6 +54,11 @@ Si `installed` es menor que `latest`, avisa: el usuario debe actualizar el plugi
   - commits locales sin push: AVISO. Enuméralos y explica que el worktree parte de `origin/<base>`, así que **no estarán en el PR**. Pregunta si hacer push antes o seguir sin ellos;
   - el local va por detrás: OK (el worktree parte de `origin`), pero menciónalo.
 
+## 6. Hooks
+
+- Si existe `.agent-playbook/hook-errors.log` con entradas recientes, AVISO: algún hook falló (los hooks no bloquean la sesión cuando fallan, así que una regla podría no estar aplicándose). Muestra la última entrada.
+- Si existe `.agent-playbook/active-run` de otro ticket, pregunta: puede ser una corrida que no se cerró.
+
 ## Problemas conocidos
 
 | Síntoma | Causa | Qué hacer |
