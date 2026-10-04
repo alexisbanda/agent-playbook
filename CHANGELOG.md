@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.1
+
+- El marketplace lista también [ticket-studio](https://github.com/alexisbanda/ticket-studio), el plugin hermano para que el PM escriba tickets listos para agentes. Sin cambios en el comportamiento de agent-playbook.
+
 ## 0.6.0
 
 - **Journeys de regresión** con evidencia: `scripts/run_journeys.py` corre los `journeys` de la configuración, guarda los logs por ticket e imprime la tabla para el comentario de evidencia. `setup-project` propone candidatos.

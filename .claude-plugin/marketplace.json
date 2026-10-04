@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "agent-playbook",
-  "description": "Marketplace privado del playbook de orquestación con agentes Claude.",
+  "description": "Marketplace privado de los plugins de orquestación con agentes Claude: agent-playbook (resolver tickets) y ticket-studio (escribirlos).",
   "owner": {
     "name": "Alexis Banda"
   },
@@ -9,9 +9,18 @@
     {
       "name": "agent-playbook",
       "description": "Manuales versionados, ruteo de modelos, hooks y cierre con evidencia para orquestar el desarrollo de software con agentes Claude.",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "source": "./",
       "category": "development"
+    },
+    {
+      "name": "ticket-studio",
+      "description": "Tickets listos para agentes: contrato de ticket, redacción guiada, validación y revisión de backlog para GitHub Issues, Notion y Jira.",
+      "source": {
+        "source": "github",
+        "repo": "alexisbanda/ticket-studio"
+      },
+      "category": "productivity"
     }
   ]
 }
