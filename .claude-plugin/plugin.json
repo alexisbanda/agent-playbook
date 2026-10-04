@@ -1,6 +1,6 @@
 {
   "name": "agent-playbook",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Manuales versionados, ruteo de modelos, hooks y cierre con evidencia para orquestar el desarrollo de software con agentes Claude.",
   "author": {
     "name": "Alexis Banda"

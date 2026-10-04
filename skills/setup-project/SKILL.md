@@ -12,8 +12,8 @@ Deja un repositorio listo para trabajar con el playbook. No toca código de la a
 | Parámetro | Valor |
 | --- | --- |
 | Archivo de configuración | `.claude/agent-playbook.json` |
-| Esquema | `${CLAUDE_PLUGIN_ROOT}/config/agent-playbook.schema.json` |
-| Plantilla | `${CLAUDE_PLUGIN_ROOT}/config/agent-playbook.example.json` |
+| Esquema | `${CLAUDE_SKILL_DIR}/../../config/agent-playbook.schema.json` |
+| Plantilla | `${CLAUDE_SKILL_DIR}/../../config/agent-playbook.example.json` |
 | Carpeta de estado (no versionada) | `.agent-playbook/` |
 
 ## Pasos
@@ -29,7 +29,7 @@ Deja un repositorio listo para trabajar con el playbook. No toca código de la a
 4. **Deducir el resto.** `tracker.github.repo` sale de `origin`. `environment.test_command` se propone a partir de los manifiestos del proyecto (`package.json`, `composer.json`, `pyproject.toml`, `Makefile`…), y se confirma con el usuario.
 5. **Escribir la configuración** en `.claude/agent-playbook.json` y validarla contra el esquema:
    ```bash
-   python3 -c "import json,jsonschema,sys; jsonschema.validate(json.load(open('.claude/agent-playbook.json')), json.load(open(sys.argv[1])))" "${CLAUDE_PLUGIN_ROOT}/config/agent-playbook.schema.json"
+   python3 -c "import json,jsonschema,sys; jsonschema.validate(json.load(open('.claude/agent-playbook.json')), json.load(open(sys.argv[1])))" "${CLAUDE_SKILL_DIR}/../../config/agent-playbook.schema.json"
    ```
    Si `jsonschema` no está instalado, revisa a mano los campos obligatorios (`version`, `profile`, `tracker.type`) y dilo en el resumen.
 6. **Excluir el estado de las corridas.** Añade `.agent-playbook/` al `.gitignore` del repo si no está.

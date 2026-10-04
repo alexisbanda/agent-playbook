@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0
+
+- Skill `resolve-issue`: orquestador con preflight, lectores, plan con aprobación, construcción en worktree, review, merge con checklist y cierre con evidencia.
+- Referencias compartidas: `preflight`, `engine` (perfil reducido), `closure` y adaptadores de tracker para GitHub Issues y Notion (este último sin probar contra una base real).
+- Plantillas: `RUN_STATE`, `HANDBACK`, `CODER_BRIEF`, `REVIEW_BRIEF`, `PR_BODY`, `EVIDENCE`.
+- `setup-project` resuelve rutas con `${CLAUDE_SKILL_DIR}`.
+
 ## 0.1.0
 
 - Esqueleto del plugin y marketplace privado en el mismo repositorio.
