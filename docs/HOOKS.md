@@ -10,11 +10,12 @@ Los hooks se registran en [`hooks/hooks.json`](../hooks/hooks.json) y son Python
 | --- | --- | --- | --- |
 | Repo sin `.claude/agent-playbook.json` | Inactivo | Inactivo | Inactiva |
 | Repo configurado, sin corrida abierta | Solo registra | Activo | Activa |
-| Corrida abierta (`.agent-playbook/active-run`) | Activo | Activo | Activa, etiquetada con el ticket |
+| Corrida abierta (`.agent-playbook/active-run`), en la sesión que la abrió o sus subagentes | Activo | Activo | Activa, etiquetada con el ticket |
+| Corrida abierta, pero desde **otra** sesión en el mismo repo | Solo registra | Activo | Activa, sin etiquetar |
 
 El plugin se instala por usuario, así que los hooks se disparan en todos los proyectos: por eso no hacen nada donde el playbook no está configurado.
 
-`resolve-issue` abre la corrida al terminar el preflight y `close_run.py` la cierra.
+`resolve-issue` abre la corrida al terminar el preflight escribiendo `<ticket> <id de sesión>` en el marcador (`$CLAUDE_CODE_SESSION_ID`), y `close_run.py` la cierra. Guardar la sesión evita que otra sesión que trabaje en el mismo repo (por ejemplo, una que vigila la corrida) contamine sus métricas o pase por su gate. Un marcador sin sesión, del formato anterior, se aplica a todas las sesiones.
 
 ## Modos (`hooks.mode`)
 
@@ -54,7 +55,7 @@ Para endurecer: deja `warn` hasta que la telemetría muestre pocos falsos positi
 | `rm -rf` fuera del repo y de su carpeta de worktrees (o sobre ellos mismos) | Borrado irreversible |
 | Comandos que coinciden con `hooks.production_patterns` | Escrituras en producción: confirmación explícita |
 
-El análisis es por expresiones sobre el texto del comando: atrapa los errores honestos, no a alguien decidido a saltárselo.
+El análisis es por expresiones sobre el texto del comando y es deliberadamente amplio: reconoce `gh` y `git` con ruta, detrás de `env -u …`, de una variable (`$GH`, `${GIT}`) y `git -C <dir> push` (comprobando la rama de ese directorio). Un falso positivo solo pide confirmación; un falso negativo dejaría pasar la acción. Atrapa los errores honestos, no a alguien decidido a saltárselo.
 
 ## Telemetría
 
@@ -66,8 +67,8 @@ Una línea por evento en `.agent-playbook/events.jsonl` (no versionado). **No gu
 | `UserPromptSubmit` | Que el usuario escribió (longitud, no el texto) |
 | `Stop` | Fin de turno: el modelo espera al humano |
 | `SubagentStart` / `SubagentStop` | Subagentes lanzados y terminados |
-| `PostToolUse` sobre `Agent` | Rol, clase, modelo y override de cada subagente |
-| `PostToolUse` sobre `Bash` | PR abierto, promovido o mergeado; worktree creado o borrado |
+| `PostToolUse` sobre `Agent` | `subagent_launched`: rol, clase, modelo y override. Los subagentes corren en segundo plano, así que este evento marca el lanzamiento; el final es `SubagentStop` |
+| `PostToolUse` sobre `Bash` | PR abierto (solo si la salida trae la URL del PR), promovido o mergeado; worktree creado o borrado. Solo cuenta un comando **ejecutado**: el texto que lo menciona (un `grep`, un heredoc, un brief) no cuenta |
 | `PostToolUse` sobre `AskUserQuestion` | Pregunta al humano |
 | `PreCompact` | Compactación de contexto |
 | Gates | Cada decisión `model_gate` y `safety_gate` |

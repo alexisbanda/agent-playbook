@@ -9,7 +9,7 @@
     {
       "name": "agent-playbook",
       "description": "Manuales versionados, ruteo de modelos, hooks y cierre con evidencia para orquestar el desarrollo de software con agentes Claude.",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "source": "./",
       "category": "development"
     }

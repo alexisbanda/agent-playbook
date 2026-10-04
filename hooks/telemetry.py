@@ -10,13 +10,23 @@ import re
 import common
 import route
 
+# Anchored to where a command starts, so text that only mentions a command
+# (a grep pattern, a heredoc, a brief) does not count.
+PR_URL = re.compile(r"/pull/\d+")
 BASH_FACTS = [
-    ("pr_opened", re.compile(r"\bgh\s+pr\s+create\b")),
-    ("pr_promoted", re.compile(r"\bgh\s+pr\s+ready\b(?![^;&|]*--undo)")),
-    ("pr_merged", re.compile(r"\bgh\s+pr\s+merge\b")),
-    ("worktree_created", re.compile(r"\bgit\s+worktree\s+add\b")),
-    ("worktree_removed", re.compile(r"\bgit\s+worktree\s+remove\b")),
+    ("pr_promoted", re.compile(common.gh_pr("ready").pattern + r"(?![^;&|\n]*--undo)", re.MULTILINE)),
+    ("pr_merged", common.gh_pr("merge")),
+    ("worktree_created", re.compile(common.CMD_START + common.GIT_BIN + r"\s+worktree\s+add\b", re.MULTILINE)),
+    ("worktree_removed", re.compile(common.CMD_START + common.GIT_BIN + r"\s+worktree\s+remove\b", re.MULTILINE)),
 ]
+PR_CREATE = common.gh_pr("create")
+
+
+def bash_output(payload):
+    response = payload.get("tool_response")
+    if isinstance(response, dict):
+        return f"{response.get('stdout', '')}\n{response.get('stderr', '')}"
+    return str(response or "")
 
 
 def facts(payload):
@@ -42,11 +52,18 @@ def facts(payload):
         })]
     if event == "PostToolUse" and tool == "Bash":
         command = (payload.get("tool_input") or {}).get("command", "")
-        return [(name, {}) for name, pattern in BASH_FACTS if pattern.search(command)]
+        found = [(name, {}) for name, pattern in BASH_FACTS if pattern.search(command)]
+        # A PR counts as opened only if gh printed its URL.
+        if PR_CREATE.search(command):
+            url = PR_URL.search(bash_output(payload))
+            if url:
+                found.insert(0, ("pr_opened", {"pr": url.group(0).rsplit("/", 1)[-1]}))
+        return found
     if event == "PostToolUse" and tool in ("Agent", "Task"):
         tool_input = payload.get("tool_input") or {}
         role, klass, override = route.parse_header(tool_input.get("prompt", ""))
-        return [("subagent_done", {"model": tool_input.get("model"), "role": role, "klass": klass, "override": override})]
+        # Agents run in the background: PostToolUse fires at launch, not at the end.
+        return [("subagent_launched", {"model": tool_input.get("model"), "role": role, "klass": klass, "override": override})]
     if event == "PostToolUse" and tool == "AskUserQuestion":
         return [("asked_human", {})]
     return []
