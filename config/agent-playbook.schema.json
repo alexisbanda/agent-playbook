@@ -90,6 +90,23 @@
         }
       }
     },
+    "tickets": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Contrato de ticket (Ticket Studio). Opcional: con contract=false, que es lo predeterminado, el playbook resuelve cualquier ticket como siempre.",
+      "properties": {
+        "contract": {
+          "type": "boolean",
+          "default": false,
+          "description": "Si es true, el resolver comprueba la etiqueta de listo y el mínimo del contrato (criterios con tipo de prueba, riesgo, tamaño), avisa si faltan sin bloquear y registra ticket_quality en las métricas."
+        },
+        "ready_label": {
+          "type": "string",
+          "default": "ready",
+          "description": "Etiqueta con la que el tech lead marca un ticket como listo."
+        }
+      }
+    },
     "hooks": {
       "type": "object",
       "additionalProperties": false,

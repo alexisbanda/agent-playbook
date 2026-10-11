@@ -30,6 +30,8 @@ Activa la auto-actualización del marketplace en `/plugin` → Marketplaces para
 | --- | --- | --- |
 | `profile` | `reduced`, `full` | `reduced` |
 | `tracker.type` | `github`, `notion` (`jira`, `linear` reservados) | — |
+| `tickets.contract` | `true`, `false`: comprobar el contrato de ticket de [ticket-studio](https://github.com/alexisbanda/ticket-studio) y medir `ticket_quality` | `false` |
+| `tickets.ready_label` | etiqueta con la que el tech lead marca un ticket como listo | `ready` |
 | `hooks.mode` | `off`, `warn`, `block` | `warn` |
 | `hooks.production_patterns` | expresiones de comandos que tocan producción | `[]` |
 | `review_bot.enabled` | `true`, `false` (ver [docs/REVIEW_BOT.md](docs/REVIEW_BOT.md)) | `false` |
@@ -50,7 +52,7 @@ routing/          tabla de ruteo de modelos (routing.json), su esquema y su expl
 metrics/          precios para el coste estimado y umbrales (tripwires) de la tuning wave
 config/           esquema y ejemplo de la configuración por repo
 docs/             escalado, gestores de tickets, hooks, review bot, métricas
-scripts/          utilidades de CI y de las corridas (route.py: modelo de cada subagente; merge_gate.py: condiciones de merge; run_journeys.py: regresión; close_run.py y metrics_report.py: métricas)
+scripts/          utilidades de CI y de las corridas (route.py: modelo de cada subagente; ticket_check.py: contrato de ticket opcional; merge_gate.py: condiciones de merge; run_journeys.py: regresión; close_run.py y metrics_report.py: métricas)
 tests/            tests de los scripts
 ```
 

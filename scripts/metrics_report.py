@@ -90,6 +90,7 @@ def summarise(runs, prices):
             "overrides": len(run.get("overrides") or []),
             "model_blocks": (run.get("gate_events") or {}).get("model_block", 0),
             "tokens_measured": run.get("tokens_measured", False),
+            "ticket": run.get("ticket_quality"),
         })
     return rows
 
@@ -146,14 +147,21 @@ def fmt(value, pct=False):
     return f"{value:.0%}" if pct else str(value)
 
 
+def ticket_cell(quality):
+    if not quality:
+        return "—"
+    score = f"{quality['score']}/100" if quality.get("score") is not None else ("ok" if quality.get("contract_ok") else "incompleto")
+    return score + ("" if quality.get("ready") else " (sin ready)")
+
+
 def markdown(rows, wires, note, window):
     out = ["## Corridas", "",
-           "| Corrida | Cerrada | Versión | Min. totales | Min. esperando | Subagentes | PRs mergeados | Compactaciones | E2E a la primera | Coste estimado |",
-           "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
+           "| Corrida | Cerrada | Versión | Min. totales | Min. esperando | Subagentes | PRs mergeados | Compactaciones | E2E a la primera | Calidad del ticket | Coste estimado |",
+           "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
     for r in rows:
         cost = f"${r['cost']}" + (" (*)" if r["unpriced"] else "")
         out.append(f"| {r['run']} | {r['closed_at']} | {r['version']} | {r['wall']} | {r['wait']} | {r['subagents']} | "
-                   f"{r['prs_merged']} | {r['compactions']} | {r['e2e']} | {cost} |")
+                   f"{r['prs_merged']} | {r['compactions']} | {r['e2e']} | {ticket_cell(r['ticket'])} | {cost} |")
     if any(r["unpriced"] for r in rows):
         out += ["", "(*) Modelos sin precio en `metrics/prices.json`: " + ", ".join(sorted({m for r in rows for m in r["unpriced"]}))]
     out += ["", f"## Tripwires (últimas {window} corridas)", ""]
