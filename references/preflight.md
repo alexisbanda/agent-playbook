@@ -64,6 +64,7 @@ Si `installed` es menor que `latest`, avisa: el usuario debe actualizar el plugi
 | Síntoma | Causa | Qué hacer |
 | --- | --- | --- |
 | `gh auth status` dice que el token es inválido, o `gh` responde 401, aunque el usuario hizo `gh auth login` | Hay una variable `GITHUB_TOKEN` (o `GH_TOKEN`) exportada en el entorno, que `gh` usa antes que las credenciales guardadas | Comprueba `env -u GITHUB_TOKEN -u GH_TOKEN gh auth status`. Si así está en verde, escribe ese prefijo **literal** delante de cada comando `gh` de la corrida (`env -u GITHUB_TOKEN -u GH_TOKEN gh pr merge …`) y anótalo en `RUN_STATE.md`. No lo guardes en una variable (`GH=...; $GH pr ...`): los hooks reconocen los comandos por su texto. Sugiere al usuario quitar la variable de su perfil del shell. No imprimas el valor del token |
+| El modo automático de Claude Code deniega `gh pr merge` («merge sin review») aunque el usuario dio OK | El clasificador del modo automático no ve la aprobación del gate ni la del usuario | No lo esquives (ni con otra herramienta ni reformulando el comando). Dale al usuario el comando exacto que imprimió `merge_gate.py`, con el prefijo `env -u …` si la corrida lo usa, para que lo ejecute él, o sugiere una regla de permisos para `gh pr merge`. Anótalo en `RUN_STATE.md`. `close_run.py` cuenta igualmente ese merge |
 
 ## Resultado
 

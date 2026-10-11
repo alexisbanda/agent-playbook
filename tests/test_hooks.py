@@ -294,6 +294,46 @@ class CloseRunTest(HookTestCase):
             self.assertEqual(len(fh.readlines()), 1)
 
 
+    def close_with_fake_gh(self, run, gh_script):
+        bin_dir = os.path.join(self.tmp, "bin")
+        os.makedirs(bin_dir, exist_ok=True)
+        gh = os.path.join(bin_dir, "gh")
+        with open(gh, "w") as fh:
+            fh.write(f"#!{sys.executable}\n{gh_script}")
+        os.chmod(gh, 0o755)
+        env = dict(os.environ, PATH=bin_dir + os.pathsep + os.environ["PATH"])
+        out = subprocess.run(
+            [sys.executable, os.path.join(ROOT, "scripts", "close_run.py"), run, "--root", self.repo, "--dry-run"],
+            capture_output=True, text=True, env=env,
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        return json.loads(out.stdout)
+
+    def open_pr(self, number):
+        self.hook("telemetry.py", {"hook_event_name": "PostToolUse", "tool_name": "Bash",
+                                   "tool_input": {"command": "gh pr create --draft --title t --body-file b.md"},
+                                   "tool_response": {"stdout": f"https://github.com/o/r/pull/{number}\n", "stderr": ""}})
+
+    def test_counts_a_pr_the_user_merged_outside_the_session(self):
+        self.start_run("10")
+        self.open_pr(7)
+        metrics = self.close_with_fake_gh("10", 'import sys, json\nassert sys.argv[1:4] == ["pr", "view", "7"]\nprint(json.dumps({"state": "MERGED"}))\n')
+        self.assertEqual((metrics["prs_opened"], metrics["prs_merged"], metrics["prs_merged_outside"]), (1, 1, 1))
+
+    def test_a_merge_seen_by_the_hooks_is_not_counted_twice(self):
+        self.start_run("11")
+        self.open_pr(8)
+        self.hook("telemetry.py", {"hook_event_name": "PostToolUse", "tool_name": "Bash", "tool_input": {"command": "gh pr merge 8 --match-head-commit a"}})
+        metrics = self.close_with_fake_gh("11", 'import json\nprint(json.dumps({"state": "MERGED"}))\n')
+        self.assertEqual((metrics["prs_merged"], metrics["prs_merged_outside"]), (1, 0))
+
+    def test_without_github_only_the_events_count(self):
+        self.start_run("12")
+        self.open_pr(9)
+        metrics = self.close_with_fake_gh("12", 'import sys\nsys.stderr.write("network down")\nsys.exit(1)\n')
+        self.assertEqual((metrics["prs_merged"], metrics["prs_merged_outside"]), (0, 0))
+
+
 class TranscriptUsageTest(unittest.TestCase):
     def test_sums_usage_by_model_once_per_message(self):
         sys.path.insert(0, os.path.join(ROOT, "scripts"))

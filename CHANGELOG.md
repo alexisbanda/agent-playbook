@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.1
+
+Lo visto en la corrida de alexisbanda/pokemon-visiotech#6, el primer ticket de ticket-studio resuelto de punta a punta.
+
+- **Merge bloqueado por el modo automático:** el clasificador deniega `gh pr merge` aunque el usuario haya dado OK. `references/preflight.md` (Problemas conocidos) y `references/engine.md` (paso 7) dicen qué hacer: no esquivarlo, darle al usuario el comando del gate y seguir con el cierre cuando confirme.
+- **Telemetría de merges hechos a mano:** `close_run.py` consulta en GitHub los PRs abiertos en la corrida; `prs_merged` incluye los que se mergearon fuera de la sesión y el nuevo campo opcional `prs_merged_outside` dice cuántos. Sin `gh` o sin red, cuenta solo los eventos, como antes.
+- **Verificación:** `engine.md`, paso 4, pide contrastar la tabla criterio → prueba del PR con los tests reales (en la corrida, el PR decía comprobar campos que ningún test comprobaba).
+- 104 tests (3 nuevos).
+
 ## 0.7.0
 
 Integración **opcional** con [ticket-studio](https://github.com/alexisbanda/ticket-studio) (su fase 3). Desactivada por defecto: sin `tickets.contract: true`, el playbook se comporta igual que en la 0.6.

@@ -87,6 +87,10 @@
     "prs_merged": {
       "$ref": "#/$defs/count"
     },
+    "prs_merged_outside": {
+      "description": "PRs de la corrida mergeados fuera de la sesión (por ejemplo, a mano por el usuario porque auto mode bloqueó gh pr merge). Ya incluidos en prs_merged. Opcional: falta en líneas anteriores a la 0.7.1.",
+      "$ref": "#/$defs/count"
+    },
     "worktrees_created": {
       "$ref": "#/$defs/count"
     },
