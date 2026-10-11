@@ -7,12 +7,18 @@ Usage (from the main clone of the repo):
 
 The metrics come from what the hooks measured, not from what the model reports.
 The only declared field is e2e_first_pass, and it is labelled as such.
+
+A PR the user merges by hand (for example because auto mode blocked
+`gh pr merge`) leaves no hook event, so the PRs opened in the run are also
+looked up on GitHub: prs_merged counts both, and prs_merged_outside says how
+many were merged outside the session. Without gh or network, only the events count.
 """
 import argparse
 import collections
 import datetime
 import json
 import os
+import subprocess
 import sys
 
 STATE_DIR = ".agent-playbook"
@@ -83,6 +89,26 @@ def merge_usage(target, source):
         target[model].update(counter)
 
 
+def gh(args, cwd):
+    """Runs gh; retries without a stale GITHUB_TOKEN/GH_TOKEN from the environment."""
+    run = lambda env=None: subprocess.run(["gh", *args], capture_output=True, text=True, cwd=cwd, env=env)
+    out = run()
+    if out.returncode != 0 and ("401" in out.stderr or "Bad credentials" in out.stderr):
+        out = run({k: v for k, v in os.environ.items() if k not in ("GITHUB_TOKEN", "GH_TOKEN")})
+    if out.returncode != 0:
+        raise RuntimeError(out.stderr.strip())
+    return out.stdout
+
+
+def merged_on_github(prs, root):
+    """How many of these PRs are merged on GitHub, or None if gh cannot tell."""
+    try:
+        states = [json.loads(gh(["pr", "view", pr, "--json", "state"], root))["state"] for pr in prs]
+    except (OSError, RuntimeError, ValueError, KeyError):
+        return None
+    return sum(state == "MERGED" for state in states)
+
+
 def ticket_quality(root, run):
     """Result of scripts/ticket_check.py for this run, if the repository checks the ticket contract."""
     try:
@@ -146,6 +172,11 @@ def build_metrics(run, events, e2e_first_pass, root=None):
     for path in {e.get("agent_transcript") for e in run_events if e.get("agent_transcript")}:
         merge_usage(usage, usage_from_transcript(path))
 
+    merged = counts["pr_merged"]
+    opened = sorted({str(e["pr"]) for e in run_events if e["event"] == "pr_opened" and e.get("pr")})
+    on_github = merged_on_github(opened, root) if opened and root else None
+    merged_outside = max(0, on_github - merged) if on_github is not None else 0
+
     return {
         "run": run,
         "playbook_version": playbook_version(),
@@ -160,7 +191,8 @@ def build_metrics(run, events, e2e_first_pass, root=None):
         "subagents_by_model": dict(subagents),
         "prs_opened": counts["pr_opened"],
         "prs_promoted": counts["pr_promoted"],
-        "prs_merged": counts["pr_merged"],
+        "prs_merged": merged + merged_outside,
+        "prs_merged_outside": merged_outside,
         "worktrees_created": counts["worktree_created"],
         "worktrees_removed": counts["worktree_removed"],
         "compactions": counts["compaction"],

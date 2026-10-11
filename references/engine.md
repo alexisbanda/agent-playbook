@@ -46,6 +46,7 @@ Cuando el coder termina, tú verificas, no confías en su resumen:
 
 1. Corre el comando de tests del worktree (paso 2) y compara con el baseline. Cualquier falla nueva vuelve al coder.
 2. Revisa el diff contra el plan aprobado. Si se salió del plan, vuelve al coder o, si el cambio es razonable, avísalo al usuario.
+3. Contrasta el cuerpo del PR con el código: cada fila de la tabla criterio → prueba tiene que señalar un test o un assert que exista y compruebe lo que dice. Si el PR afirma más de lo que los tests prueban, pide al coder el assert que falta o corrige la tabla, y cubre la diferencia en la prueba en vivo del cierre.
 
 ## 5. Review
 
@@ -86,6 +87,8 @@ Resultados: código 0 = listo (imprime el comando de merge exacto, con `--match-
 **Vigilante.** Si hay que esperar al bot o a la CI, no te quedes esperando: lanza el gate en segundo plano con `--watch` (repite cada 30 s, hasta 1 hora) y sigue con otra cosa o termina tu turno. Te avisará cuando salga con 0 o 2.
 
 Con el gate en 0, muestra su tabla y el SHA, pide el OK y ejecuta el comando que imprimió. `--match-head-commit` ata el merge al commit revisado: si alguien empujó después, falla.
+
+Si el modo automático de Claude Code deniega el merge, no lo esquives: dale al usuario ese mismo comando para que lo ejecute él (ver [Problemas conocidos](preflight.md#problemas-conocidos)) y sigue con el cierre cuando confirme. La telemetría lo cuenta como `prs_merged_outside`.
 
 ## 8. Nada de agentes estacionados
 
