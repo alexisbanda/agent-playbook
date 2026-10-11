@@ -20,3 +20,18 @@ Búscalos en el cuerpo del issue bajo un encabezado `Criterios de aceptación` o
 ## Identificador
 
 El `id` es el número del issue. Si el usuario pasa una URL (`https://github.com/<owner>/<repo>/issues/<n>`), extrae `<owner>/<repo>` y `<n>` de ella.
+
+## Tickets con el contrato de Ticket Studio
+
+Un issue escrito con Ticket Studio (o a mano siguiendo su contrato) tiene dos caras. No hace falta que el plugin esté instalado para leerlas.
+
+| Parte | Dónde está | Cómo se usa |
+| --- | --- | --- |
+| Historia | `## Historia` (problema y resultado esperado, o pasos, comportamiento esperado y actual, entorno) | Contexto del plan, en palabras del stakeholder |
+| Criterios | `### Criterios de aceptación`, líneas `- [ ] [http\|test\|e2e\|manual] …` | Tal cual, como tabla criterio → chequeo del plan y como filas de la evidencia |
+| Fuera de alcance | `### Fuera de alcance` | Límite del plan: lo que no se toca |
+| Preguntas abiertas | `### Preguntas abiertas`, `- [ ]` sin resolver | Se llevan al plan para que las decida el usuario antes de construir |
+| Tipo, riesgo, tamaño, estado | Etiquetas `type:*`, `risk:*`, `size:*`, `needs-refinement` / `ready` | `risk:dinero`, `risk:seguridad`, `risk:contrato` o `risk:datos` → clase `critical` |
+| Padre e hijos | `Parte de #N` al principio del cuerpo; sub-issues nativos | Una épica no se resuelve: se resuelven sus sub-issues. Lista: `gh api repos/<repo>/issues/<n>/sub_issues --jq '.[].number'` |
+
+Con `tickets.contract: true` en la configuración, `scripts/ticket_check.py` comprueba el mínimo del contrato y la etiqueta de listo, y guarda el resultado para la métrica `ticket_quality`.

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.0
+
+Integración **opcional** con [ticket-studio](https://github.com/alexisbanda/ticket-studio) (su fase 3). Desactivada por defecto: sin `tickets.contract: true`, el playbook se comporta igual que en la 0.6.
+
+- Config: `tickets.contract` (por defecto `false`) y `tickets.ready_label` (por defecto `ready`).
+- `scripts/ticket_check.py`: comprueba la etiqueta de listo y el mínimo del contrato con lógica propia; si Ticket Studio está instalado, añade su puntuación. Un Ticket Studio roto o incompatible nunca rompe la corrida. Avisa, no bloquea.
+- `resolve-issue`: con la opción activa, comprueba el ticket y propone resolver los sub-issues de una épica en vez de la épica; con un ticket del contrato, usa sus criterios tal cual y lleva sus preguntas abiertas al plan. Lee `docs/product/BRIEF.md` y `TECH.md` si existen, con o sin la opción.
+- Adaptador de GitHub: cómo leer las dos caras, preguntas abiertas, etiquetas, padre y sub-issues.
+- Métricas: `ticket_quality` en `metrics.jsonl` y columna "Calidad del ticket" en el informe.
+- 101 tests (14 nuevos).
+
 ## 0.6.1
 
 - El marketplace lista también [ticket-studio](https://github.com/alexisbanda/ticket-studio), el plugin hermano para que el PM escriba tickets listos para agentes. Sin cambios en el comportamiento de agent-playbook.

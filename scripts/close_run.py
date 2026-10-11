@@ -83,7 +83,24 @@ def merge_usage(target, source):
         target[model].update(counter)
 
 
-def build_metrics(run, events, e2e_first_pass):
+def ticket_quality(root, run):
+    """Result of scripts/ticket_check.py for this run, if the repository checks the ticket contract."""
+    try:
+        with open(os.path.join(root, STATE_DIR, "runs", run, "ticket_check.json")) as fh:
+            check = json.load(fh)
+    except (OSError, ValueError):
+        return None
+    if not check.get("enabled"):
+        return None
+    return {
+        "source": check.get("source", "minimal"),
+        "score": check.get("score"),
+        "contract_ok": bool(check.get("contract_ok")),
+        "ready": bool(check.get("ready")),
+    }
+
+
+def build_metrics(run, events, e2e_first_pass, root=None):
     run_events = [e for e in events if e.get("run") == run]
     if not run_events:
         raise SystemExit(f"no hay eventos de la corrida '{run}' en {STATE_DIR}/events.jsonl")
@@ -153,6 +170,7 @@ def build_metrics(run, events, e2e_first_pass):
         "tokens_measured": bool(usage),
         "e2e_first_pass": e2e_first_pass,
         "e2e_first_pass_source": "declared",
+        "ticket_quality": ticket_quality(root, run) if root else None,
     }
 
 
@@ -175,7 +193,7 @@ def main():
     args = parser.parse_args()
 
     root = os.path.abspath(args.root)
-    metrics = build_metrics(args.run, load_events(root), args.e2e_first_pass)
+    metrics = build_metrics(args.run, load_events(root), args.e2e_first_pass, root)
     warning = validate(metrics)
     line = json.dumps(metrics, ensure_ascii=False)
     print(line)

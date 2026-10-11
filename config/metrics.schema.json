@@ -141,6 +141,46 @@
     },
     "e2e_first_pass_source": {
       "const": "declared"
+    },
+    "ticket_quality": {
+      "description": "Calidad del ticket según scripts/ticket_check.py, solo si el repositorio activa tickets.contract. null si no.",
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source",
+            "score",
+            "contract_ok",
+            "ready"
+          ],
+          "properties": {
+            "source": {
+              "enum": [
+                "minimal",
+                "ticket-studio"
+              ]
+            },
+            "score": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 100
+            },
+            "contract_ok": {
+              "type": "boolean"
+            },
+            "ready": {
+              "type": "boolean"
+            }
+          }
+        }
+      ]
     }
   }
 }

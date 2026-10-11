@@ -22,6 +22,7 @@ Una línea por corrida en `.agent-playbook/metrics.jsonl`, escrita por `scripts/
 | Decisiones de los gates y overrides | Qué reglas se disparan y quién las salta |
 | E2E a la primera | Si el cambio llegó sano a la prueba en vivo. Es el único campo declarado por el orquestador, y está marcado así |
 | Versión del playbook | Para comparar antes y después de un cambio en los manuales |
+| Calidad del ticket (`ticket_quality`) | Solo con `tickets.contract: true`. Puntuación de Ticket Studio, o cumplimiento mínimo si no está instalado, y si el ticket llegó marcado como listo. Cruzada con E2E a la primera y rondas de revisión, dice si los tickets incompletos cuestan retrabajo |
 
 El coste es una **estimación** con las tarifas de la API de [`metrics/prices.json`](../metrics/prices.json). No refleja descuentos ni un plan de suscripción.
 

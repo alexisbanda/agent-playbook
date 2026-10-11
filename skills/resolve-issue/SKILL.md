@@ -40,7 +40,9 @@ Cada lanzamiento de subagente empieza con la línea `ROLE: <rol> · CLASS: <clas
 
 1. **Preflight.** Lee `references/preflight.md` y cúmplelo entero. Si algo falla, detente. Al terminar, abre la corrida: `mkdir -p .agent-playbook && echo "<ticket> $CLAUDE_CODE_SESSION_ID" > .agent-playbook/active-run`. Desde ese momento los hooks hacen cumplir el ruteo y etiquetan la telemetría con el ticket, solo para esta sesión y sus subagentes.
 2. **Ticket.** Lee `references/trackers/<tracker.type>.md` y ejecuta `read_ticket`. Si el ticket no tiene criterios de aceptación verificables, propónlos en el plan. Ejecuta `start`.
-3. **Medir el terreno.** Lanza 1 a 3 lectores (`ROLE: reader · CLASS: reader`, `subagent_type: Explore`) en el mismo mensaje. Cada uno devuelve archivos afectados, riesgos y tests existentes. No leas el repositorio entero tú mismo.
+   - Si la configuración tiene `tickets.contract: true`, ejecuta `python3 <plugin>/scripts/ticket_check.py <ticket> --save .agent-playbook/runs/<ticket>/ticket_check.json`. Si falta la etiqueta de listo o algo del contrato, **avísalo y pregunta si seguir**; no bloquea. Si es una épica (`type:epic`), no se resuelve: propón resolver sus sub-issues uno a uno. Con la opción desactivada, sáltate este punto.
+   - Si el ticket sigue el contrato (secciones `## Historia` y `## Especificación`), usa sus criterios tal cual para la tabla criterio → chequeo, y lleva al plan cada pregunta abierta sin resolver para que la decida el usuario.
+3. **Medir el terreno.** Si existen `docs/product/BRIEF.md` o `docs/product/TECH.md`, léelos primero: son el contexto de producto y técnico del proyecto. Lanza 1 a 3 lectores (`ROLE: reader · CLASS: reader`, `subagent_type: Explore`) en el mismo mensaje. Cada uno devuelve archivos afectados, riesgos y tests existentes. No leas el repositorio entero tú mismo.
 4. **Plan y aprobación.** Copia `templates/RUN_STATE.md` a la carpeta de la corrida y rellénalo. Presenta al usuario:
    - la clase del ticket y por qué;
    - qué cambia y en qué archivos;
