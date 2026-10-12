@@ -9,13 +9,13 @@
     {
       "name": "agent-playbook",
       "description": "Manuales versionados, ruteo de modelos, hooks y cierre con evidencia para orquestar el desarrollo de software con agentes Claude.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "source": "./",
       "category": "development"
     },
     {
       "name": "ticket-studio",
-      "description": "Tickets listos para agentes: contrato de ticket, redacción guiada, validación y revisión de backlog para GitHub Issues, Notion y Jira.",
+      "description": "Tickets listos para agentes: contrato de ticket, redacción guiada, validación y revisión de backlog para GitHub Issues y Notion.",
       "source": {
         "source": "github",
         "repo": "alexisbanda/ticket-studio"
