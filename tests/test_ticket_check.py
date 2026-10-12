@@ -55,6 +55,12 @@ class MinimalCheckTest(unittest.TestCase):
     def test_unknown_check_types_do_not_count(self):
         self.assertEqual(tc.minimal_check("- [ ] [ux] queda bonito\n", [])["typed_criteria"], 0)
 
+    def test_improvement_and_task_follow_the_same_minimum(self):
+        for kind in ("improvement", "task"):
+            labels = [f"type:{kind}"] + LABELS[1:]
+            self.assertTrue(tc.minimal_check(CONTRACT_BODY, labels)["contract_ok"], kind)
+            self.assertFalse(tc.minimal_check(CONTRACT_BODY, [f"type:{kind}", "ready"])["contract_ok"], kind)
+
     def test_epic_only_needs_ready(self):
         result = tc.check({"title": "Épica", "body": "## Historia", "labels": [{"name": "type:epic"}]})
         self.assertTrue(result["epic"])
