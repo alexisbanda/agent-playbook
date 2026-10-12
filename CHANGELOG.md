@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1
+
+- Marketplace: la ficha de ticket-studio ya no menciona Jira (ticket-studio 1.0 trabaja con GitHub Issues y Notion).
+
 ## 1.0.0
 
 Primera versión estable (MVP), junto con ticket-studio 1.0: del documento de kickoff al PR mergeado con evidencia en el ticket, con GitHub Issues o Notion.
