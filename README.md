@@ -62,11 +62,21 @@ tests/            tests de los scripts
 | --- | --- | --- |
 | 0 | Esqueleto, marketplace, configuración por repo, CI | Hecho |
 | 1 | Skill `resolve-issue`, adaptadores de GitHub Issues y Notion, motor y cierre reducidos, plantillas | Hecho |
-| 1b | Skill `bootstrap-project` para arrancar proyectos nuevos | Pendiente |
+| 1b | Arranque de proyectos nuevos | Sustituida: el ticket 0 de cimientos que crea el `kickoff` de ticket-studio se resuelve con `resolve-issue` |
 | 2 | `routing.json` con las tablas reducida y completa, resolvedor y tests | Hecho |
 | 3 | Hooks: gate de modelos, gate de seguridad, telemetría y métricas por corrida | Hecho |
 | 4 | Motor: gate de merge con vigilante, review bot opcional con Claude Code Action | Hecho |
 | 5 | Journeys con evidencia, informe de métricas con coste estimado, tripwires y skill `tuning-wave` | Hecho |
+| 6 | Contrato de ticket opcional (ticket-studio), métrica `ticket_quality` | Hecho |
+| 1.0 | MVP: GitHub Issues y Notion probados en real; con ticket-studio, del kickoff al PR mergeado con evidencia | Hecho |
+
+### Límites conocidos de la 1.0
+
+- **Proyecto desde cero sin probar:** todas las corridas reales fueron sobre un repo con código. El ticket 0 de un repo vacío (montar stack, tests y CI) es el tramo más incierto.
+- **Sin entorno desplegado probado:** las pruebas en vivo se hicieron contra el entorno local (`dev_url` vacío); el gate de deploy no se ha ejercitado.
+- **Un coder a la vez** (perfil `reduced`); el perfil `full` está descrito pero no probado.
+- **Sin probar en real:** review bot, journeys de regresión, criterios `[e2e]` con navegador y la tuning wave con datos de varias corridas.
+- **Trackers:** GitHub Issues y Notion. Jira y Linear están reservados.
 
 ## Cómo cambiar el playbook
 

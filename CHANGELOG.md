@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.0
+
+Primera versión estable (MVP), junto con ticket-studio 1.0: del documento de kickoff al PR mergeado con evidencia en el ticket, con GitHub Issues o Notion.
+
+- **Notion probado en real**: las seis operaciones del adaptador, con notas de la primera corrida (estado como select, URLs sin `?pvs=…`, prefijo `userDefined:` solo para `url`/`id`, evidencia como comentario corto más bloque al final).
+- **Identificador de Notion**: carpetas y ramas usan los **8 últimos** caracteres del id de página; los 8 primeros se repiten dentro de un workspace y hacían chocar dos tickets.
+- **README**: la fase 1b (arranque) queda sustituida por el ticket 0 de ticket-studio resuelto con `resolve-issue`; roadmap al día y **límites conocidos de la 1.0**.
+- Compatible con el contrato de ticket v1.1 de ticket-studio (tipo `improvement`): `ticket_check.py` ya trata cualquier tipo que no sea épica con el mismo mínimo.
+
 ## 0.7.1
 
 Lo visto en la corrida de alexisbanda/pokemon-visiotech#6, el primer ticket de ticket-studio resuelto de punta a punta.

@@ -25,8 +25,14 @@ Búscalos en una propiedad `Acceptance criteria` / `Criterios de aceptación` o,
 
 ## Identificador
 
-El `id` es la URL de la página o su id. En los nombres de carpetas y ramas usa los 8 primeros caracteres del id, por ejemplo `notion-1a2b3c4d`.
+El `id` es la URL de la página o su id. En los nombres de carpetas y ramas usa los **8 últimos** caracteres del id sin guiones, por ejemplo `notion-79036c2d`: dentro de un mismo workspace los ids de Notion comparten el principio, así que los 8 primeros chocan entre tickets.
 
 ## Estado
 
-Adaptador escrito pero **no probado contra una base real** todavía. La primera corrida con Notion debe revisar cada operación y corregir este archivo si algo difiere.
+Probado contra una base real el 2026-10-12 (pokemon-visiotech, ticket «Listar los tipos de Pokémon»): las seis operaciones funcionan como están descritas. Notas de esa corrida:
+
+- La propiedad de estado puede ser un **select** en vez de un status: el conector de Notion no deja definir las opciones de un status. Funciona igual con `status_property`, `in_progress_value` y `done_value`.
+- Las URLs que devuelve el conector llevan `?pvs=204`: guárdalas sin la parte de después de `?`.
+- En `notion-update-page`, solo las propiedades llamadas `url` o `id` llevan el prefijo `userDefined:`; una propiedad «PR» se escribe tal cual.
+- La evidencia funciona mejor como un comentario corto (enlace al PR y veredicto) más el bloque completo al final de la página, con su tabla y sus LÍMITES.
+- Si los tickets se escriben con ticket-studio, siguen su contrato también en Notion (`guides/notion.md` de ticket-studio): los criterios están en el contenido, bajo «Criterios de aceptación», con su tipo de prueba.
