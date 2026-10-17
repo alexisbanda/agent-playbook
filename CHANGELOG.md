@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.2
+
+Lo visto en la corrida de alexisbanda/kickoff-demo#2, el primer **ticket 0 de un repo sin código** resuelto de punta a punta (kickoff de ticket-studio → `TECH.md` → `resolve-issue`; Next.js 16, Postgres, Prisma 7, Vitest y CI; 28 minutos, pruebas en vivo a la primera).
+
+- **`setup-project` en un repo sin código:** no hay comando de tests que ejecutar. Si `TECH.md` fija el stack, propone el que creará el ticket 0 y lo guarda solo con OK, diciendo que no se ejecutó; si no, lo deja vacío. Comprueba también la versión del runtime.
+- **Versión del runtime** (`references/test-runtimes.md`, `engine.md` paso 1): dónde leer la que pide el proyecto, avisar si `TECH.md` nombra una fuera de soporte (la corrida pedía Node 20, sin soporte desde abril de 2026), instalar la que falta en el espacio del usuario con la aprobación del plan y usar el mismo prefijo en baseline, coder y verificación.
+- **Brief del coder, regla 8:** los generadores escriben configuración de agentes (`prisma init` creó `.claude/skills/`, `.windsurf/`, `.agents/`); no se commitea nada en `.claude/`, se borra lo que creen ahí, y lo que el framework regenera en cada arranque (`AGENTS.md` de `next dev`) se commitea y se dice. Los generadores que pisan archivos del repo se ejecutan fuera del worktree.
+- **README:** el límite «proyecto desde cero sin probar» pasa a «probado una vez».
+
 ## 1.0.1
 
 - Marketplace: la ficha de ticket-studio ya no menciona Jira (ticket-studio 1.0 trabaja con GitHub Issues y Notion).

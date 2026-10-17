@@ -46,6 +46,14 @@ Lee el servicio, la ruta de montaje y el comando del propio `compose.yaml` y del
 
 Si el worktree necesita dependencias instaladas (`node_modules`, `vendor`, un entorno virtual), el motor las instala o enlaza al crear el worktree (ver `engine.md`, paso 1).
 
+## Versión del runtime
+
+Los tests pueden fallar, o una dependencia negarse a instalar, porque la máquina tiene otra versión de Node, PHP o Python que la que pide el proyecto.
+
+- **Dónde mirarla:** `.nvmrc`, `.node-version`, `engines` de `package.json`, `.tool-versions`, `.python-version`, `requires-python` de `pyproject.toml`, `require.php` de `composer.json`. En un repo sin código (ticket 0), la que diga `docs/product/TECH.md`; si nombra una versión fuera de soporte, avísalo en el plan y propón la LTS vigente.
+- **Si la instalada no sirve:** propón en el plan instalar la que falta **en el espacio del usuario**, sin sudo ni tocar la del sistema (`N_PREFIX=$HOME/.n n install 22`, `nvm install 22`, `pyenv install …`), y ejecutar cada comando con ese runtime delante (`PATH=$HOME/.n/bin:$PATH npm test`). Hazlo solo con la aprobación del plan.
+- Anótalo en `RUN_STATE.md` (Preflight) y pásale al coder el prefijo literal en el comando de tests de su brief. Dilo también en LÍMITES si el proyecto exige una versión que la máquina no trae por defecto.
+
 ## Cómo comprobar que `worktree_test_command` prueba el worktree
 
 En `setup-project` no hay worktree todavía: verifica la sintaxis ejecutándolo con `{worktree}` igual a la ruta del clon principal. En la primera corrida, el motor confirma que prueba el worktree (ver `engine.md`, paso 2).
