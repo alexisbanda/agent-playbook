@@ -37,7 +37,7 @@ def facts(payload):
     if event == "SessionEnd":
         return [("session_end", {"reason": payload.get("reason")})]
     if event == "UserPromptSubmit":
-        return [("user_prompt", {"chars": len(payload.get("prompt") or "")})]
+        return [("user_prompt", {"chars": len(payload.get("prompt") or ""), "transcript": payload.get("transcript_path")})]
     if event == "Stop":
         return [("turn_end", {})]
     if event == "PreCompact":

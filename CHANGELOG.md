@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.3
+
+Lo visto al revisar el coste de kickoff-demo#2 y #5: el informe de métricas daba la mitad del coste real ($2,67 y $4,17 frente a $4,84 y $8,11).
+
+- **Tokens de salida bien contados** (`scripts/close_run.py`): Claude Code escribe cada respuesta en varios registros con el mismo id (uno por bloque mientras se genera), y solo el último trae los `output_tokens` finales. Se contaba el primero: en #5, 16.493 tokens de salida del coder en vez de 75.681.
+- **El orquestador cuenta:** si la sesión empezó antes de que los hooks del repo la vieran (no hay `session_start`), su transcript se busca junto al de sus subagentes (`<dir>/<sesión>/subagents/…` → `<dir>/<sesión>.jsonl`); además, `user_prompt` guarda la ruta del transcript. Era cerca del 40 % del coste.
+- **Brief del coder, regla 9 («pocos pasos»):** cada llamada a una herramienta relee todo el contexto (el 74 % del coste del coder en #5, con 124 llamadas). Agrupar lint, typecheck y tests en una llamada; archivos nuevos de una vez; `git add` y `commit` juntos, y push y PR al final; no releer lo que ya está en el contexto.
+- `docs/METRICS.md`: qué incluyen los tokens por modelo.
+- 107 tests (2 nuevos).
+
 ## 1.0.2
 
 Lo visto en la corrida de alexisbanda/kickoff-demo#2, el primer **ticket 0 de un repo sin código** resuelto de punta a punta (kickoff de ticket-studio → `TECH.md` → `resolve-issue`; Next.js 16, Postgres, Prisma 7, Vitest y CI; 28 minutos, pruebas en vivo a la primera).

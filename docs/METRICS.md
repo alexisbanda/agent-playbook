@@ -14,7 +14,7 @@ Una línea por corrida en `.agent-playbook/metrics.jsonl`, escrita por `scripts/
 
 | Métrica | Qué revela |
 | --- | --- |
-| Tokens por modelo y coste estimado | Dónde está el gasto. Suele estar en el contexto que se relee (lectura de caché), no en lo que el modelo escribe |
+| Tokens por modelo y coste estimado | Dónde está el gasto. Suele estar en el contexto que se relee (lectura de caché), no en lo que el modelo escribe. Incluye al orquestador (la sesión principal, solo dentro de la ventana de la corrida) y a cada subagente; de cada respuesta cuenta el último registro del transcript, que es el que trae los tokens de salida finales |
 | Minutos totales y minutos esperando al humano | Cuánto frenan las aprobaciones |
 | Subagentes por modelo | Si el ruteo se usa como se diseñó |
 | PRs abiertos, promovidos y mergeados | Si el flujo llega al final. `prs_merged` incluye los PRs de la corrida que el usuario mergeó fuera de la sesión (se consultan en GitHub al cerrar); `prs_merged_outside` dice cuántos fueron |

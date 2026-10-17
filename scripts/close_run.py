@@ -56,11 +56,15 @@ def minutes(delta):
 
 
 def usage_from_transcript(path, start=None, end=None):
-    """Sums token usage by model from a Claude Code transcript (JSONL)."""
+    """Sums token usage by model from a Claude Code transcript (JSONL).
+
+    A response is written as several records with the same message id (one per
+    content block while it streams); only the last one carries the final
+    output_tokens, so the last record of each message wins."""
     totals = collections.defaultdict(lambda: collections.Counter())
     if not path or not os.path.exists(path):
         return totals
-    seen = set()
+    last = {}
     with open(path) as fh:
         for line in fh:
             try:
@@ -74,14 +78,28 @@ def usage_from_transcript(path, start=None, end=None):
             ts = parse_ts(entry.get("timestamp"))
             if (start and ts and ts < start) or (end and ts and ts > end):
                 continue
-            key = message.get("id") or entry.get("uuid")
-            if key in seen:
-                continue
-            seen.add(key)
-            counter = totals[message.get("model", "unknown")]
-            for field in ("input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"):
-                counter[field] += usage.get(field) or 0
+            last[message.get("id") or entry.get("uuid")] = (message.get("model", "unknown"), usage)
+    for model, usage in last.values():
+        counter = totals[model]
+        for field in ("input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"):
+            counter[field] += usage.get(field) or 0
     return totals
+
+
+def session_transcripts(events, sessions):
+    """Main-thread transcripts of the run's sessions: the one each event recorded
+    (session_start, user_prompt) or, if the session started before the hooks
+    could see it, the one next to its subagents' transcripts
+    (<dir>/<session>/subagents/agent-*.jsonl -> <dir>/<session>.jsonl)."""
+    paths = {e.get("transcript") for e in events if e.get("session_id") in sessions and e.get("transcript")}
+    for e in events:
+        agent = e.get("agent_transcript")
+        if e.get("session_id") in sessions and agent:
+            session_dir = os.path.dirname(os.path.dirname(agent))
+            candidate = session_dir + ".jsonl"
+            if os.path.basename(session_dir) == e["session_id"] and os.path.exists(candidate):
+                paths.add(candidate)
+    return {p for p in paths if p}
 
 
 def merge_usage(target, source):
@@ -163,11 +181,8 @@ def build_metrics(run, events, e2e_first_pass, root=None):
     )
 
     usage = collections.defaultdict(collections.Counter)
-    transcripts = {
-        e.get("transcript") for e in events
-        if e["event"] == "session_start" and e.get("session_id") in sessions and e.get("transcript")
-    }
-    for path in transcripts:
+    # The orchestrator's own tokens, only inside the run's window.
+    for path in session_transcripts(events, sessions):
         merge_usage(usage, usage_from_transcript(path, start, end))
     for path in {e.get("agent_transcript") for e in run_events if e.get("agent_transcript")}:
         merge_usage(usage, usage_from_transcript(path))

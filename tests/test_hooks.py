@@ -1,9 +1,11 @@
+import datetime
 import json
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -294,6 +296,30 @@ class CloseRunTest(HookTestCase):
             self.assertEqual(len(fh.readlines()), 1)
 
 
+    def test_counts_the_orchestrator_without_a_session_start(self):
+        # The session started before the repo's hooks saw it: its transcript is found next to its subagents'.
+        self.start_run("13", "sid")
+        session_dir = os.path.join(self.tmp, "sid")
+        os.makedirs(os.path.join(session_dir, "subagents"))
+        def assistant(model, ts, out):
+            return json.dumps({"type": "assistant", "timestamp": ts, "message": {"id": f"{model}{ts}", "model": model, "usage": {"input_tokens": 1, "output_tokens": out}}}) + "\n"
+        self.hook("telemetry.py", {"hook_event_name": "UserPromptSubmit", "prompt": "ok", "session_id": "sid"})
+        time.sleep(1.1)
+        inside = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        with open(session_dir + ".jsonl", "w") as fh:
+            fh.write(assistant("claude-opus-5-5", "2000-01-01T00:00:00Z", 999))  # before the run: not counted
+            fh.write(assistant("claude-opus-5-5", inside, 7))
+        agent = os.path.join(session_dir, "subagents", "agent-x.jsonl")
+        with open(agent, "w") as fh:
+            fh.write(assistant("claude-sonnet-5", inside, 30))
+        time.sleep(1.1)
+        self.hook("telemetry.py", {"hook_event_name": "SubagentStop", "agent_id": "x", "agent_type": "general-purpose",
+                                   "agent_transcript_path": agent, "session_id": "sid"})
+        self.hook("telemetry.py", {"hook_event_name": "Stop", "session_id": "sid"})
+        metrics = self.close_with_fake_gh("13", 'import sys\nsys.exit(1)\n')
+        self.assertEqual(metrics["tokens_by_model"]["claude-opus-5-5"]["output_tokens"], 7)
+        self.assertEqual(metrics["tokens_by_model"]["claude-sonnet-5"]["output_tokens"], 30)
+
     def close_with_fake_gh(self, run, gh_script):
         bin_dir = os.path.join(self.tmp, "bin")
         os.makedirs(bin_dir, exist_ok=True)
@@ -347,6 +373,19 @@ class TranscriptUsageTest(unittest.TestCase):
         finally:
             os.remove(fh.name)
         self.assertEqual(dict(usage["claude-sonnet-5"]), {"input_tokens": 10, "output_tokens": 4, "cache_read_input_tokens": 100, "cache_creation_input_tokens": 0})
+
+    def test_a_streamed_message_counts_its_final_usage(self):
+        # Claude Code writes one record per content block; only the last one has the final output_tokens.
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import close_run
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", delete=False) as fh:
+            for out in (4, 4, 391):
+                fh.write(json.dumps({"type": "assistant", "message": {"id": "m1", "model": "claude-sonnet-5", "usage": {"input_tokens": 2, "output_tokens": out, "cache_read_input_tokens": 50}}}) + "\n")
+        try:
+            usage = close_run.usage_from_transcript(fh.name)
+        finally:
+            os.remove(fh.name)
+        self.assertEqual((usage["claude-sonnet-5"]["output_tokens"], usage["claude-sonnet-5"]["cache_read_input_tokens"]), (391, 50))
 
 
 if __name__ == "__main__":
