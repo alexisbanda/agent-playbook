@@ -66,6 +66,23 @@ class MinimalCheckTest(unittest.TestCase):
         self.assertTrue(result["epic"])
         self.assertTrue(result["contract_ok"])
 
+    def test_jira_zero_admin_issue_passes_check(self):
+        jira_issue = {
+            "key": "PKM-12",
+            "fields": {
+                "summary": "Récord por Pokémon",
+                "description": CONTRACT_BODY,
+                "issuetype": {"name": "Story"},
+                "status": {"name": "Ready for Dev"},
+                "labels": ["risk:ninguno", "size:M"],
+            },
+        }
+        result = tc.check(jira_issue)
+        self.assertTrue(result["ready"])
+        self.assertTrue(result["contract_ok"])
+        self.assertEqual(result["type"], "feature")
+        self.assertEqual(result["size"], "M")
+
 
 class StudioTest(unittest.TestCase):
     def setUp(self):

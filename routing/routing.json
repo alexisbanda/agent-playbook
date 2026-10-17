@@ -5,22 +5,42 @@
     "economy": {
       "alias": "haiku",
       "model_id": "claude-haiku-4-5",
-      "pin_env": "ANTHROPIC_DEFAULT_HAIKU_MODEL"
+      "pin_env": "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+      "runtime_aliases": {
+        "claude": "haiku",
+        "agy": "flash",
+        "model_ids": ["claude-haiku-4-5", "gemini-2.5-flash", "gemini-3-flash", "flash_lite", "flash"]
+      }
     },
     "standard": {
       "alias": "sonnet",
       "model_id": "claude-sonnet-5",
-      "pin_env": "ANTHROPIC_DEFAULT_SONNET_MODEL"
+      "pin_env": "ANTHROPIC_DEFAULT_SONNET_MODEL",
+      "runtime_aliases": {
+        "claude": "sonnet",
+        "agy": "inherit",
+        "model_ids": ["claude-sonnet-5", "inherit"]
+      }
     },
     "premium": {
       "alias": "opus",
       "model_id": "claude-opus-5-5",
-      "pin_env": "ANTHROPIC_DEFAULT_OPUS_MODEL"
+      "pin_env": "ANTHROPIC_DEFAULT_OPUS_MODEL",
+      "runtime_aliases": {
+        "claude": "opus",
+        "agy": "pro",
+        "model_ids": ["claude-opus-5-5", "gemini-2.5-pro", "gemini-3.1-pro", "pro"]
+      }
     },
     "flagship": {
       "alias": "fable",
       "model_id": "claude-fable-5-1",
-      "pin_env": "ANTHROPIC_DEFAULT_FABLE_MODEL"
+      "pin_env": "ANTHROPIC_DEFAULT_FABLE_MODEL",
+      "runtime_aliases": {
+        "claude": "fable",
+        "agy": "pro",
+        "model_ids": ["claude-fable-5-1"]
+      }
     }
   },
   "writer_roles": [

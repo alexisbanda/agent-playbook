@@ -1,7 +1,7 @@
 {
   "name": "agent-playbook",
-  "version": "1.0.3",
-  "description": "Manuales versionados, ruteo de modelos, hooks y cierre con evidencia para orquestar el desarrollo de software con agentes Claude.",
+  "version": "1.2.0",
+  "description": "Manuales versionados, ruteo de modelos, hooks y cierre con evidencia para orquestar el desarrollo de software con agentes (Claude Code y Google Antigravity agy).",
   "author": {
     "name": "Alexis Banda"
   },

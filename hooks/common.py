@@ -15,7 +15,10 @@ import traceback
 PLUGIN_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(PLUGIN_ROOT, "scripts"))
 
-CONFIG_REL = os.path.join(".claude", "agent-playbook.json")
+CONFIG_RELS = (
+    ".agent-playbook.json",
+    os.path.join(".claude", "agent-playbook.json"),
+)
 STATE_DIR = ".agent-playbook"
 
 # Where a command starts: line start, after ; & | ( or $(, optionally behind
@@ -38,9 +41,32 @@ def gh_pr(verb):
 GIT_PUSH = re.compile(CMD_START + GIT_BIN + r"\s+push\b", re.MULTILINE)
 
 
+def normalize_payload(data):
+    """Protocol sniffing: normalizes Claude Code (snake_case) and Google Antigravity agy
+    (camelCase) hook payloads into a single canonical dictionary."""
+    if not isinstance(data, dict):
+        return {}
+    out = dict(data)
+    is_agy = any(k in data for k in ("hookEventName", "toolName", "toolInput", "trajectoryId")) or (
+        data.get("tool_name") in ("run_command", "invoke_subagent", "ask_question")
+        or data.get("toolName") in ("run_command", "invoke_subagent", "ask_question")
+    )
+    out["_runtime"] = "agy" if is_agy else "claude"
+    out.setdefault("session_id", data.get("sessionId") or data.get("trajectoryId") or data.get("conversationId"))
+    out.setdefault("agent_id", data.get("agentId") or data.get("subagentId"))
+    out.setdefault("hook_event_name", data.get("hookEventName"))
+    out.setdefault("tool_name", data.get("toolName"))
+    out.setdefault("tool_input", data.get("toolInput"))
+    out.setdefault("tool_response", data.get("toolResponse"))
+    out.setdefault("transcript_path", data.get("transcriptPath"))
+    out.setdefault("agent_transcript_path", data.get("agentTranscriptPath"))
+    out.setdefault("agent_type", data.get("agentType"))
+    return out
+
+
 def read_input():
     raw = sys.stdin.read()
-    return json.loads(raw) if raw.strip() else {}
+    return normalize_payload(json.loads(raw)) if raw.strip() else {}
 
 
 def project_root(cwd):
@@ -63,11 +89,13 @@ def load_context(payload):
     root = project_root(cwd)
     if not root:
         return None, None
-    try:
-        with open(os.path.join(root, CONFIG_REL)) as fh:
-            return root, json.load(fh)
-    except (OSError, ValueError):
-        return None, None
+    for rel in CONFIG_RELS:
+        try:
+            with open(os.path.join(root, rel)) as fh:
+                return root, json.load(fh)
+        except (OSError, ValueError):
+            continue
+    return None, None
 
 
 def mode(config):

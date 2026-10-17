@@ -2,6 +2,18 @@
 
 Se ejecuta antes de cualquier otra cosa. Cada control falla con un mensaje concreto de qué falta y cómo arreglarlo. No sigas con un control en rojo.
 
+## Ejecución en un solo paso (`scripts/preflight.py`)
+
+Ejecuta todos los controles de golpe y abre `.agent-playbook/active-run` si no hay fallos:
+
+```bash
+python3 <plugin>/scripts/preflight.py --session-model <id del modelo de la sesión> --open-run <ticket> [--override-model "<motivo>"]
+```
+
+El script devuelve un JSON con `ok` (`true` si ningún control dio `fail`), la lista `checks`, metadatos detectados (`profile`, `tracker_type`, `base_branch`, `origin_sha`, `gh_env_prefix`) y el bloque `markdown` listo para pegar en `RUN_STATE.md`. Si `checks` incluye avisos (`warn`) que requieren decisión del usuario (cambios sin commitear en el clon principal, commits locales sin push en la rama base o un `active-run` de otro ticket), pregúntale antes de seguir.
+
+A continuación se detalla qué comprueba cada uno de los 6 controles:
+
 ## 1. Modelo de la sesión
 
 Comprueba el modelo con el que corre la sesión (lo indica tu propio contexto de sistema):
@@ -22,23 +34,19 @@ Si el usuario pasó `--override-model "<motivo>"`, continúa y anota el motivo e
 
 ## 2. Versión del playbook
 
-```bash
-installed=$(python3 -c "import json;print(json.load(open('<plugin>/.claude-plugin/plugin.json'))['version'])")
-latest=$(gh api repos/alexisbanda/agent-playbook/contents/.claude-plugin/plugin.json --jq .content | base64 -d | python3 -c "import json,sys;print(json.load(sys.stdin)['version'])")
-echo "installed=$installed latest=$latest"
-```
+`preflight.py` compara la versión instalada en `<plugin>/.claude-plugin/plugin.json` con la última publicada en GitHub y guarda el resultado en `.agent-playbook/cache/version-check.json` durante 24 horas para no repetir llamadas de red en el mismo día.
 
 Si `installed` es menor que `latest`, avisa: el usuario debe actualizar el plugin (`/plugin` → Marketplaces → actualizar, y luego `/reload-plugins`). No bloquea, salvo que el usuario quiera actualizar primero. Si la consulta remota falla, dilo y sigue.
 
 ## 3. Configuración del repo
 
-- `.claude/agent-playbook.json` existe. Si no, ejecuta el skill `setup-project` y vuelve aquí.
-- Es válida contra `<plugin>/config/agent-playbook.schema.json` (con `jsonschema` si está instalado; si no, revisa `version`, `profile` y `tracker.type` a mano).
-- `tracker.type` es `github` o `notion`. Para `jira` o `linear`, detente: no hay adaptador todavía.
+- `.agent-playbook.json` o `.claude/agent-playbook.json` existe. Si no, ejecuta el skill `setup-project` y vuelve aquí.
+- Es válida contra `<plugin>/config/agent-playbook.schema.json` (con `jsonschema` si está instalado; si no, revisa `version`, `profile` y `tracker.type`).
+- `tracker.type` es `github`, `notion` o `jira`. Para `linear`, detente: no hay adaptador todavía.
 
 ## 4. Herramientas y permisos
 
-- `gh auth status` en verde, con el scope `repo`. Si falla por un token de entorno, ver [Problemas conocidos](#problemas-conocidos).
+- `gh auth status` en verde, con el scope `repo`. Si falla por un token de entorno, `preflight.py` reintenta sin `GITHUB_TOKEN`/`GH_TOKEN` y devuelve `gh_env_prefix: "env -u GITHUB_TOKEN -u GH_TOKEN"` (ver [Problemas conocidos](#problemas-conocidos)).
 - `git remote get-url origin` apunta a GitHub.
 - Si el tracker es `notion`, el conector de Notion responde (por ejemplo, una búsqueda de la base de datos configurada). Si no está autorizado, detente y pide al usuario que lo autorice en los conectores de claude.ai.
 
@@ -47,7 +55,7 @@ Si `installed` es menor que `latest`, avisa: el usuario debe actualizar el plugi
 - `git fetch origin` sin errores.
 - `git status --porcelain` en el clon principal:
   - vacío: OK;
-  - solo `.claude/agent-playbook.json` y `.gitignore` (lo que deja `setup-project`): AVISO, sigue, y recuerda al usuario que conviene versionarlos;
+  - solo `.claude/agent-playbook.json`, `.agent-playbook.json` y `.gitignore` (lo que deja `setup-project`): AVISO, sigue, y recuerda al usuario que conviene versionarlos;
   - cualquier otro cambio: pregunta. No los muevas ni los descartes por tu cuenta.
 - **Rama base al día con el remoto.** `git log --oneline origin/<base>..<base>` y `git log --oneline <base>..origin/<base>`, con `<base>` la rama por defecto:
   - sin salida: OK;
@@ -68,4 +76,4 @@ Si `installed` es menor que `latest`, avisa: el usuario debe actualizar el plugi
 
 ## Resultado
 
-Escribe en `RUN_STATE.md` (sección Preflight) una línea por control con OK, AVISO o FALLO.
+Escribe en `RUN_STATE.md` (sección Preflight) el bloque `markdown` devuelto por `preflight.py` (una línea por control con OK, AVISO o FALLO).

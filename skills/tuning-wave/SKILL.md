@@ -14,13 +14,14 @@ Cierra el ciclo de mejora continua: las corridas dejan métricas medidas por los
 | --- | --- |
 | Raíz del plugin (`<plugin>`) | `${CLAUDE_SKILL_DIR}/../..` |
 | Informe | `python3 <plugin>/scripts/metrics_report.py [archivos...]` |
+| Exportación sanitizada (clientes) | `python3 <plugin>/scripts/metrics_report.py --export-sanitized metrics-sanitized.jsonl` |
 | Umbrales | `<plugin>/metrics/tripwires.json` |
 | Precios para el coste estimado | `<plugin>/metrics/prices.json` |
 | Cambios propuestos | Máximo 3 por ola |
 
 ## Pasos
 
-1. **Reunir las métricas.** Por defecto, `.agent-playbook/metrics.jsonl` del repo actual. Añade las rutas que pase el usuario (otros repos que usen el playbook). Si hay menos de 3 corridas en total, dilo y detente: con tan pocos datos cualquier conclusión es ruido.
+1. **Reunir las métricas.** Por defecto, `.agent-playbook/metrics.jsonl` del repo actual. Añade las rutas que pase el usuario (otros repos que usen el playbook; en repos de clientes externos usa antes `--export-sanitized` para anonimizar IDs de tickets y motivos de override sin perder las métricas numéricas). Si hay menos de 3 corridas en total, dilo y detente: con tan pocos datos cualquier conclusión es ruido.
 2. **Generar el informe** con `metrics_report.py` y muéstralo tal cual. Distingue las corridas por `playbook_version`: las líneas sin versión (0.4.x o anterior) pueden tener métricas infladas por fallos de telemetría ya corregidos. Menciónalo y no bases un cambio solo en ellas.
 3. **Mirar detrás de cada tripwire que salta**, y solo de esos. Fuentes, de más a menos fiable:
    - `.agent-playbook/events.jsonl`: decisiones de los gates, overrides, esperas;

@@ -24,18 +24,20 @@ Uno por ticket y por repositorio. Lo creas tú, a mano, no con la opción autom�
 
 **Comando de tests del worktree** (lo usan el baseline, el coder y la verificación): `environment.worktree_test_command` con `{worktree}` sustituido por la ruta absoluta del worktree, ejecutado desde la raíz del clon principal. Si está vacío, `environment.test_command` con el worktree como directorio de trabajo.
 
-Antes de tocar nada, córrelo y guarda la salida en `.agent-playbook/runs/<ticket>/baseline.log`, con un resumen de qué falla. En la primera corrida de un repo, comprueba que de verdad prueba el worktree: por ejemplo, que el listado de tests incluye un archivo que solo existe ahí, o que la ruta en las trazas es la del worktree. Anótalo en `RUN_STATE.md`.
+**Caché por SHA base:** obtén el SHA corto de `origin/<rama-base>` (`git rev-parse --short origin/<rama-base>`, o `origin_sha` del preflight). Si ya existe `.agent-playbook/cache/baseline-<sha>.log`, cópialo directamente a `.agent-playbook/runs/<ticket>/baseline.log` sin volver a ejecutar la suite de tests y anota en `RUN_STATE.md` que el baseline salió de caché para ese SHA.
+
+Si no está en caché, córrelo antes de tocar nada y guarda la salida tanto en `.agent-playbook/runs/<ticket>/baseline.log` como en `.agent-playbook/cache/baseline-<sha>.log` (`mkdir -p .agent-playbook/cache`), con un resumen de qué falla. En la primera corrida de un repo, comprueba que de verdad prueba el worktree: por ejemplo, que el listado de tests incluye un archivo que solo existe ahí, o que la ruta en las trazas es la del worktree. Anótalo en `RUN_STATE.md`.
 
 - Las fallas del baseline son **preexistentes**: no son culpa del coder.
 - Si no hay `test_command` (por ejemplo, en un proyecto nuevo), anótalo: irá a la sección LÍMITES del cierre.
 
 ## 3. Coder
 
-Uno a la vez. Lánzalo con el Agent tool:
+En `resolve-issue` corre un coder a la vez; en `resolve-epic` (o en el perfil `full`) pueden correr hasta 3 coders en paralelo en worktrees distintos **únicamente si** los conjuntos de `archivos que toca` del plan aprobado son estrictamente disjuntos (intersección vacía). Lánzalo con el Agent tool (Claude Code) o `invoke_subagent` (`TypeName: self` en `agy`):
 
 - primera línea del prompt: `ROLE: coder · CLASS: <clase del ticket>`;
-- `model`: el de la clase según `routing/ROUTING.md` (`sonnet` en `standard`, `opus` en `critical`). `fable` nunca escribe código;
-- el resto del prompt: `templates/CODER_BRIEF.md` rellenado.
+- `model` / `Model`: el de la clase según `routing/ROUTING.md` (`sonnet`/`inherit` en `standard`, `opus`/`pro` en `critical`). `fable` nunca escribe código;
+- el resto del prompt: `templates/CODER_BRIEF.md` rellenado (incluyendo la lista cerrada de archivos que puede tocar).
 
 Pásale en el brief el comando de tests del worktree ya resuelto (paso 2). El coder trabaja solo en su worktree, hace commits convencionales (`feat: …`, `fix: …`), corre los tests, arregla las fallas que él causó, empuja su rama y abre el PR **en borrador** con `templates/PR_BODY.md`. La aprobación del plan ya cubre esos commits, el push de la rama del ticket y el PR en borrador: no se vuelve a pedir OK. Nunca empuja a la rama base, nunca promueve y nunca mergea.
 
@@ -43,10 +45,10 @@ Las fallas preexistentes no las arregla: las lista en su informe. Tú las public
 
 ## 4. Verificación
 
-Cuando el coder termina, tú verificas, no confías en su resumen:
+Cuando el coder termina, tú verificas:
 
-1. Corre el comando de tests del worktree (paso 2) y compara con el baseline. Cualquier falla nueva vuelve al coder.
-2. Revisa el diff contra el plan aprobado. Si se salió del plan, vuelve al coder o, si el cambio es razonable, avísalo al usuario.
+1. **Tests sin duplicación innecesaria:** comprueba que el worktree está limpio (`git status --porcelain` vacío) y que el coder ejecutó el comando de tests del worktree sobre el SHA actual de `HEAD` sin fallas nuevas respecto al baseline. Si el informe del coder incluye la salida en verde sobre ese mismo SHA y no se ha tocado ningún archivo después, no re-ejecutes toda la suite completa por segunda vez; si no la corrió sobre el commit final, hubo cambios posteriores o hay cualquier duda, corre el comando de tests del worktree (paso 2) y compara con el baseline. Cualquier falla nueva vuelve al coder.
+2. Revisa el diff contra el plan aprobado (`git diff origin/<rama-base>...HEAD`). Si se salió del plan, vuelve al coder o, si el cambio es razonable, avísalo al usuario.
 3. Contrasta el cuerpo del PR con el código: cada fila de la tabla criterio → prueba tiene que señalar un test o un assert que exista y compruebe lo que dice. Si el PR afirma más de lo que los tests prueban, pide al coder el assert que falta o corrige la tabla, y cubre la diferencia en la prueba en vivo del cierre.
 
 ## 5. Review

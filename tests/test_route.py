@@ -110,5 +110,21 @@ class PinsTest(unittest.TestCase):
         self.assertEqual(route.missing_pins(ROUTING, env=env), [])
 
 
+class AgyRuntimeTest(unittest.TestCase):
+    def test_recognizes_agy_aliases_and_gemini_models(self):
+        self.assertEqual(route.tier_of("flash", ROUTING), "economy")
+        self.assertEqual(route.tier_of("inherit", ROUTING), "standard")
+        self.assertEqual(route.tier_of("pro", ROUTING), "premium")
+        self.assertEqual(route.tier_of("gemini-2.5-pro", ROUTING), "premium")
+
+    def test_injects_agy_model_alias_when_runtime_is_agy(self):
+        reader = route.decide("ROLE: reader · CLASS: reader", None, "reduced", ROUTING, runtime="agy")
+        self.assertEqual((reader["decision"], reader["model"]), ("inject", "flash"))
+        coder = route.decide("ROLE: coder · CLASS: standard", None, "reduced", ROUTING, runtime="agy")
+        self.assertEqual((coder["decision"], coder["model"]), ("inject", "inherit"))
+        crit = route.decide("ROLE: coder · CLASS: critical", None, "reduced", ROUTING, runtime="agy")
+        self.assertEqual((crit["decision"], crit["model"]), ("inject", "pro"))
+
+
 if __name__ == "__main__":
     unittest.main()

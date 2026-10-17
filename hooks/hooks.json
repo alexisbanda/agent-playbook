@@ -1,12 +1,12 @@
 {
-  "description": "agent-playbook: gate de modelos, gate de seguridad y telemetría. Inactivos en repos sin .claude/agent-playbook.json.",
+  "description": "agent-playbook: gate de modelos, gate de seguridad y telemetría (Claude Code y Google Antigravity agy). Inactivos en repos sin .agent-playbook.json ni .claude/agent-playbook.json.",
   "hooks": {
     "PreToolUse": [
-      { "matcher": "Agent|Task", "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/model_gate.py\"", "timeout": 10 }] },
-      { "matcher": "Bash", "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/safety_gate.py\"", "timeout": 10 }] }
+      { "matcher": "Agent|Task|invoke_subagent", "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/model_gate.py\"", "timeout": 10 }] },
+      { "matcher": "Bash|run_command", "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/safety_gate.py\"", "timeout": 10 }] }
     ],
     "PostToolUse": [
-      { "matcher": "Bash|Agent|Task|AskUserQuestion", "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/telemetry.py\"", "timeout": 10 }] }
+      { "matcher": "Bash|run_command|Agent|Task|invoke_subagent|AskUserQuestion|ask_question", "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/telemetry.py\"", "timeout": 10 }] }
     ],
     "SessionStart": [{ "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/telemetry.py\"", "timeout": 10 }] }],
     "SessionEnd": [{ "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/telemetry.py\"", "timeout": 10 }] }],

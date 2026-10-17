@@ -78,6 +78,13 @@ class TripwireTest(unittest.TestCase):
         self.assertIn("| 3 |", text)
         self.assertIn("🟢 ok", text)
 
+    def test_export_sanitized_redacts_ids_and_overrides(self):
+        raw = [run("CLIENTE-SECRET-42", overrides=["motivo interno confidencial"], _source="/privado/metrics.jsonl")]
+        clean = mr.sanitize_runs(raw)
+        self.assertEqual(clean[0]["run"], "run-1")
+        self.assertEqual(clean[0]["overrides"], ["redacted"])
+        self.assertNotIn("_source", clean[0])
+
 
 class JourneysTest(unittest.TestCase):
     def test_runs_each_journey_and_keeps_logs(self):
