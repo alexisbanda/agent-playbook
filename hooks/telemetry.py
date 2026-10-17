@@ -25,7 +25,7 @@ PR_CREATE = common.gh_pr("create")
 def bash_output(payload):
     response = payload.get("tool_response")
     if isinstance(response, dict):
-        return f"{response.get('stdout', '')}\n{response.get('stderr', '')}"
+        return f"{response.get('stdout', '')}\n{response.get('stderr', '')}\n{response.get('output', '')}"
     return str(response or "")
 
 
@@ -50,8 +50,9 @@ def facts(payload):
             "subagent": payload.get("agent_id"),
             "agent_transcript": payload.get("agent_transcript_path"),
         })]
-    if event == "PostToolUse" and tool == "Bash":
-        command = (payload.get("tool_input") or {}).get("command", "")
+    if event == "PostToolUse" and tool in ("Bash", "run_command"):
+        tool_input = payload.get("tool_input") or {}
+        command = tool_input.get("command") or tool_input.get("CommandLine") or ""
         found = [(name, {}) for name, pattern in BASH_FACTS if pattern.search(command)]
         # A PR counts as opened only if gh printed its URL.
         if PR_CREATE.search(command):
@@ -59,12 +60,18 @@ def facts(payload):
             if url:
                 found.insert(0, ("pr_opened", {"pr": url.group(0).rsplit("/", 1)[-1]}))
         return found
-    if event == "PostToolUse" and tool in ("Agent", "Task"):
+    if event == "PostToolUse" and tool in ("Agent", "Task", "invoke_subagent"):
         tool_input = payload.get("tool_input") or {}
+        if isinstance(tool_input.get("Subagents"), list):
+            out = []
+            for sub in tool_input["Subagents"]:
+                role, klass, override = route.parse_header(sub.get("Prompt", ""))
+                out.append(("subagent_launched", {"model": sub.get("Model"), "role": role, "klass": klass, "override": override}))
+            return out
         role, klass, override = route.parse_header(tool_input.get("prompt", ""))
         # Agents run in the background: PostToolUse fires at launch, not at the end.
         return [("subagent_launched", {"model": tool_input.get("model"), "role": role, "klass": klass, "override": override})]
-    if event == "PostToolUse" and tool == "AskUserQuestion":
+    if event == "PostToolUse" and tool in ("AskUserQuestion", "ask_question"):
         return [("asked_human", {})]
     return []
 

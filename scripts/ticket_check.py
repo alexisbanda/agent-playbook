@@ -22,17 +22,21 @@ import subprocess
 import sys
 
 CONFIG_PATH = os.path.join(".claude", "agent-playbook.json")
+CONFIG_PATHS = (".agent-playbook.json", CONFIG_PATH)
 CHECKS = ("http", "test", "e2e", "manual")
 TYPED_RE = re.compile(r"^\s*-\s*\[[ xX]\]\s*\[(\w+)\]\s*\S", re.MULTILINE)
 CRITERIA_HEADING_RE = re.compile(r"^#{2,4}\s*(criterios de aceptaci[oó]n|acceptance criteria)\s*$", re.IGNORECASE | re.MULTILINE)
 
 
-def load_config(path=CONFIG_PATH):
-    try:
-        with open(path) as fh:
-            return json.load(fh)
-    except (OSError, ValueError):
-        return {}
+def load_config(path=None):
+    paths = (path,) if path else CONFIG_PATHS
+    for candidate in paths:
+        try:
+            with open(candidate) as fh:
+                return json.load(fh)
+        except (OSError, ValueError):
+            continue
+    return {}
 
 
 def contract_enabled(config):
@@ -54,6 +58,10 @@ def find_ticket_studio():
         return tuple(int(p) if p.isdigit() else 0 for p in name.split("."))
 
     candidates += sorted(glob.glob(pattern), key=version, reverse=True)
+    candidates += [
+        os.path.expanduser("~/.gemini/antigravity-cli/plugins/ticket-studio/scripts/ticket_core.py"),
+        os.path.expanduser("~/.gemini/antigravity/plugins/ticket-studio/scripts/ticket_core.py"),
+    ]
     return next((c for c in candidates if os.path.exists(c)), None)
 
 
@@ -96,14 +104,62 @@ def minimal_check(body, labels, ready_name="ready"):
     }
 
 
+def normalize_issue(issue, ready_name="ready"):
+    """Normalizes a GitHub, Jira or Notion issue dict into {"title", "body", "labels"}."""
+    fields = issue.get("fields") or {}
+    title = issue.get("title") or issue.get("summary") or fields.get("summary") or ""
+    body = issue.get("body") or issue.get("description") or issue.get("content") or fields.get("description") or ""
+    if isinstance(body, dict):
+        # Simple plain-text extraction for Atlassian Document Format (ADF)
+        def _adf(n):
+            if isinstance(n, str):
+                return n
+            if not isinstance(n, dict):
+                return ""
+            t = n.get("type", "")
+            c = n.get("content") or []
+            if t == "text":
+                return n.get("text", "")
+            if t == "heading":
+                lvl = (n.get("attrs") or {}).get("level", 2)
+                return "#" * lvl + " " + "".join(_adf(x) for x in c) + "\n"
+            if t in ("paragraph", "listItem"):
+                return "".join(_adf(x) for x in c) + "\n"
+            return "".join(_adf(x) for x in c)
+        body = _adf(body)
+
+    raw_labels = issue.get("labels") if issue.get("labels") is not None else (fields.get("labels") or [])
+    labels = [l if isinstance(l, str) else (l.get("name") or "") for l in raw_labels]
+
+    # Map native Jira issuetype and status if not already in labels
+    itype = issue.get("issuetype") or fields.get("issuetype")
+    if isinstance(itype, dict):
+        itype = itype.get("name")
+    if itype and not any(l.startswith("type:") for l in labels):
+        itype_map = {"epic": "epic", "bug": "bug", "task": "task", "story": "feature"}
+        mapped = itype_map.get(str(itype).lower())
+        if mapped:
+            labels.append(f"type:{mapped}")
+
+    st = issue.get("status") or fields.get("status")
+    if isinstance(st, dict):
+        st = st.get("name")
+    if st and ready_name not in labels:
+        if str(st).lower() in ("ready", "ready for dev", "listo", ready_name.lower()):
+            labels.append(ready_name)
+
+    return {"title": title, "body": body, "labels": labels}
+
+
 def check(issue, ready_name="ready", studio_path=None):
-    """issue = {"title", "body", "labels"} as `gh issue view --json` returns it."""
-    result = {"source": "minimal", **minimal_check(issue.get("body"), issue.get("labels"), ready_name)}
+    """issue = {"title", "body", "labels"} (or Jira/Notion shape)."""
+    norm = normalize_issue(issue, ready_name=ready_name)
+    result = {"source": "minimal", **minimal_check(norm.get("body"), norm.get("labels"), ready_name)}
     result["score"] = None
     if studio_path:
         try:
             core = load_ticket_core(studio_path)
-            lint = core.lint(core.parse_github(issue.get("title"), issue.get("body"), issue.get("labels")))
+            lint = core.lint(core.parse_github(norm.get("title"), norm.get("body"), norm.get("labels")))
             result.update(source="ticket-studio", score=lint["score"], errors=lint["errors"], warnings=lint["warnings"],
                           findings=lint["findings"])
         except Exception as exc:  # a broken or incompatible Ticket Studio never breaks the run
@@ -128,6 +184,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("issue")
     parser.add_argument("--repo")
+    parser.add_argument("--input", help="Ruta a un JSON de issue ya descargado (p. ej. de Jira o Notion)")
     parser.add_argument("--save")
     args = parser.parse_args()
 
@@ -135,7 +192,12 @@ def main():
     if not contract_enabled(config):
         result = {"enabled": False, "note": "tickets.contract no está activado: no se comprueba el contrato."}
     else:
-        result = {"enabled": True, **check(fetch_issue(args.issue, args.repo), ready_label(config), find_ticket_studio())}
+        if args.input:
+            with open(args.input) as fh:
+                issue_data = json.load(fh)
+        else:
+            issue_data = fetch_issue(args.issue, args.repo)
+        result = {"enabled": True, **check(issue_data, ready_label(config), find_ticket_studio())}
     if args.save:
         os.makedirs(os.path.dirname(args.save), exist_ok=True)
         with open(args.save, "w") as fh:

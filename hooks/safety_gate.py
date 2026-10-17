@@ -98,7 +98,8 @@ def rm_outside(command, root, cwd):
 
 def violations(command, payload, root, config):
     found = []
-    cwd = payload.get("cwd") or root
+    tool_input = payload.get("tool_input") or {}
+    cwd = tool_input.get("Cwd") or payload.get("cwd") or root
     subagent = bool(payload.get("agent_id"))
     if force_push(command):
         found.append("push forzado")
@@ -125,7 +126,8 @@ def main():
     root, config = common.load_context(payload)
     if not root:
         common.emit(None)
-    command = (payload.get("tool_input") or {}).get("command", "")
+    tool_input = payload.get("tool_input") or {}
+    command = tool_input.get("command") or tool_input.get("CommandLine") or ""
     found = violations(command, payload, root, config)
     if not found:
         common.emit(None)

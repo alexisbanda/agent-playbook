@@ -23,6 +23,7 @@ import sys
 import time
 
 CONFIG_PATH = os.path.join(".claude", "agent-playbook.json")
+CONFIG_PATHS = (".agent-playbook.json", CONFIG_PATH)
 OK, WAIT, FAIL = "ok", "wait", "fail"
 GOOD_CONCLUSIONS = {"SUCCESS", "NEUTRAL", "SKIPPED"}
 
@@ -44,12 +45,15 @@ def parse_ts(value):
     return datetime.datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
-def load_config(path=CONFIG_PATH):
-    try:
-        with open(path) as fh:
-            return json.load(fh)
-    except (OSError, ValueError):
-        return {}
+def load_config(path=None):
+    paths = (path,) if path else CONFIG_PATHS
+    for candidate in paths:
+        try:
+            with open(candidate) as fh:
+                return json.load(fh)
+        except (OSError, ValueError):
+            continue
+    return {}
 
 
 def check_verdict(review_enabled, review_run, head, promoted_at):

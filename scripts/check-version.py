@@ -9,6 +9,7 @@ import subprocess
 import sys
 
 PLUGIN = ".claude-plugin/plugin.json"
+ROOT_PLUGIN = "plugin.json"
 MARKETPLACE = ".claude-plugin/marketplace.json"
 
 
@@ -28,6 +29,9 @@ def load(path, ref=None):
 
 def main():
     plugin = load(PLUGIN)
+    root_plugin = load(ROOT_PLUGIN)
+    if root_plugin.get("version") != plugin["version"]:
+        sys.exit(f"version mismatch: {PLUGIN} {plugin['version']} vs {ROOT_PLUGIN} {root_plugin.get('version')}")
     entries = [p for p in load(MARKETPLACE)["plugins"] if p["name"] == plugin["name"]]
     if len(entries) != 1:
         sys.exit(f"marketplace.json must list '{plugin['name']}' exactly once")

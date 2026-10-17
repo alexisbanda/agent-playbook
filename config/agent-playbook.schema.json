@@ -40,7 +40,7 @@
             "jira",
             "linear"
           ],
-          "description": "Gestor de tickets. github y notion están soportados; jira y linear están reservados (ver docs/TRACKERS.md)."
+          "description": "Gestor de tickets. github, notion y jira están soportados; linear está reservado (ver docs/TRACKERS.md)."
         },
         "github": {
           "type": "object",
@@ -83,7 +83,38 @@
           }
         },
         "jira": {
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "project_key"
+          ],
+          "properties": {
+            "project_key": {
+              "type": "string",
+              "description": "Clave del proyecto en Jira (p. ej. PROJ)."
+            },
+            "site_url": {
+              "type": "string",
+              "description": "URL base del sitio Jira (p. ej. https://miempresa.atlassian.net)."
+            },
+            "cloud_id": {
+              "type": "string",
+              "description": "Cloud ID de Atlassian para el conector MCP, si aplica."
+            },
+            "in_progress_status": {
+              "type": "string",
+              "default": "In Progress"
+            },
+            "done_status": {
+              "type": "string",
+              "default": "Done"
+            },
+            "use_labels_for_metadata": {
+              "type": "boolean",
+              "default": true,
+              "description": "Modo Zero-Admin: lee riesgo, tamaño, tipo y estado desde etiquetas nativas de Jira sin exigir Custom Fields."
+            }
+          }
         },
         "linear": {
           "type": "object"

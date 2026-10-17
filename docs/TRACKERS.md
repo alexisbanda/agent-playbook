@@ -7,8 +7,8 @@ Los skills nunca llaman directamente a un gestor de tickets. Usan un conjunto fi
 | Tipo | Estado | Herramienta |
 | --- | --- | --- |
 | `github` | Soportado | `gh` CLI |
-| `notion` | Soportado, pendiente de probar contra una base real | Conector de Notion (requiere autorizarlo en claude.ai) |
-| `jira` | Reservado | Conector de Atlassian |
+| `notion` | Soportado | Conector de Notion (requiere autorizarlo en claude.ai / MCP) |
+| `jira` | Soportado (Zero-Admin) | Conector de Atlassian (`references/trackers/jira.md`) |
 | `linear` | Reservado | Conector de Linear |
 
 ## Operaciones que debe cubrir un adaptador

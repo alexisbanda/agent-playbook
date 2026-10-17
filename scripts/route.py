@@ -16,7 +16,7 @@ import re
 import sys
 
 ROUTING_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "routing", "routing.json")
-CONFIG_PATH = os.path.join(".claude", "agent-playbook.json")
+CONFIG_PATHS = (".agent-playbook.json", os.path.join(".claude", "agent-playbook.json"))
 
 HEADER_RE = re.compile(r"ROLE:\s*([\w-]+)\s*[·|,;]\s*CLASS:\s*([\w-]+)", re.IGNORECASE)
 OVERRIDE_RE = re.compile(r"^\s*OVERRIDE:\s*(.+?)\s*$", re.IGNORECASE | re.MULTILINE)
@@ -28,12 +28,15 @@ def load_routing(path=ROUTING_PATH):
         return json.load(fh)
 
 
-def load_profile(config_path=CONFIG_PATH):
-    try:
-        with open(config_path) as fh:
-            return json.load(fh).get("profile", "reduced")
-    except (OSError, ValueError):
-        return "reduced"
+def load_profile(config_path=None):
+    paths = (config_path,) if config_path else CONFIG_PATHS
+    for p in paths:
+        try:
+            with open(p) as fh:
+                return json.load(fh).get("profile", "reduced")
+        except (OSError, ValueError):
+            continue
+    return "reduced"
 
 
 def parse_header(prompt):
@@ -48,7 +51,7 @@ def parse_header(prompt):
 
 
 def tier_of(model, routing):
-    """Maps an alias or a full model id to its tier, or None if unknown."""
+    """Maps an alias or a full model id (Claude or agy/Gemini) to its tier, or None if unknown."""
     if not model:
         return None
     model = model.lower()
@@ -56,18 +59,32 @@ def tier_of(model, routing):
         if model in (tier["alias"], tier["model_id"]) or model.startswith(tier["model_id"]):
             return name
     for name, tier in routing["tiers"].items():
+        rt = tier.get("runtime_aliases") or {}
+        if model in (rt.get("claude"), rt.get("agy")):
+            return name
+        for mid in rt.get("model_ids") or []:
+            if model == mid.lower() or model.startswith(mid.lower()):
+                return name
+    for name, tier in routing["tiers"].items():
         if tier["alias"] in model:
             return name
     return None
 
 
-def decide(prompt, model, profile, routing):
+def _alias_for_tier(tier_name, routing, runtime="claude"):
+    tier = routing["tiers"][tier_name]
+    if runtime == "agy":
+        return (tier.get("runtime_aliases") or {}).get("agy") or tier["alias"]
+    return tier["alias"]
+
+
+def decide(prompt, model, profile, routing, runtime="claude"):
     """Returns a dict: decision (allow | inject | block), model, tier, role, class, reason, override."""
     role, klass, override = parse_header(prompt)
     result = {"role": role, "class": klass, "override": override, "profile": profile}
 
     def out(decision, reason, tier=None):
-        alias = routing["tiers"][tier]["alias"] if tier else model
+        alias = _alias_for_tier(tier, routing, runtime=runtime) if tier else model
         return dict(result, decision=decision, reason=reason, tier=tier, model=alias)
 
     if profile not in routing["profiles"]:
@@ -97,10 +114,11 @@ def decide(prompt, model, profile, routing):
     if requested is None:
         return out("inject", f"sin modelo: se inyecta el de la clase {klass}", tier)
 
+    # In agy, 'pro' maps to premium when resolved directly, which is allowed in both standard and critical.
     if requested not in rule["allowed"]:
         if override:
             return out("allow", f"OVERRIDE: {override}", requested)
-        allowed = ", ".join(routing["tiers"][t]["alias"] for t in rule["allowed"])
+        allowed = ", ".join(_alias_for_tier(t, routing, runtime=runtime) for t in rule["allowed"])
         return out("block", f"la clase {klass} no permite {model} (permitidos: {allowed})", requested)
 
     return out("allow", "modelo permitido por la clase", requested)

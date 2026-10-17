@@ -40,7 +40,17 @@
           "properties": {
             "alias": { "type": "string", "description": "Alias que acepta el parámetro model del Agent tool." },
             "model_id": { "type": "string", "description": "Identificador exacto al que debería apuntar el alias." },
-            "pin_env": { "type": "string", "description": "Variable de entorno que fija el alias a model_id." }
+            "pin_env": { "type": "string", "description": "Variable de entorno que fija el alias a model_id." },
+            "runtime_aliases": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Mapeo multi-runtime (Claude Code y Google Antigravity agy).",
+              "properties": {
+                "claude": { "type": "string" },
+                "agy": { "type": "string" },
+                "model_ids": { "type": "array", "items": { "type": "string" } }
+              }
+            }
           }
         }
       }

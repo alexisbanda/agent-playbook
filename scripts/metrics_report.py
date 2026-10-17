@@ -177,21 +177,42 @@ def markdown(rows, wires, note, window):
     return "\n".join(out)
 
 
+def sanitize_runs(runs):
+    """Returns a client-safe copy of runs without private ticket IDs, paths, or free-text override reasons."""
+    sanitized = []
+    for idx, r in enumerate(runs, 1):
+        clean = {k: v for k, v in r.items() if not k.startswith("_")}
+        clean["run"] = f"run-{idx}"
+        if clean.get("overrides"):
+            clean["overrides"] = ["redacted" for _ in clean["overrides"]]
+        sanitized.append(clean)
+    return sanitized
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("files", nargs="*")
     parser.add_argument("--window", type=int)
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--export-sanitized", help="Exporta un archivo metrics.jsonl sanitizado (sin IDs ni textos de cliente)")
     args = parser.parse_args()
 
     files = args.files or [DEFAULT_METRICS]
     missing = [f for f in files if not os.path.exists(f)]
     if missing:
         raise SystemExit("no existe: " + ", ".join(missing))
+    raw_runs = load_runs(files)
+    if args.export_sanitized:
+        clean = sanitize_runs(raw_runs)
+        with open(args.export_sanitized, "w") as fh:
+            for item in clean:
+                fh.write(json.dumps(item, ensure_ascii=False) + "\n")
+        print(json.dumps({"ok": True, "exported": len(clean), "output": args.export_sanitized}, ensure_ascii=False))
+        return
     config = load_json(TRIPWIRES)
     if args.window:
         config["window"] = args.window
-    rows = summarise(load_runs(files), load_json(PRICES)["models"])
+    rows = summarise(raw_runs, load_json(PRICES)["models"])
     wires, note = check_tripwires(rows, config)
     if args.json:
         print(json.dumps({"runs": rows, "tripwires": wires, "note": note}, ensure_ascii=False, indent=2))

@@ -56,20 +56,33 @@ def minutes(delta):
 
 
 def usage_from_transcript(path, start=None, end=None):
-    """Sums token usage by model from a Claude Code transcript (JSONL).
+    """Sums token usage by model from a Claude Code or Google Antigravity (agy) transcript (JSONL).
 
-    A response is written as several records with the same message id (one per
-    content block while it streams); only the last one carries the final
-    output_tokens, so the last record of each message wins."""
+    In Claude Code, a response is written as several records with the same message id
+    (one per content block while it streams); only the last one carries the final
+    output_tokens, so the last record of each message wins.
+    In agy, steps of type PLANNER_RESPONSE carry usage in `usage` or `metadata.usage`."""
     totals = collections.defaultdict(lambda: collections.Counter())
     if not path or not os.path.exists(path):
         return totals
     last = {}
     with open(path) as fh:
-        for line in fh:
+        for idx, line in enumerate(fh):
             try:
                 entry = json.loads(line)
             except ValueError:
+                continue
+            if entry.get("type") == "PLANNER_RESPONSE":
+                meta = entry.get("metadata") or {}
+                usage = entry.get("usage") or meta.get("usage")
+                if not usage:
+                    continue
+                ts = parse_ts(entry.get("created_at") or entry.get("timestamp"))
+                if (start and ts and ts < start) or (end and ts and ts > end):
+                    continue
+                key = entry.get("step_index", f"agy-{idx}")
+                model = entry.get("model") or meta.get("model") or "unknown"
+                last[key] = (model, usage)
                 continue
             message = entry.get("message") or {}
             usage = message.get("usage")
@@ -78,7 +91,7 @@ def usage_from_transcript(path, start=None, end=None):
             ts = parse_ts(entry.get("timestamp"))
             if (start and ts and ts < start) or (end and ts and ts > end):
                 continue
-            last[message.get("id") or entry.get("uuid")] = (message.get("model", "unknown"), usage)
+            last[message.get("id") or entry.get("uuid") or f"cc-{idx}"] = (message.get("model", "unknown"), usage)
     for model, usage in last.values():
         counter = totals[model]
         for field in ("input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"):

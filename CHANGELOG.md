@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.2.0
+
+Adaptador **Jira Zero-Admin** (Ola 2), portabilidad **Dual-Runtime Claude Code + Google Antigravity `agy`** (Ola 3) y **escalado para proyectos mediano-grandes** (Ola 4):
+
+- **Jira Zero-Admin (`tracker.type: "jira"`)**: `references/trackers/jira.md` con las 6 operaciones sobre el conector de Atlassian usando `labels` nativos (`type:*`, `risk:*`, `size:*`, `ready`), `config/agent-playbook.schema.json` con `tracker.jira` y `scripts/ticket_check.py` con normalización multi-tracker (`normalize_issue()` para GitHub, Notion y Jira ADF/Markdown + `--input`).
+- **Dual-Runtime (`Claude Code` + `Google Antigravity agy`)**:
+  - `routing/routing.json` y `scripts/route.py` con `runtime_aliases` por tier (`haiku`/`flash`, `sonnet`/`inherit`, `opus`/`pro`, `fable`/`pro`).
+  - `hooks/common.py` con normalización automática de protocolo (`snake_case` de Claude Code y `camelCase` de `agy`), soporte de herramientas equivalentes (`Agent`/`Task`/`invoke_subagent`, `Bash`/`run_command`, `AskUserQuestion`/`ask_question`) en `hooks/model_gate.py`, `hooks/safety_gate.py`, `hooks/telemetry.py` y `hooks/hooks.json`.
+  - `scripts/close_run.py` suma tokens tanto de sesiones `assistant` de Claude Code como de pasos `PLANNER_RESPONSE` de `agy`.
+  - Manifiesto `plugin.json` en la raíz sincronizado con `.claude-plugin/plugin.json` (`scripts/check-version.py`) y lectura dual de `.agent-playbook.json` / `.claude/agent-playbook.json` en todos los scripts.
+- **Escalado mediano-grande**:
+  - **`scripts/repo_map.py`** (nuevo): genera y actualiza `.agent-playbook/repo-map.md` con el árbol de módulos, manifiestos y entrypoints para evitar re-exploraciones en frío.
+  - **Skill `skills/resolve-epic/SKILL.md`** (nuevo): Wave Runner que resuelve los sub-issues de una épica por olas de dependencias y permite hasta 3 coders en paralelo en worktrees distintos cuando sus conjuntos de `archivos que toca` son disjuntos (`references/engine.md`, `docs/SCALING.md`).
+  - **Exportación sanitizada para clientes**: `scripts/metrics_report.py --export-sanitized <archivo>` anonimiza IDs de corridas, rutas y motivos de override para usar `tuning-wave` sin exponer datos privados de clientes.
+- 121 tests.
+
+## 1.1.0
+
+Eficiencia operativa para proyectos pequeños y medianos (**preflight en un paso**, **baseline cacheado por SHA** y **carril Fast-Track**):
+
+- **`scripts/preflight.py` (nuevo)**: consolida los 6 controles del preflight (modelo de la sesión, versión del playbook con caché de 24 h en `.agent-playbook/cache/version-check.json`, configuración en `.agent-playbook.json` o `.claude/agent-playbook.json`, `gh auth status` con fallback ante tokens de entorno caducados, estado de `git` y apertura de `.agent-playbook/active-run`) en una sola llamada CLI y devuelve el bloque Markdown listo para `RUN_STATE.md`.
+- **Baseline de tests cacheado por SHA base** (`references/engine.md` paso 2): guarda la salida en `.agent-playbook/cache/baseline-<sha>.log`; si otro ticket parte del mismo SHA de `origin/<rama-base>`, reutiliza el baseline sin volver a correr la suite.
+- **Verificación sin duplicación** (`references/engine.md` paso 4): si el coder ya ejecutó el comando de tests del worktree sobre el SHA actual de `HEAD` en verde y el worktree está limpio, el orquestador no repite la ejecución completa por segunda vez.
+- **Carril Fast-Track (`size: S` + `risk: ninguno`)** (`skills/resolve-issue/SKILL.md`): en tickets pequeños sin riesgo ni preguntas abiertas, el orquestador localiza los archivos con hasta 3 búsquedas directas (`Grep`/`Glob`) sin lanzar subagentes `Explore`, y soporta `--approve-plan` para ir directo a construcción manteniendo siempre el OK humano obligatorio antes del merge.
+- 111 tests (4 nuevos).
+
 ## 1.0.3
 
 Lo visto al revisar el coste de kickoff-demo#2 y #5: el informe de métricas daba la mitad del coste real ($2,67 y $4,17 frente a $4,84 y $8,11).

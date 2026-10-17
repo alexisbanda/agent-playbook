@@ -387,6 +387,72 @@ class TranscriptUsageTest(unittest.TestCase):
             os.remove(fh.name)
         self.assertEqual((usage["claude-sonnet-5"]["output_tokens"], usage["claude-sonnet-5"]["cache_read_input_tokens"]), (391, 50))
 
+    def test_parses_agy_planner_response_usage(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import close_run
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", delete=False) as fh:
+            fh.write(json.dumps({
+                "step_index": 3,
+                "type": "PLANNER_RESPONSE",
+                "created_at": "2026-10-17T10:00:00Z",
+                "model": "gemini-2.5-pro",
+                "usage": {"input_tokens": 120, "output_tokens": 45},
+            }) + "\n")
+        try:
+            usage = close_run.usage_from_transcript(fh.name)
+        finally:
+            os.remove(fh.name)
+        self.assertEqual((usage["gemini-2.5-pro"]["input_tokens"], usage["gemini-2.5-pro"]["output_tokens"]), (120, 45))
+
+
+class AgyDualRuntimeHooksTest(HookTestCase):
+    def test_agy_invoke_subagent_injects_and_gates_models(self):
+        self.start_run()
+        out = self.hook("model_gate.py", {
+            "hookEventName": "PreToolUse",
+            "toolName": "invoke_subagent",
+            "toolInput": {
+                "Subagents": [
+                    {"TypeName": "research", "Role": "Reader", "Prompt": "ROLE: reader · CLASS: reader\nExplora"}
+                ]
+            },
+        })
+        updated = out["hookSpecificOutput"]["updatedInput"]
+        self.assertEqual(updated["Subagents"][0]["Model"], "flash")
+
+        blocked = self.hook("model_gate.py", {
+            "hookEventName": "PreToolUse",
+            "toolName": "invoke_subagent",
+            "toolInput": {
+                "Subagents": [
+                    {"TypeName": "self", "Role": "Coder", "Model": "inherit", "Prompt": "ROLE: coder · CLASS: critical\nFix"}
+                ]
+            },
+        })
+        self.assertEqual(self.decision(blocked), "deny")
+
+    def test_agy_run_command_is_checked_by_safety_gate(self):
+        out = self.hook("safety_gate.py", {
+            "hookEventName": "PreToolUse",
+            "toolName": "run_command",
+            "toolInput": {"CommandLine": "git push origin main", "Cwd": self.repo},
+        })
+        self.assertEqual(self.decision(out), "deny")
+
+    def test_root_config_file_is_loaded_when_dot_claude_is_absent(self):
+        os.remove(os.path.join(self.repo, ".claude", "agent-playbook.json"))
+        with open(os.path.join(self.repo, ".agent-playbook.json"), "w") as fh:
+            json.dump({"version": 1, "profile": "reduced", "tracker": {"type": "github"}, "hooks": {"mode": "block"}}, fh)
+        self.start_run()
+        out = self.hook("model_gate.py", {
+            "hookEventName": "PreToolUse",
+            "toolName": "invoke_subagent",
+            "toolInput": {
+                "Subagents": [{"TypeName": "self", "Role": "Coder", "Prompt": "sin header", "Model": "inherit"}]
+            },
+        })
+        self.assertEqual(self.decision(out), "deny")
+
 
 if __name__ == "__main__":
     unittest.main()
