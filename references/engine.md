@@ -17,6 +17,7 @@ Uno por ticket y por repositorio. Lo creas tú, a mano, no con la opción autom�
    `<tipo>` es `feat` o `fix`. `<rama-base>` es la rama por defecto del repo salvo que el ticket diga otra cosa.
 4. Revisa excepciones del entorno (detalle por entorno en `references/test-runtimes.md`):
    - Archivos no versionados que el proyecto necesita (`.env`, dependencias instaladas). Copia, enlaza o monta lo necesario y anótalo en `RUN_STATE.md`. Nunca copies secretos a un archivo versionado.
+   - Versión del runtime que pide el proyecto frente a la instalada (`references/test-runtimes.md`, «Versión del runtime»). Si hace falta otra, ya va en el plan aprobado: instálala en el espacio del usuario y usa el mismo prefijo en el baseline, el brief del coder y la verificación.
    - Contenedores que montan solo el clon principal (Sail, Docker Compose). Ahí los tests del worktree se corren **siempre** con `environment.worktree_test_command`. Si los tests corren en un contenedor y ese campo está vacío, detente: sin él, el baseline y la verificación probarían el clon principal.
 
 ## 2. Baseline

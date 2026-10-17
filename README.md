@@ -72,7 +72,7 @@ tests/            tests de los scripts
 
 ### Límites conocidos de la 1.0
 
-- **Proyecto desde cero sin probar:** todas las corridas reales fueron sobre un repo con código. El ticket 0 de un repo vacío (montar stack, tests y CI) es el tramo más incierto.
+- **Proyecto desde cero, probado una vez:** el ticket 0 de un repo sin código (kickoff-demo#2: Next.js, Postgres, Prisma, Vitest y CI) se resolvió de punta a punta, a la primera, en 28 minutos. Falta repetirlo con otro stack.
 - **Sin entorno desplegado probado:** las pruebas en vivo se hicieron contra el entorno local (`dev_url` vacío); el gate de deploy no se ha ejercitado.
 - **Un coder a la vez** (perfil `reduced`); el perfil `full` está descrito pero no probado.
 - **Sin probar en real:** review bot, journeys de regresión, criterios `[e2e]` con navegador y la tuning wave con datos de varias corridas.

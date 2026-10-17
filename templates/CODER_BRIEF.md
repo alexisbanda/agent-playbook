@@ -26,6 +26,7 @@ Eres el coder del ticket <id>: <título>.
 5. Nunca promuevas el PR (`gh pr ready`) ni lo mergees.
 6. Si tienes que esperar algo externo más de ~5 minutos, deja `HANDBACK.md` en el worktree y termina.
 7. Si el plan resulta inviable o ambiguo, detente y explícalo en lugar de improvisar un diseño distinto.
+8. Generadores y CLIs (`create-next-app`, `prisma init`, `laravel new`…) pueden escribir configuración de agentes: `.claude/`, `.agents/`, `.windsurf/`, `AGENTS.md`, `skills-lock.json`. No commitees nada en `.claude/` y borra lo que un generador cree ahí o en carpetas de otros agentes, salvo que el plan lo pida. Si el propio framework lo regenera en cada arranque (por ejemplo, el `AGENTS.md` que escribe `next dev`), commitéalo y dilo en el informe. Nunca ejecutes un generador que pise archivos del repo (`README.md`, `.gitignore`): genéralo fuera del worktree y trae los archivos a mano.
 
 ## Tu informe final (breve)
 

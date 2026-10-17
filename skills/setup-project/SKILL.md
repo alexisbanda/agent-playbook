@@ -34,6 +34,8 @@ Deja un repositorio listo para trabajar con el playbook. No toca código de la a
    - Si termina y el resultado tiene sentido (los tests corren, aunque alguno falle por motivos del código), guárdalo y anota el resumen (pasan/fallan) para el usuario.
    - Si falla por el entorno (driver o base de datos no disponible, contenedor apagado, dependencia sin instalar), **no lo guardes**: explica qué falta (por ejemplo, `./vendor/bin/sail up -d`) y pregunta si arrancarlo o dejar el campo vacío.
    - Un comando que no se pudo ejecutar se guarda solo si el usuario lo pide, y se dice en el resumen.
+   - **Repo sin código** (sin `package.json`, `composer.json`, `pyproject.toml` ni equivalente; típico antes del ticket 0): no hay nada que ejecutar. Si `docs/product/TECH.md` ya fija el stack, propone el comando que el ticket 0 va a crear (por ejemplo `npm test`), guárdalo solo con OK del usuario y di en el resumen que no se pudo ejecutar; el baseline de la primera corrida saldrá sin tests y lo anota. Si el stack no está decidido, déjalo vacío.
+   - **Versión del runtime:** comprueba la que pide el proyecto contra la instalada (sección «Versión del runtime» de `test-runtimes.md`). Si no coincide, dilo; no instales nada aquí.
 6. **Escribir la configuración** en `.claude/agent-playbook.json` y validarla contra el esquema:
    ```bash
    python3 -c "import json,jsonschema,sys; jsonschema.validate(json.load(open('.claude/agent-playbook.json')), json.load(open(sys.argv[1])))" "${CLAUDE_SKILL_DIR}/../../config/agent-playbook.schema.json"
