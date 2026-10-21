@@ -71,6 +71,14 @@ class TripwireTest(unittest.TestCase):
         result, _ = wires(runs)
         self.assertTrue(result["overrides_per_run_max"] and result["model_blocks_per_run_max"])
 
+    def test_inherited_session_context_trips(self):
+        result, _ = wires([run(i, orchestrator_ctx_start_k=420.0) for i in range(1, 4)])
+        self.assertTrue(result["orchestrator_ctx_start_k_max"])
+
+    def test_runs_without_start_context_are_not_judged_on_it(self):
+        result, _ = wires([run(i) for i in range(1, 4)])
+        self.assertNotIn("orchestrator_ctx_start_k_max", result)
+
     def test_report_renders(self):
         rows = mr.summarise([run(i) for i in range(1, 4)], PRICES)
         result, note = mr.check_tripwires(rows, TRIPWIRES)

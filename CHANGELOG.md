@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.3.0
+
+Tuning wave del 2026-10-21 sobre 8 corridas de castkit (todas 1.2.0). Saltaron `cache_read_share_max` (0,982) y `human_wait_share_max` (0,51); el coste mediano (4,85 USD) seguía por debajo del umbral, pero las tres últimas corridas costaron 5,81, 8,37 y 11,97 USD.
+
+- **Cada ticket en una sesión nueva.** El orquestador encadenaba tickets en la misma sesión: su contexto en la primera llamada de cada corrida pasó de 168k (corrida 1) a 417k (corrida 45) y 669k (corrida 55) tokens, y la lectura de caché de Opus de unos 5M a 28M por corrida. Sin compactaciones, porque la ventana es de 1M.
+  - `scripts/preflight.py`: control 7, **Contexto de la sesión**. Busca el transcript de la sesión en `events.jsonl` y, si supera el tripwire `orchestrator_ctx_start_k_max`, avisa y no abre `active-run` (la corrida pertenece a la sesión, y `/clear` empieza otra). `--keep-session` la abre igualmente si el usuario decide seguir.
+  - `skills/resolve-issue/SKILL.md` (Fase 1), `references/preflight.md`, `references/closure.md` (recomendar `/clear` al cerrar) y `skills/resolve-epic/SKILL.md` (sesión nueva al empezar; `/clear` entre olas por encima de unos 300k).
+- **Tripwire recalibrado.** `cache_read_share_max` (0,97) saltaba incluso en la corrida más limpia (0,979): en un bucle agéntico la lectura de caché siempre domina. Se sustituye por `orchestrator_ctx_start_k_max` (150k), medido con la nueva métrica `orchestrator_ctx_start_k` de `scripts/close_run.py` (contexto del orquestador en su primera llamada de la corrida) y mostrado en `metrics_report.py`.
+- Qué mirar en la próxima ola: la mediana de `orchestrator_ctx_start_k` por debajo de 150, y el coste mediano por corrida por debajo de 5 USD.
+- 127 tests.
+
 ## 1.2.0
 
 Adaptador **Jira Zero-Admin** (Ola 2), portabilidad **Dual-Runtime Claude Code + Google Antigravity `agy`** (Ola 3) y **escalado para proyectos mediano-grandes** (Ola 4):

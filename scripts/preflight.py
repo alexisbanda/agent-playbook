@@ -10,10 +10,12 @@ single deterministic command:
   5. Main clone git state (`git fetch origin`, `git status --porcelain`, ahead/behind base)
   6. Hooks & active run (`.agent-playbook/hook-errors.log`, `.agent-playbook/active-run`,
      and optional `--open-run <ticket>` to start the run atomically)
+  7. Session context: warns when the session already carries more context than
+     the `orchestrator_ctx_start_k_max` tripwire (a previous ticket left in it)
 
 Usage:
   preflight.py --session-model <model> [--override-model "<reason>"]
-               [--open-run <ticket>] [--session-id <id>]
+               [--open-run <ticket>] [--session-id <id>] [--keep-session]
                [--no-fetch] [--no-remote-version]
 
 Prints a JSON object with `ok`, `checks`, `markdown` (ready for RUN_STATE.md),
@@ -31,6 +33,7 @@ import time
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PLUGIN_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
 sys.path.insert(0, SCRIPT_DIR)
+import close_run  # noqa: E402
 import route  # noqa: E402
 
 CONFIG_CANDIDATES = (
@@ -351,6 +354,49 @@ def check_hooks_and_active_run(cwd=".", open_ticket=None, session_id=None, can_o
     }
 
 
+def session_transcript(cwd=".", session_id=None):
+    """Transcript of this session as the hooks recorded it; without an id, the most recent one."""
+    path = os.path.join(cwd, ".agent-playbook", "events.jsonl")
+    found = None
+    try:
+        with open(path) as fh:
+            for line in fh:
+                try:
+                    event = json.loads(line)
+                except ValueError:
+                    continue
+                if event.get("transcript") and (not session_id or event.get("session_id") == session_id):
+                    found = event["transcript"]
+    except OSError:
+        return None
+    return found
+
+
+def check_session_context(cwd=".", session_id=None, transcript=None):
+    try:
+        with open(os.path.join(PLUGIN_ROOT, "metrics", "tripwires.json")) as fh:
+            limit_k = json.load(fh)["tripwires"]["orchestrator_ctx_start_k_max"]["value"]
+    except (OSError, ValueError, KeyError):
+        limit_k = 150
+    transcript = transcript or session_transcript(cwd, session_id)
+    samples = close_run.context_samples(transcript)
+    if not samples:
+        return {"id": "context", "status": "ok", "context_k": None,
+                "detail": "sesión nueva (sin llamadas previas medidas)"}
+    context_k = round(max(samples)[1] / 1000)
+    if context_k > limit_k:
+        return {
+            "id": "context",
+            "status": "warn",
+            "context_k": context_k,
+            "detail": (f"la sesión ya lleva {context_k}k tokens de contexto (umbral {limit_k}k) y cada llamada los relee; "
+                       "propón al usuario `/clear` o una sesión nueva y repetir el preflight allí "
+                       "(o `--keep-session` si decide seguir en esta)"),
+        }
+    return {"id": "context", "status": "ok", "context_k": context_k,
+            "detail": f"{context_k}k tokens de contexto (umbral {limit_k}k)"}
+
+
 def format_markdown(checks):
     badge = {"ok": "OK", "warn": "AVISO", "fail": "FALLO"}
     labels = {
@@ -360,6 +406,7 @@ def format_markdown(checks):
         "tools": "4. Herramientas y permisos",
         "git_state": "5. Estado del clon principal",
         "hooks": "6. Hooks y corrida activa",
+        "context": "7. Contexto de la sesión",
     }
     return "\n".join(
         f"- {labels.get(c['id'], c['id'])}: **{badge[c['status']]}** — {c['detail']}"
@@ -368,7 +415,7 @@ def format_markdown(checks):
 
 
 def run_preflight(session_model, cwd=".", override_model=None, open_run=None, session_id=None,
-                  do_fetch=True, remote_version=True):
+                  do_fetch=True, remote_version=True, keep_session=False):
     cfg_check = check_config(cwd=cwd)
     cfg = cfg_check.get("config") or {}
     profile = cfg.get("profile", "reduced")
@@ -380,13 +427,20 @@ def run_preflight(session_model, cwd=".", override_model=None, open_run=None, se
     version_check = check_version(cwd=cwd, remote_check=remote_version, gh_prefix=gh_prefix)
     git_check = check_git_state(cwd=cwd, do_fetch=do_fetch)
 
+    sid = session_id or os.environ.get("CLAUDE_CODE_SESSION_ID") or os.environ.get("AGY_SESSION_ID")
+    context_check = check_session_context(cwd=cwd, session_id=sid)
+    if keep_session and context_check["status"] == "warn":
+        context_check["detail"] += " · el usuario decidió seguir en esta sesión"
     preliminary = [model_check, version_check, cfg_check, tools_check, git_check]
-    can_open = not any(c["status"] == "fail" for c in preliminary)
+    # The run belongs to the session that opens it, and /clear starts another one:
+    # with a heavy context, leave it closed until the user decides.
+    can_open = not any(c["status"] == "fail" for c in preliminary) and (
+        context_check["status"] == "ok" or keep_session)
     hooks_check = check_hooks_and_active_run(
         cwd=cwd, open_ticket=open_run, session_id=session_id, can_open=can_open
     )
 
-    checks = [*preliminary, hooks_check]
+    checks = [*preliminary, hooks_check, context_check]
     ok = not any(c["status"] == "fail" for c in checks)
     return {
         "ok": ok,
@@ -407,6 +461,8 @@ def main():
     parser.add_argument("--override-model", help="Motivo si el usuario autorizó otro modelo de sesión")
     parser.add_argument("--open-run", help="Abre .agent-playbook/active-run para este ticket si el preflight pasa")
     parser.add_argument("--session-id", help="ID de la sesión (por defecto CLAUDE_CODE_SESSION_ID)")
+    parser.add_argument("--keep-session", action="store_true",
+                        help="Abre la corrida aunque la sesión ya traiga mucho contexto (el usuario lo decidió)")
     parser.add_argument("--no-fetch", action="store_true", help="Omitir git fetch origin")
     parser.add_argument("--no-remote-version", action="store_true", help="Omitir consulta remota de versión")
     args = parser.parse_args()
@@ -418,6 +474,7 @@ def main():
         session_id=args.session_id,
         do_fetch=not args.no_fetch,
         remote_version=not args.no_remote_version,
+        keep_session=args.keep_session,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2))
     sys.exit(0 if result["ok"] else 1)

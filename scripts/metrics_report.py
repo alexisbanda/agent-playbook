@@ -61,13 +61,6 @@ def run_cost(run, prices):
     return round(total, 2), unpriced
 
 
-def cache_read_share(run):
-    tokens = [t for t in (run.get("tokens_by_model") or {}).values()]
-    read = sum(t.get("cache_read_input_tokens", 0) for t in tokens)
-    total = sum(sum(t.values()) for t in tokens)
-    return read / total if total else None
-
-
 def summarise(runs, prices):
     rows = []
     for run in runs:
@@ -86,7 +79,7 @@ def summarise(runs, prices):
             "e2e": run.get("e2e_first_pass", "na"),
             "cost": cost,
             "unpriced": unpriced,
-            "cache_read_share": cache_read_share(run),
+            "ctx_start": run.get("orchestrator_ctx_start_k"),
             "overrides": len(run.get("overrides") or []),
             "model_blocks": (run.get("gate_events") or {}).get("model_block", 0),
             "tokens_measured": run.get("tokens_measured", False),
@@ -125,10 +118,11 @@ def check_tripwires(rows, config):
         median = statistics.median(costs)
         add("cost_per_run_usd_max", round(median, 2), median > wires["cost_per_run_usd_max"]["value"], "mediana del coste estimado")
 
-    reads = [r["cache_read_share"] for r in window if r["cache_read_share"] is not None]
-    if reads:
-        median = statistics.median(reads)
-        add("cache_read_share_max", round(median, 3), median > wires["cache_read_share_max"]["value"], "mediana de tokens de lectura de caché / tokens totales")
+    starts = [r["ctx_start"] for r in window if r["ctx_start"] is not None]
+    if starts:
+        median = statistics.median(starts)
+        add("orchestrator_ctx_start_k_max", median, median > wires["orchestrator_ctx_start_k_max"]["value"],
+            f"mediana de miles de tokens en la primera llamada del orquestador ({len(starts)} corridas medidas)")
 
     overrides = statistics.mean(r["overrides"] for r in window)
     add("overrides_per_run_max", round(overrides, 2), overrides > wires["overrides_per_run_max"]["value"], "media por corrida")
@@ -156,12 +150,12 @@ def ticket_cell(quality):
 
 def markdown(rows, wires, note, window):
     out = ["## Corridas", "",
-           "| Corrida | Cerrada | Versión | Min. totales | Min. esperando | Subagentes | PRs mergeados | Compactaciones | E2E a la primera | Calidad del ticket | Coste estimado |",
-           "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
+           "| Corrida | Cerrada | Versión | Min. totales | Min. esperando | Subagentes | PRs mergeados | Compactaciones | Contexto inicial (k) | E2E a la primera | Calidad del ticket | Coste estimado |",
+           "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
     for r in rows:
         cost = f"${r['cost']}" + (" (*)" if r["unpriced"] else "")
         out.append(f"| {r['run']} | {r['closed_at']} | {r['version']} | {r['wall']} | {r['wait']} | {r['subagents']} | "
-                   f"{r['prs_merged']} | {r['compactions']} | {r['e2e']} | {ticket_cell(r['ticket'])} | {cost} |")
+                   f"{r['prs_merged']} | {r['compactions']} | {fmt(r['ctx_start'])} | {r['e2e']} | {ticket_cell(r['ticket'])} | {cost} |")
     if any(r["unpriced"] for r in rows):
         out += ["", "(*) Modelos sin precio en `metrics/prices.json`: " + ", ".join(sorted({m for r in rows for m in r["unpriced"]}))]
     out += ["", f"## Tripwires (últimas {window} corridas)", ""]

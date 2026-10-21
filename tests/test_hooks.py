@@ -319,6 +319,7 @@ class CloseRunTest(HookTestCase):
         metrics = self.close_with_fake_gh("13", 'import sys\nsys.exit(1)\n')
         self.assertEqual(metrics["tokens_by_model"]["claude-opus-5-5"]["output_tokens"], 7)
         self.assertEqual(metrics["tokens_by_model"]["claude-sonnet-5"]["output_tokens"], 30)
+        self.assertEqual(metrics["orchestrator_ctx_start_k"], 0.0)  # the call before the run is not its start
 
     def close_with_fake_gh(self, run, gh_script):
         bin_dir = os.path.join(self.tmp, "bin")
@@ -386,6 +387,20 @@ class TranscriptUsageTest(unittest.TestCase):
         finally:
             os.remove(fh.name)
         self.assertEqual((usage["claude-sonnet-5"]["output_tokens"], usage["claude-sonnet-5"]["cache_read_input_tokens"]), (391, 50))
+
+    def test_context_samples_add_input_and_cache_inside_the_window(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import close_run
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", delete=False) as fh:
+            for ts, read in (("2026-10-17T09:00:00Z", 900000), ("2026-10-17T10:00:00Z", 160000), ("2026-10-17T10:05:00Z", 170000)):
+                fh.write(json.dumps({"type": "assistant", "timestamp": ts, "message": {"id": ts, "usage": {
+                    "input_tokens": 5, "cache_read_input_tokens": read, "cache_creation_input_tokens": 1000}}}) + "\n")
+        try:
+            start = close_run.parse_ts("2026-10-17T09:30:00Z")
+            samples = close_run.context_samples(fh.name, start)
+        finally:
+            os.remove(fh.name)
+        self.assertEqual([tokens for _, tokens in samples], [161005, 171005])
 
     def test_parses_agy_planner_response_usage(self):
         sys.path.insert(0, os.path.join(ROOT, "scripts"))

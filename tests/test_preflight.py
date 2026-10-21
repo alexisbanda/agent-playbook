@@ -5,6 +5,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
@@ -76,6 +77,45 @@ class PreflightTest(unittest.TestCase):
         with_err = preflight.check_hooks_and_active_run(cwd=self.tmp, open_ticket="42", session_id="sess-1", can_open=True)
         self.assertEqual(with_err["status"], "warn")
         self.assertIn("model_gate timeout", with_err["detail"])
+
+    def write_transcript(self, context_tokens):
+        path = os.path.join(self.tmp, "session.jsonl")
+        with open(path, "w") as fh:
+            fh.write(json.dumps({"type": "assistant", "timestamp": "2026-10-20T10:00:00Z", "message": {
+                "id": "m1", "usage": {"input_tokens": 1, "cache_read_input_tokens": context_tokens - 1}}}) + "\n")
+        return path
+
+    def test_context_check_warns_when_the_session_carries_a_previous_ticket(self):
+        heavy = preflight.check_session_context(cwd=self.tmp, transcript=self.write_transcript(400000))
+        self.assertEqual((heavy["status"], heavy["context_k"]), ("warn", 400))
+        self.assertIn("/clear", heavy["detail"])
+        light = preflight.check_session_context(cwd=self.tmp, transcript=self.write_transcript(40000))
+        self.assertEqual(light["status"], "ok")
+
+    def test_context_check_finds_the_session_transcript_in_the_events(self):
+        transcript = self.write_transcript(400000)
+        os.makedirs(os.path.join(self.tmp, ".agent-playbook"), exist_ok=True)
+        with open(os.path.join(self.tmp, ".agent-playbook", "events.jsonl"), "w") as fh:
+            fh.write(json.dumps({"event": "user_prompt", "session_id": "other", "transcript": "/nope.jsonl"}) + "\n")
+            fh.write(json.dumps({"event": "user_prompt", "session_id": "mine", "transcript": transcript}) + "\n")
+        self.assertEqual(preflight.session_transcript(self.tmp, "mine"), transcript)
+        self.assertEqual(preflight.check_session_context(cwd=self.tmp, session_id="other")["status"], "ok")
+        self.assertEqual(preflight.check_session_context(cwd=self.tmp, session_id="mine")["status"], "warn")
+
+    def test_heavy_context_leaves_the_run_closed_unless_the_user_keeps_the_session(self):
+        self.write_config()
+        ok = lambda check_id: (lambda *a, **k: {"id": check_id, "status": "ok", "detail": ""})
+        heavy = {"id": "context", "status": "warn", "context_k": 400, "detail": "pesado"}
+        with mock.patch.object(preflight, "check_tools", ok("tools")), \
+             mock.patch.object(preflight, "check_git_state", ok("git_state")), \
+             mock.patch.object(preflight, "check_session_model", ok("session_model")), \
+             mock.patch.object(preflight, "check_session_context", lambda **k: dict(heavy)):
+            closed = preflight.run_preflight("opus", cwd=self.tmp, open_run="42", session_id="s",
+                                             do_fetch=False, remote_version=False)
+            self.assertIsNone(closed["checks"][5]["opened_run"])
+            kept = preflight.run_preflight("opus", cwd=self.tmp, open_run="42", session_id="s",
+                                           do_fetch=False, remote_version=False, keep_session=True)
+            self.assertEqual(kept["checks"][5]["opened_run"], "42")
 
 
 if __name__ == "__main__":

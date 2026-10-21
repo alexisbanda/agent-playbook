@@ -10,9 +10,9 @@ Ejecuta todos los controles de golpe y abre `.agent-playbook/active-run` si no h
 python3 <plugin>/scripts/preflight.py --session-model <id del modelo de la sesión> --open-run <ticket> [--override-model "<motivo>"]
 ```
 
-El script devuelve un JSON con `ok` (`true` si ningún control dio `fail`), la lista `checks`, metadatos detectados (`profile`, `tracker_type`, `base_branch`, `origin_sha`, `gh_env_prefix`) y el bloque `markdown` listo para pegar en `RUN_STATE.md`. Si `checks` incluye avisos (`warn`) que requieren decisión del usuario (cambios sin commitear en el clon principal, commits locales sin push en la rama base o un `active-run` de otro ticket), pregúntale antes de seguir.
+El script devuelve un JSON con `ok` (`true` si ningún control dio `fail`), la lista `checks`, metadatos detectados (`profile`, `tracker_type`, `base_branch`, `origin_sha`, `gh_env_prefix`) y el bloque `markdown` listo para pegar en `RUN_STATE.md`. Si `checks` incluye avisos (`warn`) que requieren decisión del usuario (cambios sin commitear en el clon principal, commits locales sin push en la rama base, un `active-run` de otro ticket o una sesión con demasiado contexto), pregúntale antes de seguir.
 
-A continuación se detalla qué comprueba cada uno de los 6 controles:
+A continuación se detalla qué comprueba cada uno de los 7 controles:
 
 ## 1. Modelo de la sesión
 
@@ -66,6 +66,15 @@ Si `installed` es menor que `latest`, avisa: el usuario debe actualizar el plugi
 
 - Si existe `.agent-playbook/hook-errors.log` con entradas recientes, AVISO: algún hook falló (los hooks no bloquean la sesión cuando fallan, así que una regla podría no estar aplicándose). Muestra la última entrada.
 - Si existe `.agent-playbook/active-run` de otro ticket, pregunta: puede ser una corrida que no se cerró.
+
+## 7. Contexto de la sesión
+
+Cada ticket se resuelve en una sesión nueva. El orquestador relee todo su contexto en cada llamada, así que una sesión que ya resolvió otro ticket paga por él una y otra vez (en castkit, 8 corridas encadenadas pasaron de 168k a 733k tokens de contexto y de 1,9 a 12 USD por corrida).
+
+`preflight.py` busca el transcript de la sesión en `.agent-playbook/events.jsonl` y compara su contexto actual con el tripwire `orchestrator_ctx_start_k_max` (150k):
+
+- por debajo: OK;
+- por encima: AVISO y **no abre `active-run`**, porque la corrida pertenece a la sesión que la abre y `/clear` empieza otra. Propón al usuario `/clear` (o una sesión nueva) y repetir allí el preflight; todo lo necesario para seguir está en el tracker, `RUN_STATE.md` y el repositorio. Si decide seguir en esta sesión, repite con `--keep-session` y anótalo en `RUN_STATE.md`.
 
 ## Problemas conocidos
 

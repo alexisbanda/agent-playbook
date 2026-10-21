@@ -99,6 +99,37 @@ def usage_from_transcript(path, start=None, end=None):
     return totals
 
 
+def context_tokens(usage):
+    """Tokens the model had in its context for one call: fresh input plus cache read and write."""
+    return sum(usage.get(f) or 0 for f in ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"))
+
+
+def context_samples(path, start=None, end=None):
+    """(timestamp, context tokens) of each main-thread call in a transcript, inside the window."""
+    samples = []
+    if not path or not os.path.exists(path):
+        return samples
+    with open(path) as fh:
+        for line in fh:
+            try:
+                entry = json.loads(line)
+            except ValueError:
+                continue
+            if entry.get("type") == "PLANNER_RESPONSE":
+                meta = entry.get("metadata") or {}
+                usage = entry.get("usage") or meta.get("usage")
+                ts = parse_ts(entry.get("created_at") or entry.get("timestamp"))
+            elif entry.get("type") == "assistant":
+                usage = (entry.get("message") or {}).get("usage")
+                ts = parse_ts(entry.get("timestamp"))
+            else:
+                continue
+            if not usage or not ts or (start and ts < start) or (end and ts > end):
+                continue
+            samples.append((ts, context_tokens(usage)))
+    return samples
+
+
 def session_transcripts(events, sessions):
     """Main-thread transcripts of the run's sessions: the one each event recorded
     (session_start, user_prompt) or, if the session started before the hooks
@@ -200,6 +231,11 @@ def build_metrics(run, events, e2e_first_pass, root=None):
     for path in {e.get("agent_transcript") for e in run_events if e.get("agent_transcript")}:
         merge_usage(usage, usage_from_transcript(path))
 
+    # Context the orchestrator already carried on its first call: a run that inherits
+    # a previous ticket's session starts high and pays for it on every later call.
+    samples = [s for path in session_transcripts(events, sessions) for s in context_samples(path, start, end)]
+    ctx_start = round(min(samples)[1] / 1000, 1) if samples else None
+
     merged = counts["pr_merged"]
     opened = sorted({str(e["pr"]) for e in run_events if e["event"] == "pr_opened" and e.get("pr")})
     on_github = merged_on_github(opened, root) if opened and root else None
@@ -228,6 +264,7 @@ def build_metrics(run, events, e2e_first_pass, root=None):
         "overrides": overrides,
         "tokens_by_model": {model: dict(counter) for model, counter in usage.items()},
         "tokens_measured": bool(usage),
+        "orchestrator_ctx_start_k": ctx_start,
         "e2e_first_pass": e2e_first_pass,
         "e2e_first_pass_source": "declared",
         "ticket_quality": ticket_quality(root, run) if root else None,
