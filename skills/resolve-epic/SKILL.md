@@ -48,7 +48,7 @@ Eres el **orquestador de olas** (Wave Runner). Una épica (`type:epic`) no se re
    - Sigue `references/engine.md` para cada ticket de la ola:
      - Crea los worktrees de la ola desde `origin/<rama-base>`.
      - Ejecuta o reutiliza el baseline cacheado por SHA (`baseline-<sha>.log`).
-     - Lanza los coders autorizados en paralelo (máximo 3, con archivos disjuntos) o en serie usando `Agent` (Claude Code) o `invoke_subagent` (`agy`).
+     - Lanza los coders autorizados en paralelo (máximo 3, con archivos disjuntos) o en serie usando `Agent` con `subagent_type: agent-playbook:coder` (Claude Code; ver `references/engine.md`, paso 3) o `invoke_subagent` (`agy`). Si un coder vuelve con `HANDBACK.md`, aplica el relevo por contexto de `references/engine.md`, paso 8.
      - Verifica cada worktree, pasa review según su clase (`standard` vs `critical`) y promueve cada PR cuando esté en verde.
 
 6. **Merge ordenado y refresco entre olas.**

@@ -35,6 +35,7 @@ Si no está en caché, córrelo antes de tocar nada y guarda la salida tanto en 
 
 En `resolve-issue` corre un coder a la vez; en `resolve-epic` (o en el perfil `full`) pueden correr hasta 3 coders en paralelo en worktrees distintos **únicamente si** los conjuntos de `archivos que toca` del plan aprobado son estrictamente disjuntos (intersección vacía). Lánzalo con el Agent tool (Claude Code) o `invoke_subagent` (`TypeName: self` en `agy`):
 
+- en Claude Code, `subagent_type: agent-playbook:coder`: el agente `coder` del plugin (`agents/coder.md`) solo carga las herramientas que necesita (Bash, Read, Edit, Write, Grep, Glob) y razona con esfuerzo `medium`. En `critical`, pasa además `effort: high`. Si ese tipo no está disponible (plugin sin recargar), usa `general-purpose`;
 - primera línea del prompt: `ROLE: coder · CLASS: <clase del ticket>`;
 - `model` / `Model`: el de la clase según `routing/ROUTING.md` (`sonnet`/`inherit` en `standard`, `opus`/`pro` en `critical`). `fable` nunca escribe código;
 - el resto del prompt: `templates/CODER_BRIEF.md` rellenado (incluyendo la lista cerrada de archivos que puede tocar).
@@ -93,9 +94,15 @@ Con el gate en 0, muestra su tabla y el SHA, pide el OK y ejecuta el comando que
 
 Si el modo automático de Claude Code deniega el merge, no lo esquives: dale al usuario ese mismo comando para que lo ejecute él (ver [Problemas conocidos](preflight.md#problemas-conocidos)) y sigue con el cierre cuando confirme. La telemetría lo cuenta como `prs_merged_outside`.
 
-## 8. Nada de agentes estacionados
+## 8. Nada de agentes estacionados ni sesiones interminables
 
 Un agente que tendría que esperar algo externo más de unos 5 minutos (una review, la CI, un deploy, una decisión) termina su turno y deja `HANDBACK.md` (plantilla en `templates/`) en su worktree. Para retomarlo, lanza un agente nuevo de la misma clase que empiece leyendo ese archivo. Un agente dormido acumula contexto que cuesta caro reescribir; uno nuevo con un resumen arranca liviano.
+
+**Relevo por contexto.** Lo mismo vale para un coder que trabaja demasiado tiempo: cada llamada relee todo su contexto, así que el coste crece casi con el cuadrado de su longitud (en castkit#56, dos coders llegaron a 428k tokens y costaron 27 de los 32 USD de la corrida). El vigilante `hooks/context_guard.py` avisa al coder cuando supera `hooks.coder_ctx_handback_k` (150k por defecto) u 80 llamadas, y el coder commitea, deja `HANDBACK.md` y termina. Si un coder vuelve con un `HANDBACK.md` en lugar de un PR:
+
+1. Comprueba que el worktree está limpio y que el último commit existe (`git -C <worktree> log -1 --oneline`).
+2. Lanza un coder nuevo de la misma clase con el mismo brief y, en la sección «Qué hacer», el contenido del `HANDBACK.md` como punto de partida. No le pases el informe largo del anterior.
+3. Anota el relevo en `RUN_STATE.md`. Más de dos relevos en un ticket es señal de que el plan era demasiado grande: detente y propón partirlo.
 
 ## 9. Limpieza
 

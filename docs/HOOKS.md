@@ -6,12 +6,12 @@ Los hooks se registran en [`hooks/hooks.json`](../hooks/hooks.json) y son Python
 
 ## Cuándo están activos
 
-| Situación | Gate de modelos | Gate de seguridad | Telemetría |
-| --- | --- | --- | --- |
-| Repo sin `.claude/agent-playbook.json` | Inactivo | Inactivo | Inactiva |
-| Repo configurado, sin corrida abierta | Solo registra | Activo | Activa |
-| Corrida abierta (`.agent-playbook/active-run`), en la sesión que la abrió o sus subagentes | Activo | Activo | Activa, etiquetada con el ticket |
-| Corrida abierta, pero desde **otra** sesión en el mismo repo | Solo registra | Activo | Activa, sin etiquetar |
+| Situación | Gate de modelos | Gate de seguridad | Vigilante de contexto | Telemetría |
+| --- | --- | --- | --- | --- |
+| Repo sin `.claude/agent-playbook.json` | Inactivo | Inactivo | Inactivo | Inactiva |
+| Repo configurado, sin corrida abierta | Solo registra | Activo | Inactivo | Activa |
+| Corrida abierta (`.agent-playbook/active-run`), en la sesión que la abrió o sus subagentes | Activo | Activo | Activo en los coders | Activa, etiquetada con el ticket |
+| Corrida abierta, pero desde **otra** sesión en el mismo repo | Solo registra | Activo | Inactivo | Activa, sin etiquetar |
 
 El plugin se instala por usuario, así que los hooks se disparan en todos los proyectos: por eso no hacen nada donde el playbook no está configurado.
 
@@ -56,6 +56,14 @@ Para endurecer: deja `warn` hasta que la telemetría muestre pocos falsos positi
 | Comandos que coinciden con `hooks.production_patterns` | Escrituras en producción: confirmación explícita |
 
 El análisis es por expresiones sobre el texto del comando y es deliberadamente amplio: reconoce `gh` y `git` con ruta, detrás de `env -u …`, de una variable (`$GH`, `${GIT}`) y `git -C <dir> push` (comprobando la rama de ese directorio). Un falso positivo solo pide confirmación; un falso negativo dejaría pasar la acción. Atrapa los errores honestos, no a alguien decidido a saltárselo.
+
+## Vigilante de contexto del coder
+
+`PostToolUse` sobre `Bash`, `Read`, `Edit`, `Write`, `Grep` y `Glob`, solo en Claude Code, durante una corrida abierta y solo dentro de un subagente cuyo prompt empieza con `ROLE: coder` o `ROLE: patriot` ([`hooks/context_guard.py`](../hooks/context_guard.py)).
+
+Lee el transcript del propio subagente y, cuando su contexto supera `hooks.coder_ctx_handback_k` (150k por defecto) o pasa de 80 llamadas, añade al contexto del coder la instrucción de commitear lo que esté en verde, dejar `HANDBACK.md` y terminar su turno. Vuelve a avisar cada 50k tokens más. Nunca bloquea una llamada y no hace nada en modo `off`. Cada aviso queda como evento `context_guard` y `close_run.py` los cuenta en `context_guard_warnings`.
+
+Por qué: cada llamada de un agente relee todo su contexto. En castkit, coders de 200 llamadas llegaron a 428k tokens y fueron la mayor parte del coste de la corrida. El orquestador retoma con un coder nuevo desde el `HANDBACK.md` (ver `references/engine.md`, paso 8).
 
 ## Telemetría
 

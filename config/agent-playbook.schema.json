@@ -158,6 +158,12 @@
           },
           "default": [],
           "description": "Expresiones regulares sobre comandos de shell que se consideran escrituras en producción (por ejemplo '--env=production', 'psql .*prod'). El gate de seguridad pide confirmación o bloquea al detectarlas."
+        },
+        "coder_ctx_handback_k": {
+          "type": "integer",
+          "minimum": 50,
+          "default": 150,
+          "description": "Miles de tokens de contexto a partir de los cuales el vigilante de contexto (hooks/context_guard.py) pide al coder que commitee, deje HANDBACK.md y termine, para que siga un coder nuevo. También salta a las 80 llamadas."
         }
       }
     },

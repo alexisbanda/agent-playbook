@@ -19,6 +19,7 @@ Una línea por corrida en `.agent-playbook/metrics.jsonl`, escrita por `scripts/
 | Subagentes por modelo | Si el ruteo se usa como se diseñó |
 | PRs abiertos, promovidos y mergeados | Si el flujo llega al final. `prs_merged` incluye los PRs de la corrida que el usuario mergeó fuera de la sesión (se consultan en GitHub al cerrar); `prs_merged_outside` dice cuántos fueron |
 | Contexto inicial del orquestador (`orchestrator_ctx_start_k`) | Miles de tokens que la sesión principal ya traía en su primera llamada de la corrida. Si es alto, la sesión arrastra tickets anteriores y cada llamada los relee; se arregla empezando cada ticket en una sesión nueva |
+| Bucle del coder (`coder_calls_max`, `coder_ctx_peak_k`, `context_guard_warnings`) | Llamadas del coder más largo de la corrida, el mayor contexto que alcanzó un coder (en miles de tokens) y cuántas veces avisó el vigilante de contexto. El coder suele ser la mitad del coste, y crece con llamadas × contexto |
 | Compactaciones | Si las corridas son demasiado largas o los agentes demasiado pesados |
 | Decisiones de los gates y overrides | Qué reglas se disparan y quién las salta |
 | E2E a la primera | Si el cambio llegó sano a la prueba en vivo. Es el único campo declarado por el orquestador, y está marcado así |
@@ -46,6 +47,8 @@ Umbrales en [`metrics/tripwires.json`](../metrics/tripwires.json). Que uno salte
 | `compaction_runs_share_max` | 0,2 | Más del 20 % de las corridas compactan contexto |
 | `cost_per_run_usd_max` | 5 USD | La mediana del coste estimado por corrida lo supera |
 | `orchestrator_ctx_start_k_max` | 150 | La mediana del contexto del orquestador en su primera llamada supera 150k tokens (la sesión arrastra tickets anteriores) |
+| `coder_calls_max` | 80 | La mediana de llamadas del coder más largo de cada corrida supera 80 |
+| `coder_ctx_peak_k_max` | 200 | La mediana del contexto máximo de un coder supera 200k tokens |
 | `overrides_per_run_max` | 1 | Más de un override de ruteo por corrida de media |
 | `model_blocks_per_run_max` | 1 | El gate de modelos bloquea más de una vez por corrida de media |
 | `untracked_runs_max` | 0 | Alguna corrida sin tokens medidos (telemetría rota) |
