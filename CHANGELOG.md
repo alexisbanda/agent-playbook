@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.5.0
+
+Segunda parte del análisis de tokens del 2026-11-07. Objetivo: gastar menos sin bajar la calidad, sobre todo en los tickets importantes. Los pasos que dan la calidad (plan aprobado, reviewer en `critical` con un 4 % del coste, Opus en `critical`, prueba en vivo) no cambian.
+
+- **Chequeos de aceptación ejecutables antes del PR.** Las corridas con la prueba en vivo fallida costaron de media 13,8 USD, frente a unos 3,9 de las que pasaron a la primera. En castkit, 3 de esos 5 fallos (#7, #43, #56) tenían los tests en verde y fallaban con la entrada real: una malla con agujeros de 6 aristas, una altura de relieve y un número de caras. Los tres se podían ver en el worktree. Los otros dos fueron externos: un 403 de una API y un entorno que solo existe en producción.
+  - `skills/resolve-issue/SKILL.md`: cada criterio del plan es un comando con tipo, entrada real (la misma de la prueba en vivo) y esperado medible. Lo que solo puede correr desplegado se marca «solo en cierre» y va a riesgos.
+  - `templates/CODER_BRIEF.md` (regla 13): el coder ejecuta cada chequeo sobre el último commit antes del PR e informa del valor observado; si el esperado le parece mal, se detiene en lugar de cambiarlo.
+  - `references/engine.md` (verificación, paso 3): sin los chequeos en verde sobre `HEAD`, el trabajo vuelve al coder. `references/closure.md`: la prueba en vivo repite el mismo comando y la misma entrada contra el entorno desplegado.
+  - `templates/RUN_STATE.md` y `templates/PR_BODY.md`: tabla de chequeos con comando, entrada, esperado y observado.
+- **Modelo del orquestador por carril.** En los tickets S, el orquestador en Opus es el 50–75 % del coste (unos 1,3 USD fijos por corrida). Al presentar el plan, `resolve-issue` recomienda `/model sonnet` en Fast-Track y `opus` en el carril crítico; nunca bajar de modelo en el crítico. Es una recomendación, no un bloqueo (`routing/ROUTING.md`, regla 7).
+- **Métrica `orchestrator_model`** en `close_run.py`: el modelo que hizo la mayoría de las llamadas del orquestador. `metrics_report.py` la muestra en la columna «Orquestador».
+- Qué mirar en la próxima ola:
+  - `e2e_first_pass_rate` por encima de 0,8, y en los tickets `critical` que no baje;
+  - el coste mediano de los tickets Fast-Track con orquestador `sonnet` frente a `opus`;
+  - las rondas de revisión, sin cambios.
+- 135 tests.
+
 ## 1.4.0
 
 Análisis de tokens del 2026-11-07 sobre 31 corridas 1.2.0 (castkit, recuerdos-artesanales, pokemon-visiotech, kickoff-demo): 192 USD estimados, 6,20 USD de media y mediana de 5,14 sobre las últimas 10 (salta `cost_per_run_usd_max`). El 62 % del coste es lectura de caché, y por rol: coders 52 %, orquestador 43 %, reviewers 4 %, lectores 1 %.

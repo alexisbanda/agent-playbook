@@ -13,9 +13,9 @@ Eres el coder del ticket <id>: <título>.
 
 <plan aprobado: cambios y archivos>
 
-## Criterios de aceptación
+## Criterios de aceptación y chequeos
 
-<lista>
+<tabla de chequeos de aceptación del plan: #, criterio, tipo, comando, entrada, esperado. Los marcados «solo en cierre» no los ejecutas.>
 
 ## Reglas
 
@@ -32,10 +32,13 @@ Eres el coder del ticket <id>: <título>.
 11. **Lecturas.** No vuelvas a leer un archivo que ya está en tu contexto: si lo editaste, sabes cómo quedó. En archivos de más de unas 300 líneas, localiza con `grep -n` y lee solo ese tramo (`Read` con `offset` y `limit`). No abras imágenes ni logs enteros salvo que el plan lo pida.
 12. **Relevo por contexto.** Si el sistema te avisa de que tu contexto es demasiado grande (vigilante del playbook), termina el paso en curso, commitea lo que esté en verde, deja `HANDBACK.md` (plantilla en `templates/HANDBACK.md`) con lo hecho, lo que falta, el comando de tests y los archivos y líneas clave, y termina tu turno. El orquestador lanzará un coder nuevo que siga desde ahí.
 
+13. **Chequeos de aceptación antes del PR.** Cuando la suite esté en verde, ejecuta cada chequeo de la tabla sobre el último commit, con su comando y su entrada exactos, y compara con el esperado. Si uno falla, es un fallo tuyo aunque los tests pasen: arréglalo (y añade un test que lo cubra) antes de abrir el PR. Si crees que el esperado está mal o contradice el plan, no cambies el chequeo: detente y explícalo. Recorta la salida al dato que se compara (status, cifra, línea).
+
 ## Tu informe final (breve)
 
 - Qué cambiaste (archivos) y SHA del último commit.
 - URL del PR.
 - Resultado de los tests frente al baseline.
+- Chequeos de aceptación: por cada #, el valor observado y si coincide con el esperado, sobre el SHA del último commit.
 - Fallas preexistentes encontradas.
 - Dudas o desvíos del plan.

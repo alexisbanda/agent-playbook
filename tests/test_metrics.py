@@ -61,6 +61,12 @@ class TripwireTest(unittest.TestCase):
         result, _ = wires([run(i, coder_calls_max=40, coder_ctx_peak_k=120.0) for i in range(1, 4)])
         self.assertFalse(result["coder_calls_max"] or result["coder_ctx_peak_k_max"])
 
+    def test_report_shows_the_orchestrator_model(self):
+        rows = mr.summarise([run(1, orchestrator_model="claude-sonnet-5"), run(2)], PRICES)
+        table = mr.markdown(rows, [], "nota", 10)
+        self.assertIn("| sonnet |", table)
+        self.assertEqual(mr.short_model("gemini-3.1-pro"), "gemini-3.1-pro")
+
     def test_runs_without_coder_metrics_skip_those_wires(self):
         result, _ = wires([run(i) for i in range(1, 4)])
         self.assertNotIn("coder_calls_max", result)

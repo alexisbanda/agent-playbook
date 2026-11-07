@@ -68,6 +68,10 @@
       "minimum": 0,
       "description": "Miles de tokens en el contexto del orquestador en su primera llamada de la corrida. Alto si la sesión arrastra tickets anteriores. Desde la 1.3.0."
     },
+    "orchestrator_model": {
+      "type": ["string", "null"],
+      "description": "Modelo que hizo la mayoría de las llamadas del orquestador en la corrida (la sesión puede cambiarlo con /model). Desde la 1.5.0."
+    },
     "coder_calls_max": {
       "type": ["integer", "null"],
       "minimum": 0,

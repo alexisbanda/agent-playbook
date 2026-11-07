@@ -365,6 +365,7 @@ class CloseRunTest(HookTestCase):
         self.assertEqual(metrics["tokens_by_model"]["claude-opus-5-5"]["output_tokens"], 7)
         self.assertEqual(metrics["tokens_by_model"]["claude-sonnet-5"]["output_tokens"], 30)
         self.assertEqual(metrics["orchestrator_ctx_start_k"], 0.0)  # the call before the run is not its start
+        self.assertEqual(metrics["orchestrator_model"], "claude-opus-5-5")
 
     def test_measures_the_longest_coder(self):
         self.start_run("14", "sid")

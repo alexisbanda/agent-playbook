@@ -38,7 +38,7 @@ En `resolve-issue` corre un coder a la vez; en `resolve-epic` (o en el perfil `f
 - en Claude Code, `subagent_type: agent-playbook:coder`: el agente `coder` del plugin (`agents/coder.md`) solo carga las herramientas que necesita (Bash, Read, Edit, Write, Grep, Glob) y razona con esfuerzo `medium`. En `critical`, pasa además `effort: high`. Si ese tipo no está disponible (plugin sin recargar), usa `general-purpose`;
 - primera línea del prompt: `ROLE: coder · CLASS: <clase del ticket>`;
 - `model` / `Model`: el de la clase según `routing/ROUTING.md` (`sonnet`/`inherit` en `standard`, `opus`/`pro` en `critical`). `fable` nunca escribe código;
-- el resto del prompt: `templates/CODER_BRIEF.md` rellenado (incluyendo la lista cerrada de archivos que puede tocar).
+- el resto del prompt: `templates/CODER_BRIEF.md` rellenado (incluyendo la lista cerrada de archivos que puede tocar y la tabla de chequeos de aceptación del plan, con sus comandos y entradas tal cual).
 
 Pásale en el brief el comando de tests del worktree ya resuelto (paso 2). El coder trabaja solo en su worktree, hace commits convencionales (`feat: …`, `fix: …`), corre los tests, arregla las fallas que él causó, empuja su rama y abre el PR **en borrador** con `templates/PR_BODY.md`. La aprobación del plan ya cubre esos commits, el push de la rama del ticket y el PR en borrador: no se vuelve a pedir OK. Nunca empuja a la rama base, nunca promueve y nunca mergea.
 
@@ -50,7 +50,8 @@ Cuando el coder termina, tú verificas:
 
 1. **Tests sin duplicación innecesaria:** comprueba que el worktree está limpio (`git status --porcelain` vacío) y que el coder ejecutó el comando de tests del worktree sobre el SHA actual de `HEAD` sin fallas nuevas respecto al baseline. Si el informe del coder incluye la salida en verde sobre ese mismo SHA y no se ha tocado ningún archivo después, no re-ejecutes toda la suite completa por segunda vez; si no la corrió sobre el commit final, hubo cambios posteriores o hay cualquier duda, corre el comando de tests del worktree (paso 2) y compara con el baseline. Cualquier falla nueva vuelve al coder.
 2. Revisa el diff contra el plan aprobado (`git diff origin/<rama-base>...HEAD`). Si se salió del plan, vuelve al coder o, si el cambio es razonable, avísalo al usuario.
-3. Contrasta el cuerpo del PR con el código: cada fila de la tabla criterio → prueba tiene que señalar un test o un assert que exista y compruebe lo que dice. Si el PR afirma más de lo que los tests prueban, pide al coder el assert que falta o corrige la tabla, y cubre la diferencia en la prueba en vivo del cierre.
+3. **Chequeos de aceptación:** el informe del coder trae, por cada chequeo que no es «solo en cierre», el valor observado sobre el SHA de `HEAD`. Si falta alguno, lo corrió sobre otro commit o no coincide con el esperado, vuelve al coder antes de seguir. Si tienes la menor duda, ejecuta tú ese chequeo (uno a uno, no la suite): es barato y es exactamente lo que fallaría en el cierre.
+4. Contrasta el cuerpo del PR con el código: cada fila de la tabla criterio → prueba tiene que señalar un test o un assert que exista y compruebe lo que dice. Si el PR afirma más de lo que los tests prueban, pide al coder el assert que falta o corrige la tabla, y cubre la diferencia en la prueba en vivo del cierre.
 
 ## 5. Review
 
