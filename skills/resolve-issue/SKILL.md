@@ -48,10 +48,23 @@ Cada lanzamiento de subagente empieza con la línea `ROLE: <rol> · CLASS: <clas
 4. **Plan y aprobación.** Copia `templates/RUN_STATE.md` a la carpeta de la corrida y rellénalo. Presenta al usuario:
    - la clase del ticket y por qué;
    - qué cambia y en qué archivos;
-   - cada criterio de aceptación con el chequeo que lo probará (`http`, `test`, `e2e` o `manual`);
+   - cada criterio de aceptación como **chequeo ejecutable** (ver «Chequeos de aceptación» más abajo);
+   - el modelo recomendado para el orquestador según el carril (ver «Modelo del orquestador por carril»);
    - riesgos y dudas.
 
    **Detente y espera la aprobación explícita** (salvo que el ticket vaya por el **carril Fast-Track** — `size: S`, `risk: ninguno`, sin preguntas abiertas — y el usuario haya pedido `--approve-plan` o ejecución directa en el prompt inicial, en cuyo caso dejas el plan registrado en `RUN_STATE.md` y pasas directamente a Construcción). Sin aprobación no se construye nada.
+
+   **Chequeos de aceptación.** Cada criterio lleva un comando que se puede ejecutar en el worktree y un resultado esperado medible: tipo (`http`, `test`, `e2e`, `cli`), comando, entrada y esperado. La entrada es **la misma que usarás en la prueba en vivo del cierre** (el archivo, el payload o el recorrido real), no el caso feliz de un test unitario: en castkit, 3 de 5 pruebas en vivo fallidas tenían los tests en verde y fallaban con la entrada real (una malla con agujeros de 6 aristas, una altura de relieve, un número de caras), y cada fallo multiplicó el coste de la corrida por 3 o 4. Si el chequeo solo puede correr contra el entorno desplegado (`dev_url`, producción, una API externa), escribe su equivalente local si lo hay y márcalo «solo en cierre» si no; esos van a riesgos del plan. `manual` solo cuando no hay forma de automatizarlo, y di por qué. La tabla va a `RUN_STATE.md` y al brief del coder tal cual.
+
+   **Modelo del orquestador por carril.** El orquestador es la sesión: no puedes cambiarlo tú, pero sí recomendarlo al presentar el plan, para que el usuario lo cambie con `/model` antes de aprobar.
+
+   | Carril | Sesión recomendada | Por qué |
+   | --- | --- | --- |
+   | Fast-Track (`size: S`, `risk: ninguno`, sin preguntas abiertas) | `sonnet` | En un ticket pequeño el orquestador es el 50–75 % del coste y su trabajo es procedimental |
+   | Estándar (`size: M/L` sin riesgo) | La que tenga la sesión | — |
+   | Crítico (`critical`, o cualquier `risk:*`) | `opus` (o `fable` en el perfil `full`) | Plan, verificación y cierre con más criterio donde un error cuesta caro |
+
+   Si la sesión no coincide con la recomendada, dilo en una línea junto al plan («Este ticket va por Fast-Track: con `/model sonnet` el resto de la corrida cuesta menos sin bajar la calidad del coder ni de la verificación»). Es una recomendación, no un bloqueo: si el usuario sigue con otro modelo, anótalo en `RUN_STATE.md`. Nunca recomiendes bajar de modelo en el carril crítico. Con `--approve-plan` no hay pausa para cambiarlo: si la sesión no era la recomendada, dilo en el informe final para el próximo ticket.
 
    Al presentar el plan, di qué autoriza aprobarlo: commits en la rama del ticket, push de esa rama y PR **en borrador**, sin volver a preguntar. Esto prevalece sobre una regla general de "pedir OK antes de commit o push" para esta corrida. No autoriza: push a la rama base, promover a listo si el review bot está activado sin pasar por la checklist, mergear ni escribir en producción.
 5. **Construcción.** Lee `references/engine.md`: worktree, baseline (cacheado por SHA base), coder, verificación, review y PR en borrador.

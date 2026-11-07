@@ -106,8 +106,9 @@ def context_tokens(usage):
     return sum(usage.get(f) or 0 for f in ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"))
 
 
-def context_samples(path, start=None, end=None):
-    """(timestamp, context tokens) of each main-thread call in a transcript, inside the window."""
+def context_samples(path, start=None, end=None, with_model=False):
+    """(timestamp, context tokens) of each main-thread call in a transcript, inside the window.
+    With with_model, (timestamp, context tokens, model)."""
     samples = []
     if not path or not os.path.exists(path):
         return samples
@@ -121,14 +122,16 @@ def context_samples(path, start=None, end=None):
                 meta = entry.get("metadata") or {}
                 usage = entry.get("usage") or meta.get("usage")
                 ts = parse_ts(entry.get("created_at") or entry.get("timestamp"))
+                model = entry.get("model") or meta.get("model")
             elif entry.get("type") == "assistant":
                 usage = (entry.get("message") or {}).get("usage")
                 ts = parse_ts(entry.get("timestamp"))
+                model = (entry.get("message") or {}).get("model")
             else:
                 continue
             if not usage or not ts or (start and ts < start) or (end and ts > end):
                 continue
-            samples.append((ts, context_tokens(usage)))
+            samples.append((ts, context_tokens(usage), model) if with_model else (ts, context_tokens(usage)))
     return samples
 
 
@@ -258,8 +261,11 @@ def build_metrics(run, events, e2e_first_pass, root=None):
 
     # Context the orchestrator already carried on its first call: a run that inherits
     # a previous ticket's session starts high and pays for it on every later call.
-    samples = [s for path in session_transcripts(events, sessions) for s in context_samples(path, start, end)]
+    samples = [s for path in session_transcripts(events, sessions) for s in context_samples(path, start, end, with_model=True)]
     ctx_start = round(min(samples)[1] / 1000, 1) if samples else None
+    # The model that made most of the orchestrator's calls (the session can switch with /model mid-run).
+    models = collections.Counter(m for _, _, m in samples if m and m != "<synthetic>")
+    orchestrator_model = models.most_common(1)[0][0] if models else None
 
     # The coders' own loops: how many calls the longest one made and how far its context grew.
     coders = [agent_profile(p) for p in {e.get("agent_transcript") for e in run_events if e.get("agent_transcript")}]
@@ -294,6 +300,7 @@ def build_metrics(run, events, e2e_first_pass, root=None):
         "tokens_by_model": {model: dict(counter) for model, counter in usage.items()},
         "tokens_measured": bool(usage),
         "orchestrator_ctx_start_k": ctx_start,
+        "orchestrator_model": orchestrator_model,
         "coder_calls_max": max(c for c, _ in coders) if coders else None,
         "coder_ctx_peak_k": round(max(p for _, p in coders) / 1000, 1) if coders else None,
         "context_guard_warnings": counts["context_guard"],
