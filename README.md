@@ -34,6 +34,7 @@ Activa la auto-actualización del marketplace en `/plugin` → Marketplaces para
 | `tickets.ready_label` | etiqueta con la que el tech lead marca un ticket como listo | `ready` |
 | `hooks.mode` | `off`, `warn`, `block` | `warn` |
 | `hooks.production_patterns` | expresiones de comandos que tocan producción | `[]` |
+| `hooks.coder_ctx_handback_k` | miles de tokens de contexto a partir de los cuales el coder deja `HANDBACK.md` y sigue uno nuevo | `150` |
 | `review_bot.enabled` | `true`, `false` (ver [docs/REVIEW_BOT.md](docs/REVIEW_BOT.md)) | `false` |
 | `environment` | `dev_url`, `test_command`, `worktree_test_command`, `deploy_check` | vacío |
 | `journeys` | lista de `{name, command}` | `[]` |
@@ -47,8 +48,9 @@ El esquema completo está en [config/agent-playbook.schema.json](config/agent-pl
 plugin.json       manifiesto en raíz compatible con Google Antigravity (agy)
 skills/           procedimientos que se invocan (setup-project, resolve-issue, resolve-epic, tuning-wave)
 references/       capítulos compartidos que los skills leen por fases: preflight, motor, cierre, adaptadores de trackers (github, notion, jira)
+agents/           subagente coder del plugin (herramientas mínimas y esfuerzo medio)
 templates/        RUN_STATE, HANDBACK, briefs de coder y reviewer, cuerpo de PR, evidencia, workflow del review bot
-hooks/            gate de modelos, gate de seguridad y telemetría dual-runtime (ver docs/HOOKS.md)
+hooks/            gate de modelos, gate de seguridad, vigilante de contexto del coder y telemetría dual-runtime (ver docs/HOOKS.md)
 routing/          tabla de ruteo de modelos (routing.json con runtime_aliases claude/agy), su esquema y su explicación
 metrics/          precios para el coste estimado y umbrales (tripwires) de la tuning wave
 config/           esquema y ejemplo de la configuración por repo (.agent-playbook.json o .claude/agent-playbook.json)

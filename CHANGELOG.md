@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.4.0
+
+Análisis de tokens del 2026-11-07 sobre 31 corridas 1.2.0 (castkit, recuerdos-artesanales, pokemon-visiotech, kickoff-demo): 192 USD estimados, 6,20 USD de media y mediana de 5,14 sobre las últimas 10 (salta `cost_per_run_usd_max`). El 62 % del coste es lectura de caché, y por rol: coders 52 %, orquestador 43 %, reviewers 4 %, lectores 1 %.
+
+El coder es la mayor partida y nadie la medía. Los coders largos hacen 93-236 llamadas y su contexto pasa de 44k a 213-428k tokens (castkit#56: dos coders releyeron 120M tokens, 27 de los 32 USD de la corrida). Lo que crece es, por este orden, el razonamiento que se conserva durante el bucle de herramientas, lo que escribe el propio coder (heredocs `cat >>`, `Edit`) y los resultados de herramientas. Además, la regla de pocos pasos no se cumplía: 36 ejecuciones de tests, 29 `grep` sueltos, 32 heredocs por trozos y el mismo archivo leído hasta 5 veces en un solo coder.
+
+- **Agente `coder` del plugin** (`agents/coder.md`): solo Bash, Read, Edit, Write, Grep y Glob, y esfuerzo `medium`; en `critical` el orquestador pasa `effort: high`. `general-purpose` arrancaba con 44k tokens de contexto que se releían en cada llamada. `references/engine.md` (paso 3), `skills/resolve-issue/SKILL.md` y `skills/resolve-epic/SKILL.md` lanzan `agent-playbook:coder`; `agy` no cambia.
+- **Vigilante de contexto** (`hooks/context_guard.py`, `PostToolUse`): dentro de un coder o patriot, al pasar de `hooks.coder_ctx_handback_k` (150k por defecto, nuevo en el esquema) u 80 llamadas, le pide commitear, dejar `HANDBACK.md` y terminar; avisa otra vez cada 50k más. No bloquea. `references/engine.md` (paso 8) describe el relevo con un coder nuevo y propone partir el ticket a partir del tercer relevo.
+- **Brief del coder** (`templates/CODER_BRIEF.md`): reglas 10 a 12. Tests del módulo mientras itera y la suite completa una vez al final, salida recortada, lecturas por tramos sin releer, y relevo cuando avisa el vigilante. `templates/HANDBACK.md` cubre el relevo por contexto.
+- **Métricas**: `close_run.py` añade `coder_calls_max`, `coder_ctx_peak_k` y `context_guard_warnings`; `metrics_report.py` muestra la columna «Coder: llamadas / pico (k)» y evalúa los tripwires nuevos `coder_calls_max` (80) y `coder_ctx_peak_k_max` (200). Con los datos de 1.2.0, castkit#56 daría 236 / 428, #94 93 / 214 y #1 28 / 74.
+- Qué mirar en la próxima ola: la mediana de `coder_ctx_peak_k` por debajo de 200, la de `coder_calls_max` por debajo de 80 y el coste mediano por corrida por debajo de 5 USD.
+- 134 tests.
+
 ## 1.3.0
 
 Tuning wave del 2026-10-21 sobre 8 corridas de castkit (todas 1.2.0). Saltaron `cache_read_share_max` (0,982) y `human_wait_share_max` (0,51); el coste mediano (4,85 USD) seguía por debajo del umbral, pero las tres últimas corridas costaron 5,81, 8,37 y 11,97 USD.

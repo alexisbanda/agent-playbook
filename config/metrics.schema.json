@@ -68,6 +68,20 @@
       "minimum": 0,
       "description": "Miles de tokens en el contexto del orquestador en su primera llamada de la corrida. Alto si la sesión arrastra tickets anteriores. Desde la 1.3.0."
     },
+    "coder_calls_max": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Llamadas al modelo del coder (o patriot) más largo de la corrida. Desde la 1.4.0."
+    },
+    "coder_ctx_peak_k": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "description": "Miles de tokens del mayor contexto que alcanzó un coder (o patriot) de la corrida. Desde la 1.4.0."
+    },
+    "context_guard_warnings": {
+      "$ref": "#/$defs/count",
+      "description": "Avisos del vigilante de contexto (hooks/context_guard.py) en la corrida. Desde la 1.4.0."
+    },
     "human_waits": {
       "$ref": "#/$defs/count"
     },
@@ -174,10 +188,7 @@
               ]
             },
             "score": {
-              "type": [
-                "integer",
-                "null"
-              ],
+              "type": ["integer", "null"],
               "minimum": 0,
               "maximum": 100
             },

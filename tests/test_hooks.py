@@ -274,6 +274,51 @@ class TelemetryTest(HookTestCase):
         self.assertIn("ANTHROPIC_DEFAULT_", out["hookSpecificOutput"]["additionalContext"])
 
 
+class ContextGuardTest(HookTestCase):
+    def write_agent(self, role, calls, ctx, agent="c1"):
+        session = os.path.join(self.tmp, "s1")
+        os.makedirs(os.path.join(session, "subagents"), exist_ok=True)
+        path = os.path.join(session, "subagents", f"agent-{agent}.jsonl")
+        with open(path, "w") as fh:
+            fh.write(json.dumps({"type": "user", "message": {"role": "user", "content": f"ROLE: {role} · CLASS: standard\nbrief"}}) + "\n")
+            for i in range(calls):
+                usage = {"input_tokens": 1, "cache_read_input_tokens": ctx * (i + 1) // calls, "cache_creation_input_tokens": 0, "output_tokens": 5}
+                fh.write(json.dumps({"type": "assistant", "message": {"id": f"m{i}", "model": "claude-sonnet-5", "usage": usage}}) + "\n")
+        return session + ".jsonl"
+
+    def guard(self, transcript, agent="c1"):
+        return self.hook("context_guard.py", {"hook_event_name": "PostToolUse", "tool_name": "Bash", "agent_id": agent,
+                                              "transcript_path": transcript, "tool_input": {"command": "ls"}})
+
+    def test_warns_a_coder_past_the_limit_once_per_step(self):
+        self.start_run()
+        transcript = self.write_agent("coder", 20, 160_000)
+        out = self.guard(transcript)
+        self.assertIn("HANDBACK.md", out["hookSpecificOutput"]["additionalContext"])
+        self.assertIsNone(self.guard(transcript))  # same level: no repeated warning
+        self.write_agent("coder", 21, 215_000)
+        self.assertIsNotNone(self.guard(transcript))  # 50k further: warns again
+        self.assertEqual([e["ctx_k"] for e in self.events() if e["event"] == "context_guard"], [160, 215])
+
+    def test_warns_on_too_many_calls(self):
+        self.start_run()
+        self.assertIsNotNone(self.guard(self.write_agent("coder", 85, 90_000)))
+
+    def test_silent_below_limits_for_other_roles_and_outside_a_run(self):
+        transcript = self.write_agent("coder", 20, 300_000)
+        self.assertIsNone(self.guard(transcript))  # no run open
+        self.start_run()
+        self.assertIsNone(self.guard(self.write_agent("reader", 90, 300_000, agent="r1"), agent="r1"))
+        self.assertIsNone(self.guard(self.write_agent("coder", 10, 100_000, agent="c2"), agent="c2"))
+        self.assertIsNone(self.hook("context_guard.py", {"hook_event_name": "PostToolUse", "tool_name": "Bash",
+                                                         "transcript_path": transcript}))  # main thread
+
+    def test_limit_comes_from_the_config(self):
+        self.write_config(coder_ctx_handback_k=300)
+        self.start_run()
+        self.assertIsNone(self.guard(self.write_agent("coder", 20, 250_000)))
+
+
 class CloseRunTest(HookTestCase):
     def test_builds_a_valid_metrics_line_and_clears_the_marker(self):
         self.start_run("9")
@@ -320,6 +365,25 @@ class CloseRunTest(HookTestCase):
         self.assertEqual(metrics["tokens_by_model"]["claude-opus-5-5"]["output_tokens"], 7)
         self.assertEqual(metrics["tokens_by_model"]["claude-sonnet-5"]["output_tokens"], 30)
         self.assertEqual(metrics["orchestrator_ctx_start_k"], 0.0)  # the call before the run is not its start
+
+    def test_measures_the_longest_coder(self):
+        self.start_run("14", "sid")
+        session_dir = os.path.join(self.tmp, "sid")
+        os.makedirs(os.path.join(session_dir, "subagents"))
+        def agent(name, role, ctxs):
+            path = os.path.join(session_dir, "subagents", f"agent-{name}.jsonl")
+            with open(path, "w") as fh:
+                fh.write(json.dumps({"type": "user", "message": {"content": [{"type": "text", "text": f"ROLE: {role} · CLASS: standard"}]}}) + "\n")
+                for i, ctx in enumerate(ctxs):
+                    fh.write(json.dumps({"type": "assistant", "message": {"id": f"{name}{i}", "model": "claude-sonnet-5",
+                                         "usage": {"input_tokens": 0, "cache_read_input_tokens": ctx, "output_tokens": 1}}}) + "\n")
+            self.hook("telemetry.py", {"hook_event_name": "SubagentStop", "agent_id": name, "agent_transcript_path": path, "session_id": "sid"})
+        agent("r", "reader", [10_000] * 50)  # readers do not count
+        agent("a", "coder", [40_000, 120_000, 90_000])
+        agent("b", "coder", [40_000, 60_000, 70_000, 80_000])
+        self.hook("telemetry.py", {"hook_event_name": "Stop", "session_id": "sid"})
+        metrics = self.close_with_fake_gh("14", 'import sys\nsys.exit(1)\n')
+        self.assertEqual((metrics["coder_calls_max"], metrics["coder_ctx_peak_k"], metrics["context_guard_warnings"]), (4, 120.0, 0))
 
     def close_with_fake_gh(self, run, gh_script):
         bin_dir = os.path.join(self.tmp, "bin")

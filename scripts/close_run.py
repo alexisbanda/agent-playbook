@@ -21,6 +21,8 @@ import os
 import subprocess
 import sys
 
+import route
+
 STATE_DIR = ".agent-playbook"
 PLUGIN_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 SCHEMA = os.path.join(PLUGIN_ROOT, "config", "metrics.schema.json")
@@ -130,6 +132,29 @@ def context_samples(path, start=None, end=None):
     return samples
 
 
+def agent_profile(path):
+    """(role from the ROLE header of its prompt, model calls, peak context tokens) of a subagent transcript."""
+    role, ids, peak = None, set(), 0
+    if not path or not os.path.exists(path):
+        return role, 0, 0
+    with open(path) as fh:
+        for idx, line in enumerate(fh):
+            try:
+                entry = json.loads(line)
+            except ValueError:
+                continue
+            message = entry.get("message") or {}
+            if role is None and entry.get("type") == "user":
+                content = message.get("content")
+                if isinstance(content, list):
+                    content = " ".join(c.get("text", "") for c in content if isinstance(c, dict))
+                role = route.parse_header(content or "")[0] or ""
+            elif entry.get("type") == "assistant" and message.get("usage"):
+                ids.add(message.get("id") or entry.get("uuid") or idx)
+                peak = max(peak, context_tokens(message["usage"]))
+    return role, len(ids), peak
+
+
 def session_transcripts(events, sessions):
     """Main-thread transcripts of the run's sessions: the one each event recorded
     (session_start, user_prompt) or, if the session started before the hooks
@@ -236,6 +261,10 @@ def build_metrics(run, events, e2e_first_pass, root=None):
     samples = [s for path in session_transcripts(events, sessions) for s in context_samples(path, start, end)]
     ctx_start = round(min(samples)[1] / 1000, 1) if samples else None
 
+    # The coders' own loops: how many calls the longest one made and how far its context grew.
+    coders = [agent_profile(p) for p in {e.get("agent_transcript") for e in run_events if e.get("agent_transcript")}]
+    coders = [(calls, peak) for role, calls, peak in coders if role in ("coder", "patriot") and calls]
+
     merged = counts["pr_merged"]
     opened = sorted({str(e["pr"]) for e in run_events if e["event"] == "pr_opened" and e.get("pr")})
     on_github = merged_on_github(opened, root) if opened and root else None
@@ -265,6 +294,9 @@ def build_metrics(run, events, e2e_first_pass, root=None):
         "tokens_by_model": {model: dict(counter) for model, counter in usage.items()},
         "tokens_measured": bool(usage),
         "orchestrator_ctx_start_k": ctx_start,
+        "coder_calls_max": max(c for c, _ in coders) if coders else None,
+        "coder_ctx_peak_k": round(max(p for _, p in coders) / 1000, 1) if coders else None,
+        "context_guard_warnings": counts["context_guard"],
         "e2e_first_pass": e2e_first_pass,
         "e2e_first_pass_source": "declared",
         "ticket_quality": ticket_quality(root, run) if root else None,

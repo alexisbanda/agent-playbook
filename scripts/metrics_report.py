@@ -80,6 +80,8 @@ def summarise(runs, prices):
             "cost": cost,
             "unpriced": unpriced,
             "ctx_start": run.get("orchestrator_ctx_start_k"),
+            "coder_calls": run.get("coder_calls_max"),
+            "coder_peak": run.get("coder_ctx_peak_k"),
             "overrides": len(run.get("overrides") or []),
             "model_blocks": (run.get("gate_events") or {}).get("model_block", 0),
             "tokens_measured": run.get("tokens_measured", False),
@@ -124,6 +126,18 @@ def check_tripwires(rows, config):
         add("orchestrator_ctx_start_k_max", median, median > wires["orchestrator_ctx_start_k_max"]["value"],
             f"mediana de miles de tokens en la primera llamada del orquestador ({len(starts)} corridas medidas)")
 
+    calls = [r["coder_calls"] for r in window if r["coder_calls"] is not None]
+    if calls:
+        median = statistics.median(calls)
+        add("coder_calls_max", median, median > wires["coder_calls_max"]["value"],
+            f"mediana de llamadas del coder más largo de cada corrida ({len(calls)} corridas medidas)")
+
+    peaks = [r["coder_peak"] for r in window if r["coder_peak"] is not None]
+    if peaks:
+        median = statistics.median(peaks)
+        add("coder_ctx_peak_k_max", median, median > wires["coder_ctx_peak_k_max"]["value"],
+            f"mediana del contexto máximo de un coder, en miles de tokens ({len(peaks)} corridas medidas)")
+
     overrides = statistics.mean(r["overrides"] for r in window)
     add("overrides_per_run_max", round(overrides, 2), overrides > wires["overrides_per_run_max"]["value"], "media por corrida")
 
@@ -141,6 +155,12 @@ def fmt(value, pct=False):
     return f"{value:.0%}" if pct else str(value)
 
 
+def coder_cell(row):
+    if row["coder_calls"] is None:
+        return "—"
+    return f"{row['coder_calls']} / {fmt(row['coder_peak'])}"
+
+
 def ticket_cell(quality):
     if not quality:
         return "—"
@@ -150,12 +170,12 @@ def ticket_cell(quality):
 
 def markdown(rows, wires, note, window):
     out = ["## Corridas", "",
-           "| Corrida | Cerrada | Versión | Min. totales | Min. esperando | Subagentes | PRs mergeados | Compactaciones | Contexto inicial (k) | E2E a la primera | Calidad del ticket | Coste estimado |",
-           "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
+           "| Corrida | Cerrada | Versión | Min. totales | Min. esperando | Subagentes | PRs mergeados | Compactaciones | Contexto inicial (k) | Coder: llamadas / pico (k) | E2E a la primera | Calidad del ticket | Coste estimado |",
+           "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
     for r in rows:
         cost = f"${r['cost']}" + (" (*)" if r["unpriced"] else "")
         out.append(f"| {r['run']} | {r['closed_at']} | {r['version']} | {r['wall']} | {r['wait']} | {r['subagents']} | "
-                   f"{r['prs_merged']} | {r['compactions']} | {fmt(r['ctx_start'])} | {r['e2e']} | {ticket_cell(r['ticket'])} | {cost} |")
+                   f"{r['prs_merged']} | {r['compactions']} | {fmt(r['ctx_start'])} | {coder_cell(r)} | {r['e2e']} | {ticket_cell(r['ticket'])} | {cost} |")
     if any(r["unpriced"] for r in rows):
         out += ["", "(*) Modelos sin precio en `metrics/prices.json`: " + ", ".join(sorted({m for r in rows for m in r["unpriced"]}))]
     out += ["", f"## Tripwires (últimas {window} corridas)", ""]

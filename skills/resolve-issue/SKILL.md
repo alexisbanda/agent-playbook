@@ -30,8 +30,8 @@ La tabla de clases y modelos está en `<plugin>/routing/ROUTING.md` (fuente de v
 | Clase | Modelo por defecto (Claude Code) | Modelo por defecto (`agy`) | Subagente equivalente |
 | --- | --- | --- | --- |
 | `reader` | `haiku` | `flash` | `Agent` (`subagent_type: Explore`) / `invoke_subagent` (`TypeName: research`) |
-| `standard` | `sonnet` | `inherit` | `Agent` (`general-purpose`) / `invoke_subagent` (`TypeName: self`) |
-| `critical` (dinero, contratos, seguridad, migraciones de datos, causa desconocida) | `opus` | `pro` | `Agent` (`general-purpose`) / `invoke_subagent` (`TypeName: self`) |
+| `standard` | `sonnet` | `inherit` | `Agent` (`agent-playbook:coder`) / `invoke_subagent` (`TypeName: self`) |
+| `critical` (dinero, contratos, seguridad, migraciones de datos, causa desconocida) | `opus` | `pro` | `Agent` (`agent-playbook:coder`, `effort: high`) / `invoke_subagent` (`TypeName: self`) |
 | `review` | `sonnet`; `opus` si revisa trabajo `critical` | `inherit`; `pro` si revisa trabajo `critical` | `Agent` (`general-purpose`) / `invoke_subagent` (`TypeName: research` o `self`) |
 
 Cada lanzamiento de subagente empieza con la línea `ROLE: <rol> · CLASS: <clase>` y pasa `model` / `Model` explícitamente. `fable` nunca escribe código. Para salirte de la tabla, añade `OVERRIDE: <motivo>` en la segunda línea y anótalo en `RUN_STATE.md`. Para preguntar al usuario usa `AskUserQuestion` (Claude Code) o `ask_question` (`agy`).
