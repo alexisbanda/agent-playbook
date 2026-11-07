@@ -12,7 +12,7 @@ Si el proyecto no tiene entorno desplegado (`dev_url` vacío), prueba contra la 
 
 ## 2. Prueba en vivo
 
-Cada criterio de aceptación se convierte en una prueba, con el chequeo que se acordó en el plan:
+Cada criterio de aceptación se prueba con el chequeo de aceptación del plan: **el mismo comando y la misma entrada** que el coder ya ejecutó en el worktree, ahora contra el código mergeado y desplegado (`dev_url` en los `http`). Si aquí aparece un resultado distinto del que el coder observó, anótalo: es una diferencia de entorno, y la siguiente tuning wave debe saberlo.
 
 | Chequeo | Prueba | Evidencia |
 | --- | --- | --- |

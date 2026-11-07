@@ -80,6 +80,7 @@ def summarise(runs, prices):
             "cost": cost,
             "unpriced": unpriced,
             "ctx_start": run.get("orchestrator_ctx_start_k"),
+            "orchestrator": run.get("orchestrator_model"),
             "coder_calls": run.get("coder_calls_max"),
             "coder_peak": run.get("coder_ctx_peak_k"),
             "overrides": len(run.get("overrides") or []),
@@ -155,6 +156,14 @@ def fmt(value, pct=False):
     return f"{value:.0%}" if pct else str(value)
 
 
+def short_model(model):
+    """claude-opus-5-5 -> opus; unknown or missing -> as is or a dash."""
+    if not model:
+        return "—"
+    parts = model.split("-")
+    return parts[1] if len(parts) > 1 and parts[0] == "claude" else model
+
+
 def coder_cell(row):
     if row["coder_calls"] is None:
         return "—"
@@ -170,11 +179,11 @@ def ticket_cell(quality):
 
 def markdown(rows, wires, note, window):
     out = ["## Corridas", "",
-           "| Corrida | Cerrada | Versión | Min. totales | Min. esperando | Subagentes | PRs mergeados | Compactaciones | Contexto inicial (k) | Coder: llamadas / pico (k) | E2E a la primera | Calidad del ticket | Coste estimado |",
-           "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
+           "| Corrida | Cerrada | Versión | Orquestador | Min. totales | Min. esperando | Subagentes | PRs mergeados | Compactaciones | Contexto inicial (k) | Coder: llamadas / pico (k) | E2E a la primera | Calidad del ticket | Coste estimado |",
+           "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
     for r in rows:
         cost = f"${r['cost']}" + (" (*)" if r["unpriced"] else "")
-        out.append(f"| {r['run']} | {r['closed_at']} | {r['version']} | {r['wall']} | {r['wait']} | {r['subagents']} | "
+        out.append(f"| {r['run']} | {r['closed_at']} | {r['version']} | {short_model(r['orchestrator'])} | {r['wall']} | {r['wait']} | {r['subagents']} | "
                    f"{r['prs_merged']} | {r['compactions']} | {fmt(r['ctx_start'])} | {coder_cell(r)} | {r['e2e']} | {ticket_cell(r['ticket'])} | {cost} |")
     if any(r["unpriced"] for r in rows):
         out += ["", "(*) Modelos sin precio en `metrics/prices.json`: " + ", ".join(sorted({m for r in rows for m in r["unpriced"]}))]

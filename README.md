@@ -23,7 +23,7 @@ Activa la auto-actualización del marketplace en `/plugin` → Marketplaces para
 
 1. Abre Claude Code en el repo y ejecuta `/agent-playbook:setup-project`. Crea `.claude/agent-playbook.json`.
 2. Versiona ese archivo para que todo el equipo use la misma configuración.
-3. Para resolver un ticket: `/agent-playbook:resolve-issue <número o URL>`. También se activa solo si pides resolver o implementar un issue.
+3. Para resolver un ticket: `/agent-playbook:resolve-issue <número o URL>`. También se activa solo si pides resolver o implementar un issue. Al presentar el plan recomienda el modelo de la sesión según el carril: `sonnet` para tickets pequeños sin riesgo y `opus` para los críticos (se cambia con `/model`).
 4. Cada semana, o cada 10 corridas: `/agent-playbook:tuning-wave` para revisar las métricas y mejorar los manuales. Ver [docs/METRICS.md](docs/METRICS.md).
 
 | Opción | Valores | Por defecto |

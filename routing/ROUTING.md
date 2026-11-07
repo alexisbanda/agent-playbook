@@ -66,6 +66,7 @@ Las clases del perfil completo también se aceptan en el reducido y se traducen:
 4. **El reviewer sube a `opus`** cuando revisa trabajo de clase `critical` (o `contract`, `money`, `security`), cuando revisa el PR que resuelve el ticket en el perfil completo, o en una segunda revisión tras un desacuerdo.
 5. **Excepciones con `OVERRIDE: <motivo>`** en las primeras líneas del prompt: deja pasar un modelo que la clase no permite y queda registrado en la telemetría. No salta la regla 3.
 6. **Modelo de la sesión.** El resolver solo arranca en una sesión `sonnet`, `opus` o `fable`. En el perfil completo, la clase `orchestrate` pide `fable`; el preflight avisa si la sesión usa otro.
+7. **Orquestador por carril.** Al presentar el plan, `resolve-issue` recomienda `sonnet` para el carril Fast-Track y `opus` para el crítico (ver «Modelo del orquestador por carril» en el skill). El usuario lo cambia con `/model`; nunca se baja de modelo en el carril crítico.
 
 ## Comprobar una decisión
 

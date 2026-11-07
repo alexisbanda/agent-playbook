@@ -10,8 +10,8 @@ Closes <#id | url del ticket>
 
 ## Criterios de aceptación
 
-| Criterio | Cómo se prueba |
-| --- | --- |
+| # | Criterio | Cómo se prueba (test o assert) | Chequeo ejecutado antes del PR (observado) |
+| --- | --- | --- | --- |
 
 ## Tests
 

@@ -19,6 +19,7 @@ Una línea por corrida en `.agent-playbook/metrics.jsonl`, escrita por `scripts/
 | Subagentes por modelo | Si el ruteo se usa como se diseñó |
 | PRs abiertos, promovidos y mergeados | Si el flujo llega al final. `prs_merged` incluye los PRs de la corrida que el usuario mergeó fuera de la sesión (se consultan en GitHub al cerrar); `prs_merged_outside` dice cuántos fueron |
 | Contexto inicial del orquestador (`orchestrator_ctx_start_k`) | Miles de tokens que la sesión principal ya traía en su primera llamada de la corrida. Si es alto, la sesión arrastra tickets anteriores y cada llamada los relee; se arregla empezando cada ticket en una sesión nueva |
+| Modelo del orquestador (`orchestrator_model`) | El que hizo la mayoría de las llamadas de la sesión principal. Con el carril del ticket en `RUN_STATE.md`, dice si la recomendación de `sonnet` en Fast-Track y `opus` en crítico se sigue y cuánto cambia el coste |
 | Bucle del coder (`coder_calls_max`, `coder_ctx_peak_k`, `context_guard_warnings`) | Llamadas del coder más largo de la corrida, el mayor contexto que alcanzó un coder (en miles de tokens) y cuántas veces avisó el vigilante de contexto. El coder suele ser la mitad del coste, y crece con llamadas × contexto |
 | Compactaciones | Si las corridas son demasiado largas o los agentes demasiado pesados |
 | Decisiones de los gates y overrides | Qué reglas se disparan y quién las salta |

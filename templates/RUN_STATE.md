@@ -7,6 +7,8 @@
 | Ticket | <id> · <título> · <url> |
 | Tracker | github / notion |
 | Clase | reader / standard / critical |
+| Carril | Fast-Track / estándar / crítico |
+| Modelo del orquestador | <recomendado> · <usado> |
 | Perfil | reduced / full |
 | Fase actual | preflight / ticket / terreno / plan / construcción / merge / cierre / cerrada |
 | Inicio | <fecha y hora> |
@@ -29,10 +31,10 @@
 
 - Aprobado por el usuario: <fecha y hora>
 - Cambios:
-- Criterios → chequeos:
+- Chequeos de aceptación (el coder los ejecuta antes del PR; el cierre los repite contra el entorno):
 
-| Criterio | Chequeo (http / test / e2e / manual) |
-| --- | --- |
+| # | Criterio | Tipo (http / test / e2e / cli / manual) | Comando en el worktree | Entrada | Esperado | En cierre |
+| --- | --- | --- | --- | --- | --- | --- |
 
 ## Agentes
 
