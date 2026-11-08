@@ -93,11 +93,13 @@ Resultados: código 0 = listo (imprime el comando de merge exacto, con `--match-
 
 Con el gate en 0, muestra su tabla y el SHA, pide el OK y ejecuta el comando que imprimió. `--match-head-commit` ata el merge al commit revisado: si alguien empujó después, falla.
 
-Si el modo automático de Claude Code deniega el merge, no lo esquives: dale al usuario ese mismo comando para que lo ejecute él (ver [Problemas conocidos](preflight.md#problemas-conocidos)) y sigue con el cierre cuando confirme. La telemetría lo cuenta como `prs_merged_outside`.
+Si el modo automático de Claude Code deniega el merge, no lo esquives: dale al usuario ese mismo comando para que lo ejecute él, y sugiere añadir la regla de permisos del paso 10 de `setup-project` para que la próxima vez no haga falta (ver [Problemas conocidos](preflight.md#problemas-conocidos)) y sigue con el cierre cuando confirme. La telemetría lo cuenta como `prs_merged_outside`.
 
 ## 8. Nada de agentes estacionados ni sesiones interminables
 
 Un agente que tendría que esperar algo externo más de unos 5 minutos (una review, la CI, un deploy, una decisión) termina su turno y deja `HANDBACK.md` (plantilla en `templates/`) en su worktree. Para retomarlo, lanza un agente nuevo de la misma clase que empiece leyendo ese archivo. Un agente dormido acumula contexto que cuesta caro reescribir; uno nuevo con un resumen arranca liviano.
+
+**Al terminar tu turno con trabajo en segundo plano** (un coder, un lector, el vigilante del merge, la CI), ciérralo con una línea que diga qué corre, cuánto suele tardar y que avisarás solo, por ejemplo: «El coder está en marcha (suele tardar 10–20 min). Te aviso cuando termine; no hace falta que preguntes». La notificación del agente te despierta, así que el usuario no necesita preguntar «¿cómo va?». En castkit y recuerdos hubo unas 13 preguntas así en 12 corridas, cada una una parada más y una llamada más del orquestador sobre todo su contexto. Si el usuario pregunta igualmente, contesta en una línea con el estado, sin relanzar nada.
 
 **Relevo por contexto.** Lo mismo vale para un coder que trabaja demasiado tiempo: cada llamada relee todo su contexto, así que el coste crece casi con el cuadrado de su longitud (en castkit#56, dos coders llegaron a 428k tokens y costaron 27 de los 32 USD de la corrida). El vigilante `hooks/context_guard.py` avisa al coder cuando supera `hooks.coder_ctx_handback_k` (150k por defecto) u 80 llamadas, y el coder commitea, deja `HANDBACK.md` y termina. Si un coder vuelve con un `HANDBACK.md` en lugar de un PR:
 

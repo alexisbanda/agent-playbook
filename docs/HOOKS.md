@@ -72,7 +72,7 @@ Una línea por evento en `.agent-playbook/events.jsonl` (no versionado). **No gu
 | Evento de Claude Code | Qué se registra |
 | --- | --- |
 | `SessionStart` / `SessionEnd` | Inicio y fin, ruta del transcript |
-| `UserPromptSubmit` | Que el usuario escribió (longitud, no el texto) |
+| `UserPromptSubmit` | Que el usuario escribió (longitud, no el texto). `automatic: true` si el mensaje empieza por una etiqueta (`<task-notification>`, `<system-reminder>`…): es la herramienta despertando la sesión, no el humano respondiendo |
 | `Stop` | Fin de turno: el modelo espera al humano |
 | `SubagentStart` / `SubagentStop` | Subagentes lanzados y terminados |
 | `PostToolUse` sobre `Agent` | `subagent_launched`: rol, clase, modelo y override. Los subagentes corren en segundo plano, así que este evento marca el lanzamiento; el final es `SubagentStop` |

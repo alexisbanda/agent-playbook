@@ -16,6 +16,7 @@ Una línea por corrida en `.agent-playbook/metrics.jsonl`, escrita por `scripts/
 | --- | --- |
 | Tokens por modelo y coste estimado | Dónde está el gasto. Suele estar en el contexto que se relee (lectura de caché), no en lo que el modelo escribe. Incluye al orquestador (la sesión principal, solo dentro de la ventana de la corrida) y a cada subagente; de cada respuesta cuenta el último registro del transcript, que es el que trae los tokens de salida finales |
 | Minutos totales y minutos esperando al humano | Cuánto frenan las aprobaciones |
+| Paradas, espera activa y ausencias (`human_stops`, `human_wait_active_minutes`, `human_absence_minutes`) | Desde la 1.6.0. Una parada es un fin de turno al que respondió el humano; los avisos automáticos de tareas no cuentan. Las paradas de más de 30 minutos son ausencias (el humano no estaba), no fricción del proceso |
 | Subagentes por modelo | Si el ruteo se usa como se diseñó |
 | PRs abiertos, promovidos y mergeados | Si el flujo llega al final. `prs_merged` incluye los PRs de la corrida que el usuario mergeó fuera de la sesión (se consultan en GitHub al cerrar); `prs_merged_outside` dice cuántos fueron |
 | Contexto inicial del orquestador (`orchestrator_ctx_start_k`) | Miles de tokens que la sesión principal ya traía en su primera llamada de la corrida. Si es alto, la sesión arrastra tickets anteriores y cada llamada los relee; se arregla empezando cada ticket en una sesión nueva |
@@ -44,7 +45,8 @@ Umbrales en [`metrics/tripwires.json`](../metrics/tripwires.json). Que uno salte
 | Tripwire | Umbral inicial | Salta cuando |
 | --- | --- | --- |
 | `e2e_first_pass_rate_min` | 0,8 | Menos del 80 % de las pruebas en vivo pasan a la primera |
-| `human_wait_share_max` | 0,5 | La mediana del tiempo esperando al humano supera la mitad de la corrida |
+| `human_wait_share_max` | 0,5 | La mediana del tiempo esperando al humano supera la mitad de la corrida. Desde la 1.6.0 no cuenta las ausencias de más de 30 minutos (ni en la espera ni en la duración) |
+| `human_stops_per_run_max` | 6 | La mediana de paradas en las que respondió el humano supera 6 por corrida |
 | `compaction_runs_share_max` | 0,2 | Más del 20 % de las corridas compactan contexto |
 | `cost_per_run_usd_max` | 5 USD | La mediana del coste estimado por corrida lo supera |
 | `orchestrator_ctx_start_k_max` | 150 | La mediana del contexto del orquestador en su primera llamada supera 150k tokens (la sesión arrastra tickets anteriores) |

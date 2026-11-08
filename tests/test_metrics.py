@@ -54,6 +54,16 @@ class TripwireTest(unittest.TestCase):
         result, _ = wires([run(i) for i in range(1, 5)])
         self.assertFalse(any(result.values()), result)
 
+    def test_absences_do_not_count_as_waiting(self):
+        # 100 min run, 70 of them away: 6 active minutes over 30 effective is not friction.
+        runs = [run(i, wall_minutes=100, human_wait_minutes=76, human_wait_active_minutes=6,
+                    human_absence_minutes=70, human_stops=4) for i in range(1, 4)]
+        result, _ = wires(runs)
+        self.assertFalse(result["human_wait_share_max"])
+        self.assertFalse(result["human_stops_per_run_max"])
+        result, _ = wires([run(i, human_stops=9, human_wait_active_minutes=2, human_absence_minutes=0) for i in range(1, 4)])
+        self.assertTrue(result["human_stops_per_run_max"])
+
     def test_long_coders_trip(self):
         result, _ = wires([run(i, coder_calls_max=150, coder_ctx_peak_k=320.0) for i in range(1, 4)])
         self.assertTrue(result["coder_calls_max"])

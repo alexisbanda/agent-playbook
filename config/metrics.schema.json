@@ -89,6 +89,18 @@
     "human_waits": {
       "$ref": "#/$defs/count"
     },
+    "human_stops": {
+      "$ref": "#/$defs/count",
+      "description": "Veces que la corrida se detuvo y respondió el humano (sin contar los avisos automáticos de tareas). Desde la 1.6.0."
+    },
+    "human_wait_active_minutes": {
+      "$ref": "#/$defs/minutes",
+      "description": "Minutos esperando al humano en paradas de 30 minutos o menos: la fricción del proceso. Desde la 1.6.0."
+    },
+    "human_absence_minutes": {
+      "$ref": "#/$defs/minutes",
+      "description": "Minutos de las paradas de más de 30 minutos: el humano estaba ausente, no esperando a decidir. Desde la 1.6.0."
+    },
     "sessions": {
       "$ref": "#/$defs/count"
     },

@@ -386,6 +386,30 @@ class CloseRunTest(HookTestCase):
         metrics = self.close_with_fake_gh("14", 'import sys\nsys.exit(1)\n')
         self.assertEqual((metrics["coder_calls_max"], metrics["coder_ctx_peak_k"], metrics["context_guard_warnings"]), (4, 120.0, 0))
 
+    def test_separates_human_stops_absences_and_automatic_wakeups(self):
+        self.start_run("15", "sid")
+        events = os.path.join(self.repo, ".agent-playbook", "events.jsonl")
+        def ev(ts, event, **kw):
+            with open(events, "a") as fh:
+                fh.write(json.dumps({"ts": ts, "event": event, "session_id": "sid", "agent_id": None, "run": "15", **kw}) + "\n")
+        ev("2026-11-01T10:00:00+00:00", "turn_end")
+        ev("2026-11-01T10:05:00+00:00", "user_prompt", chars=5)                 # 5 min: a stop
+        ev("2026-11-01T10:10:00+00:00", "turn_end")
+        ev("2026-11-01T10:20:00+00:00", "user_prompt", chars=300, automatic=True)  # task notification
+        ev("2026-11-01T10:30:00+00:00", "turn_end")
+        ev("2026-11-01T12:30:00+00:00", "user_prompt", chars=8)                 # 120 min: away
+        metrics = self.close_with_fake_gh("15", 'import sys\nsys.exit(1)\n')
+        self.assertEqual((metrics["human_waits"], metrics["human_stops"]), (3, 2))
+        self.assertEqual((metrics["human_wait_active_minutes"], metrics["human_absence_minutes"]), (5.0, 120.0))
+        self.assertEqual(metrics["human_wait_minutes"], 135.0)  # unchanged meaning: every wait
+
+    def test_marks_prompts_injected_by_the_harness(self):
+        self.start_run("16")
+        self.hook("telemetry.py", {"hook_event_name": "UserPromptSubmit", "prompt": "<task-notification>done</task-notification>"})
+        self.hook("telemetry.py", {"hook_event_name": "UserPromptSubmit", "prompt": "ok"})
+        prompts = [e for e in self.events() if e["event"] == "user_prompt"]
+        self.assertEqual([e.get("automatic") for e in prompts], [True, None])
+
     def close_with_fake_gh(self, run, gh_script):
         bin_dir = os.path.join(self.tmp, "bin")
         os.makedirs(bin_dir, exist_ok=True)

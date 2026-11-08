@@ -37,7 +37,11 @@ def facts(payload):
     if event == "SessionEnd":
         return [("session_end", {"reason": payload.get("reason")})]
     if event == "UserPromptSubmit":
-        return [("user_prompt", {"chars": len(payload.get("prompt") or ""), "transcript": payload.get("transcript_path")})]
+        prompt = payload.get("prompt") or ""
+        # A prompt that starts with a tag (<task-notification>, <system-reminder>...) is the
+        # harness waking the session, not the human answering. Only the flag is stored.
+        return [("user_prompt", {"chars": len(prompt), "automatic": prompt.lstrip().startswith("<") or None,
+                                 "transcript": payload.get("transcript_path")})]
     if event == "Stop":
         return [("turn_end", {})]
     if event == "PreCompact":

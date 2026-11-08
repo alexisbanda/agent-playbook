@@ -5,6 +5,7 @@
   "tripwires": {
     "e2e_first_pass_rate_min": { "value": 0.8, "why": "Si las pruebas en vivo dejan de pasar a la primera, el cambio llega enfermo al cierre: revisar criterios, brief del coder o verificación." },
     "human_wait_share_max": { "value": 0.5, "why": "Si más de la mitad del tiempo se espera al humano, las aprobaciones frenan el flujo: revisar qué se pregunta y cuándo." },
+    "human_stops_per_run_max": { "value": 6, "why": "Demasiadas paradas para el humano: revisar qué se pregunta, si se puede preguntar todo junto y si un permiso que falta (por ejemplo el de merge) añade paradas." },
     "compaction_runs_share_max": { "value": 0.2, "why": "Compactar en muchas corridas indica sesiones demasiado largas o agentes demasiado pesados." },
     "cost_per_run_usd_max": { "value": 5.0, "why": "Coste estimado por corrida por encima del presupuesto: mirar dónde se relee contexto." },
     "orchestrator_ctx_start_k_max": { "value": 150, "why": "El orquestador empieza la corrida con el contexto de tickets anteriores y lo relee en cada llamada: empezar cada ticket en una sesión nueva (o /clear) y retomar desde RUN_STATE.md." },

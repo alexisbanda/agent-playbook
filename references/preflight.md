@@ -10,9 +10,9 @@ Ejecuta todos los controles de golpe y abre `.agent-playbook/active-run` si no h
 python3 <plugin>/scripts/preflight.py --session-model <id del modelo de la sesión> --open-run <ticket> [--override-model "<motivo>"]
 ```
 
-El script devuelve un JSON con `ok` (`true` si ningún control dio `fail`), la lista `checks`, metadatos detectados (`profile`, `tracker_type`, `base_branch`, `origin_sha`, `gh_env_prefix`) y el bloque `markdown` listo para pegar en `RUN_STATE.md`. Si `checks` incluye avisos (`warn`) que requieren decisión del usuario (cambios sin commitear en el clon principal, commits locales sin push en la rama base, un `active-run` de otro ticket o una sesión con demasiado contexto), pregúntale antes de seguir.
+El script devuelve un JSON con `ok` (`true` si ningún control dio `fail`), la lista `checks`, metadatos detectados (`profile`, `tracker_type`, `base_branch`, `origin_sha`, `gh_env_prefix`) y el bloque `markdown` listo para pegar en `RUN_STATE.md`. Si `checks` incluye avisos (`warn`) que requieren decisión del usuario (cambios sin commitear en el clon principal, commits locales sin push en la rama base, un `active-run` de otro ticket o una sesión con demasiado contexto), pregúntale antes de seguir. El aviso del permiso de merge (control 8) no requiere decisión: menciónalo y sigue.
 
-A continuación se detalla qué comprueba cada uno de los 7 controles:
+A continuación se detalla qué comprueba cada uno de los 8 controles:
 
 ## 1. Modelo de la sesión
 
@@ -75,6 +75,15 @@ Cada ticket se resuelve en una sesión nueva. El orquestador relee todo su conte
 
 - por debajo: OK;
 - por encima: AVISO y **no abre `active-run`**, porque la corrida pertenece a la sesión que la abre y `/clear` empieza otra. Propón al usuario `/clear` (o una sesión nueva) y repetir allí el preflight; todo lo necesario para seguir está en el tracker, `RUN_STATE.md` y el repositorio. Si decide seguir en esta sesión, repite con `--keep-session` y anótalo en `RUN_STATE.md`.
+
+## 8. Permiso de merge
+
+`preflight.py` busca en `.claude/settings.json`, `.claude/settings.local.json` y `~/.claude/settings.json` una regla `permissions.allow` para `gh pr merge`. Sin ella, el modo automático de Claude Code deniega el merge aunque el usuario haya dado el OK, y cada PR cuesta una parada más: el usuario lo mergea a mano y vuelve a decirlo (en castkit y recuerdos, 23 de 32 PRs).
+
+- con regla: OK;
+- sin regla: AVISO que **no requiere decisión**. No te detengas por él; menciónalo al presentar el plan y sugiere `setup-project` para añadir `Bash(gh pr merge * --match-head-commit *)`.
+
+La regla no debilita el control: el OK explícito del usuario y `merge_gate.py` siguen siendo obligatorios, y el gate de seguridad bloquea un `gh pr merge` sin `--match-head-commit` o lanzado desde un subagente.
 
 ## Problemas conocidos
 
