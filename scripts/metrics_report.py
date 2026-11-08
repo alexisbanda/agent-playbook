@@ -61,6 +61,17 @@ def run_cost(run, prices):
     return round(total, 2), unpriced
 
 
+def wait_share(run):
+    """Share of the run spent waiting for the human. Since 1.6.0, absences (stops longer
+    than 30 minutes) are left out of both sides: they measure the human being away, not
+    the process making them wait. Older lines only have the raw total."""
+    wall = run.get("wall_minutes") or 0
+    if "human_wait_active_minutes" in run:
+        effective = wall - (run.get("human_absence_minutes") or 0)
+        return (run["human_wait_active_minutes"] / effective) if effective > 0 else None
+    return (run.get("human_wait_minutes", 0) / wall) if wall else None
+
+
 def summarise(runs, prices):
     rows = []
     for run in runs:
@@ -72,7 +83,8 @@ def summarise(runs, prices):
             "version": run.get("playbook_version", "?"),
             "wall": wall,
             "wait": run.get("human_wait_minutes", 0),
-            "wait_share": (run.get("human_wait_minutes", 0) / wall) if wall else None,
+            "wait_share": wait_share(run),
+            "stops": run.get("human_stops"),
             "subagents": run.get("subagents", 0),
             "prs_merged": run.get("prs_merged", 0),
             "compactions": run.get("compactions", 0),
@@ -111,7 +123,14 @@ def check_tripwires(rows, config):
     shares = [r["wait_share"] for r in window if r["wait_share"] is not None]
     if shares:
         median = statistics.median(shares)
-        add("human_wait_share_max", round(median, 2), median > wires["human_wait_share_max"]["value"], "mediana de minutos esperando / minutos totales")
+        add("human_wait_share_max", round(median, 2), median > wires["human_wait_share_max"]["value"],
+            "mediana de minutos esperando / minutos totales, sin ausencias de más de 30 min desde la 1.6.0")
+
+    stops = [r["stops"] for r in window if r["stops"] is not None]
+    if stops:
+        median = statistics.median(stops)
+        add("human_stops_per_run_max", median, median > wires["human_stops_per_run_max"]["value"],
+            f"mediana de paradas en las que respondió el humano ({len(stops)} corridas medidas)")
 
     share = sum(r["compactions"] > 0 for r in window) / len(window)
     add("compaction_runs_share_max", round(share, 2), share > wires["compaction_runs_share_max"]["value"], "corridas con al menos una compactación")
@@ -179,11 +198,11 @@ def ticket_cell(quality):
 
 def markdown(rows, wires, note, window):
     out = ["## Corridas", "",
-           "| Corrida | Cerrada | Versión | Orquestador | Min. totales | Min. esperando | Subagentes | PRs mergeados | Compactaciones | Contexto inicial (k) | Coder: llamadas / pico (k) | E2E a la primera | Calidad del ticket | Coste estimado |",
-           "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
+           "| Corrida | Cerrada | Versión | Orquestador | Min. totales | Min. esperando | Paradas | Subagentes | PRs mergeados | Compactaciones | Contexto inicial (k) | Coder: llamadas / pico (k) | E2E a la primera | Calidad del ticket | Coste estimado |",
+           "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
     for r in rows:
         cost = f"${r['cost']}" + (" (*)" if r["unpriced"] else "")
-        out.append(f"| {r['run']} | {r['closed_at']} | {r['version']} | {short_model(r['orchestrator'])} | {r['wall']} | {r['wait']} | {r['subagents']} | "
+        out.append(f"| {r['run']} | {r['closed_at']} | {r['version']} | {short_model(r['orchestrator'])} | {r['wall']} | {r['wait']} | {fmt(r['stops'])} | {r['subagents']} | "
                    f"{r['prs_merged']} | {r['compactions']} | {fmt(r['ctx_start'])} | {coder_cell(r)} | {r['e2e']} | {ticket_cell(r['ticket'])} | {cost} |")
     if any(r["unpriced"] for r in rows):
         out += ["", "(*) Modelos sin precio en `metrics/prices.json`: " + ", ".join(sorted({m for r in rows for m in r["unpriced"]}))]

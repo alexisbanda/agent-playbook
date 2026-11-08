@@ -397,6 +397,36 @@ def check_session_context(cwd=".", session_id=None, transcript=None):
             "detail": f"{context_k}k tokens de contexto (umbral {limit_k}k)"}
 
 
+MERGE_RULE = "Bash(gh pr merge * --match-head-commit *)"
+
+
+def check_merge_permission(cwd=".", home=None):
+    """Whether some settings file allows `gh pr merge`. Without that rule, Claude Code's
+    auto mode denies the merge even after the user's OK, and every PR costs an extra
+    stop: the user runs the command by hand and comes back to say so."""
+    root = os.path.abspath(cwd)
+    home = home or os.path.expanduser("~")
+    files = [os.path.join(root, ".claude", "settings.json"),
+             os.path.join(root, ".claude", "settings.local.json"),
+             os.path.join(home, ".claude", "settings.json")]
+    for path in files:
+        try:
+            with open(path) as fh:
+                allow = ((json.load(fh).get("permissions") or {}).get("allow") or [])
+        except (OSError, ValueError, AttributeError):
+            continue
+        if any(isinstance(rule, str) and "gh pr merge" in rule for rule in allow):
+            return {"id": "merge_permission", "status": "ok",
+                    "detail": f"regla de merge en {os.path.relpath(path, root) if path.startswith(root) else path}"}
+    return {
+        "id": "merge_permission",
+        "status": "warn",
+        "rule": MERGE_RULE,
+        "detail": ("sin regla de permisos para `gh pr merge`: el modo automático denegará el merge y lo tendrás "
+                   f"que ejecutar a mano. Añade `{MERGE_RULE}` con setup-project. No requiere decisión ahora"),
+    }
+
+
 def format_markdown(checks):
     badge = {"ok": "OK", "warn": "AVISO", "fail": "FALLO"}
     labels = {
@@ -407,6 +437,7 @@ def format_markdown(checks):
         "git_state": "5. Estado del clon principal",
         "hooks": "6. Hooks y corrida activa",
         "context": "7. Contexto de la sesión",
+        "merge_permission": "8. Permiso de merge",
     }
     return "\n".join(
         f"- {labels.get(c['id'], c['id'])}: **{badge[c['status']]}** — {c['detail']}"
@@ -440,7 +471,7 @@ def run_preflight(session_model, cwd=".", override_model=None, open_run=None, se
         cwd=cwd, open_ticket=open_run, session_id=session_id, can_open=can_open
     )
 
-    checks = [*preliminary, hooks_check, context_check]
+    checks = [*preliminary, hooks_check, context_check, check_merge_permission(cwd=cwd)]
     ok = not any(c["status"] == "fail" for c in checks)
     return {
         "ok": ok,

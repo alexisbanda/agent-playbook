@@ -85,6 +85,24 @@ class PreflightTest(unittest.TestCase):
                 "id": "m1", "usage": {"input_tokens": 1, "cache_read_input_tokens": context_tokens - 1}}}) + "\n")
         return path
 
+    def test_merge_permission_looks_in_project_local_and_user_settings(self):
+        home = tempfile.mkdtemp()
+        try:
+            out = preflight.check_merge_permission(cwd=self.tmp, home=home)
+            self.assertEqual(out["status"], "warn")
+            self.assertIn("No requiere decisión", out["detail"])
+            os.makedirs(os.path.join(self.tmp, ".claude"), exist_ok=True)
+            with open(os.path.join(self.tmp, ".claude", "settings.local.json"), "w") as fh:
+                json.dump({"permissions": {"allow": [preflight.MERGE_RULE]}}, fh)
+            self.assertEqual(preflight.check_merge_permission(cwd=self.tmp, home=home)["status"], "ok")
+            os.remove(os.path.join(self.tmp, ".claude", "settings.local.json"))
+            os.makedirs(os.path.join(home, ".claude"))
+            with open(os.path.join(home, ".claude", "settings.json"), "w") as fh:
+                json.dump({"permissions": {"allow": ["Bash(env -u GITHUB_TOKEN -u GH_TOKEN gh pr merge *)"]}}, fh)
+            self.assertEqual(preflight.check_merge_permission(cwd=self.tmp, home=home)["status"], "ok")
+        finally:
+            shutil.rmtree(home)
+
     def test_context_check_warns_when_the_session_carries_a_previous_ticket(self):
         heavy = preflight.check_session_context(cwd=self.tmp, transcript=self.write_transcript(400000))
         self.assertEqual((heavy["status"], heavy["context_k"]), ("warn", 400))

@@ -67,7 +67,7 @@ Cada lanzamiento de subagente empieza con la línea `ROLE: <rol> · CLASS: <clas
    Si la sesión no coincide con la recomendada, dilo en una línea junto al plan («Este ticket va por Fast-Track: con `/model sonnet` el resto de la corrida cuesta menos sin bajar la calidad del coder ni de la verificación»). Es una recomendación, no un bloqueo: si el usuario sigue con otro modelo, anótalo en `RUN_STATE.md`. Nunca recomiendes bajar de modelo en el carril crítico. Con `--approve-plan` no hay pausa para cambiarlo: si la sesión no era la recomendada, dilo en el informe final para el próximo ticket.
 
    Al presentar el plan, di qué autoriza aprobarlo: commits en la rama del ticket, push de esa rama y PR **en borrador**, sin volver a preguntar. Esto prevalece sobre una regla general de "pedir OK antes de commit o push" para esta corrida. No autoriza: push a la rama base, promover a listo si el review bot está activado sin pasar por la checklist, mergear ni escribir en producción.
-5. **Construcción.** Lee `references/engine.md`: worktree, baseline (cacheado por SHA base), coder, verificación, review y PR en borrador.
+5. **Construcción.** Lee `references/engine.md`: worktree, baseline (cacheado por SHA base), coder, verificación, review y PR en borrador. Cuando termines un turno con un agente en segundo plano, di qué corre, cuánto suele tardar y que avisarás solo (`engine.md`, paso 8).
 6. **Merge.** Sigue la checklist de merge de `references/engine.md`. Muestra el resultado y **pide OK explícito** antes de mergear (incluso en Fast-Track). Los coders nunca mergean.
 7. **Cierre.** Lee `references/closure.md`: gate de deploy, prueba en vivo, evidencia en el ticket, LÍMITES, journeys e informe final. Ejecuta `finish` solo con la evidencia publicada.
 

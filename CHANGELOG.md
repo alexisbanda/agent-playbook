@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.6.0
+
+Tuning wave del 2026-11-08 sobre 36 corridas (30 de castkit y recuerdos-artesanales, todas 1.2.0; aún ninguna con la 1.3.0–1.5.0). Saltan tres tripwires:
+- `cost_per_run_usd_max` (5,14) y `e2e_first_pass_rate_min` (0,75): ya los atacan la 1.4.0 y la 1.5.0, sin datos nuevos para evaluarlas, así que se dejan como están;
+- `human_wait_share_max` (0,92, desde 0,51 en la ola anterior): este es nuevo.
+
+Detrás de las esperas no hay respuestas lentas: la mediana es de 2–3 minutos. Sí hay unas 8 paradas por corrida, y:
+- **23 de 32 PRs los mergeó el usuario a mano.** Son todos los de recuerdos y 14 de 23 en castkit, porque el modo automático deniega `gh pr merge`: una parada más por PR.
+- **Unas 13 preguntas «¿cómo va…?» en 12 corridas**, porque el orquestador terminaba el turno sin decir qué corría ni que avisaría solo.
+- **El tripwire medía ausencias, no fricción**: la corrida #93 tiene 844 de sus 897 minutos en una sola espera nocturna.
+
+Cambios:
+
+- **Permiso de merge.** `skills/setup-project/SKILL.md` (paso 10) propone, con OK del usuario, `Bash(gh pr merge * --match-head-commit *)` en `.claude/settings.local.json`. `scripts/preflight.py` añade el control 8, «Permiso de merge», que avisa si falta y no requiere decisión (`references/preflight.md`). El OK explícito, `merge_gate.py` y el gate de seguridad (que bloquea el merge sin `--match-head-commit` o desde un subagente) no cambian.
+- **Avisar de lo que corre en segundo plano.** `references/engine.md` (paso 8) y `skills/resolve-issue/SKILL.md` (fase 5): al terminar el turno con un agente en marcha, una línea con qué corre, cuánto suele tardar y que el orquestador avisará solo.
+- **Esperas medidas sin ausencias.**
+  - `hooks/telemetry.py` marca `automatic` en los mensajes que inyecta la herramienta (notificaciones de tareas); guarda solo la marca, no el texto.
+  - `scripts/close_run.py` añade `human_stops`, `human_wait_active_minutes` y `human_absence_minutes` (paradas de más de 30 minutos). `human_wait_minutes` y `human_waits` mantienen su significado.
+  - `scripts/metrics_report.py`: `human_wait_share_max` deja fuera las ausencias desde la 1.6.0, y hay un tripwire nuevo, `human_stops_per_run_max` (6), con su columna «Paradas».
+  - Con los datos de 1.2.0: la #93 queda en 5 paradas, 45 min de espera activa y 844 de ausencia; la #78 en 8 paradas; la #32 en 6 paradas y 154 min de ausencia.
+- Qué mirar en la próxima ola:
+  - `prs_merged_outside` en 0;
+  - la mediana de `human_stops` por debajo de 6;
+  - ninguna pregunta «¿cómo va…?».
+
+  La proporción de espera seguirá alta mientras los agentes sean rápidos: la señal útil son las paradas.
+- 139 tests.
+
 ## 1.5.0
 
 Segunda parte del análisis de tokens del 2026-11-07. Objetivo: gastar menos sin bajar la calidad, sobre todo en los tickets importantes. Los pasos que dan la calidad (plan aprobado, reviewer en `critical` con un 4 % del coste, Opus en `critical`, prueba en vivo) no cambian.

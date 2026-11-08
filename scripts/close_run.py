@@ -24,6 +24,8 @@ import sys
 import route
 
 STATE_DIR = ".agent-playbook"
+# A wait longer than this is the human being away, not the process making them wait.
+ABSENCE_MINUTES = 30
 PLUGIN_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 SCHEMA = os.path.join(PLUGIN_ROOT, "config", "metrics.schema.json")
 
@@ -226,16 +228,30 @@ def build_metrics(run, events, e2e_first_pass, root=None):
     counts = collections.Counter(e["event"] for e in run_events)
 
     # Waiting for the human: from the end of a main-thread turn to the next prompt.
+    # human_wait_minutes and human_waits keep their old meaning (every wait) so that
+    # runs stay comparable; the split below separates the human's real stops from
+    # automatic wake-ups (task notifications) and from absences.
     waiting = datetime.timedelta()
     waits = 0
+    stops = 0
+    active = datetime.timedelta()
+    absent = datetime.timedelta()
     pending = None
     for event in run_events:
         if event["event"] == "turn_end" and not event.get("agent_id"):
             pending = parse_ts(event["ts"])
         elif event["event"] == "user_prompt" and pending:
-            waiting += parse_ts(event["ts"]) - pending
+            gap = parse_ts(event["ts"]) - pending
+            waiting += gap
             waits += 1
             pending = None
+            if event.get("automatic"):
+                continue
+            stops += 1
+            if gap > datetime.timedelta(minutes=ABSENCE_MINUTES):
+                absent += gap
+            else:
+                active += gap
 
     gates = collections.Counter()
     overrides = []
@@ -285,6 +301,9 @@ def build_metrics(run, events, e2e_first_pass, root=None):
         "wall_minutes": minutes(end - start),
         "human_wait_minutes": minutes(waiting),
         "human_waits": waits,
+        "human_stops": stops,
+        "human_wait_active_minutes": minutes(active),
+        "human_absence_minutes": minutes(absent),
         "sessions": len(sessions),
         "subagents": sum(subagents.values()),
         "subagents_by_model": dict(subagents),
