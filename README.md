@@ -90,7 +90,7 @@ Todas las corridas reales registradas usan GitHub Issues y el perfil `reduced`. 
 - **Jira:** el adaptador existe desde la 1.2, pero no hay corridas con `tracker.type: "jira"`. Notion se probó en la 1.0.
 - **Perfil `full`:** descrito y con su tabla de ruteo, sin corridas.
 - **`resolve-epic` y los coders en paralelo:** sin corridas registradas.
-- **Google Antigravity `agy`:** los hooks y el ruteo lo contemplan, sin corridas registradas.
+- **Google Antigravity `agy`:** los hooks y el ruteo lo contemplan, y el segundo reviewer (`second_reviewer`, consultivo en `standard` e interno obligatorio en `critical`) y los lectores Gemini (`gemini_readers`) lo invocan en solo lectura, sin corridas reales registradas todavía.
 - **Entorno desplegado:** las pruebas en vivo se han hecho contra el entorno local (`dev_url` vacío); el gate de deploy no se ha ejercitado.
 - **Review bot, criterios `e2e` con navegador y journeys:** sin probar a fondo (un solo repo tiene un journey).
 - **Proyecto desde cero:** el ticket 0 de un repo sin código se resolvió una vez (kickoff-demo#2, Next.js); falta repetirlo con otro stack.
