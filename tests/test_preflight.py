@@ -171,6 +171,39 @@ class PreflightTest(unittest.TestCase):
                     "second_reviewer.enabled pero agy no está en el PATH: la corrida seguirá sin segundo reviewer",
                 )
 
+    def test_gemini_readers_check_omitted_when_disabled_and_warns_without_agy(self):
+        self.write_config()
+        self.assertIsNone(preflight.check_gemini_readers(cwd=self.tmp))
+
+        ok = lambda check_id: (lambda *a, **k: {"id": check_id, "status": "ok", "detail": ""})
+        with mock.patch.object(preflight, "check_tools", ok("tools")), \
+             mock.patch.object(preflight, "check_git_state", ok("git_state")), \
+             mock.patch.object(preflight, "check_session_model", ok("session_model")), \
+             mock.patch.object(preflight, "check_session_context", ok("context")), \
+             mock.patch.object(preflight, "check_merge_permission", ok("merge_permission")):
+            self.write_config({
+                "version": 1,
+                "profile": "reduced",
+                "tracker": {"type": "github"},
+                "gemini_readers": {"enabled": True, "model": "gemini-3.8-flash", "effort": "low"},
+            })
+            with mock.patch.object(preflight.shutil, "which", return_value="/usr/local/bin/agy"):
+                found = preflight.run_preflight("opus", cwd=self.tmp, do_fetch=False, remote_version=False)
+                rdr_ok = [c for c in found["checks"] if c["id"] == "gemini_readers"][0]
+                self.assertEqual(rdr_ok["status"], "ok")
+                self.assertIn("gemini-3.8-flash (low)", rdr_ok["detail"])
+                self.assertIn("10. Lectores Gemini", found["markdown"])
+
+            with mock.patch.object(preflight.shutil, "which", return_value=None):
+                missing = preflight.run_preflight("opus", cwd=self.tmp, do_fetch=False, remote_version=False)
+                self.assertTrue(missing["ok"])
+                rdr_warn = [c for c in missing["checks"] if c["id"] == "gemini_readers"][0]
+                self.assertEqual(rdr_warn["status"], "warn")
+                self.assertEqual(
+                    rdr_warn["detail"],
+                    "gemini_readers.enabled pero agy no está en el PATH: se caerá a lectores Claude haiku",
+                )
+
 
 if __name__ == "__main__":
     unittest.main()

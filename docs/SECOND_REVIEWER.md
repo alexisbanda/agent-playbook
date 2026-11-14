@@ -1,16 +1,21 @@
-# Segundo reviewer
+# Segundo reviewer y reviewer interno con Gemini
 
-Una segunda opinión sobre el diff de cada ticket, dada por un modelo de otro proveedor: Gemini, a través del CLI `agy` de Antigravity. Revisa en solo lectura, antes de promover el PR. Es **consultivo**: sus hallazgos van al orquestador, que los comprueba y decide. Nunca aprueba, nunca bloquea y el gate de merge no lo mira. Es opcional y se activa por configuración.
+Una revisión del diff de cada ticket por un modelo de otro proveedor: Gemini, a través del CLI `agy` de Antigravity. Revisa en solo lectura, antes de promover el PR. Es opcional y se activa por configuración.
+
+- En tickets `standard` (o en `critical` si `second_reviewer.internal_review` es `false`) es **consultivo**: sus hallazgos van al orquestador, que los comprueba y decide. Nunca aprueba ni bloquea por sí mismo.
+- En tickets `critical` con `second_reviewer.internal_review: true` (por defecto) **es el reviewer interno obligatorio**: su `APPROVE` sobre el `HEAD` actual cuenta como la aprobación interna y absorbe la revisión de `opus` (una sola revisión de Gemini por ronda). Si `agy` falla, el orquestador cae automáticamente al reviewer interno de Claude (`opus`) y lo anota en LÍMITES.
+
+En ambos modos `merge_gate.py` no lee `second-review.json`; es el orquestador quien aplica el veredicto antes de promover.
 
 ## Para qué sirve
 
 | Qué aporta | Detalle |
 | --- | --- |
-| Otra mirada | Un modelo distinto del que escribió y verificó el código tiene puntos ciegos distintos. En `standard` cubre un hueco: ahí no hay reviewer independiente. En `critical` se suma al reviewer interno, sin sustituirlo |
+| Otra mirada | Un modelo distinto del que escribió y verificó el código tiene puntos ciegos distintos. En `standard` cubre un hueco: ahí no hay reviewer independiente. En `critical` actúa como el reviewer interno obligatorio (o se suma a `opus` si `internal_review: false`) |
 | Cobertura de criterios | Devuelve una tabla criterio → test. El orquestador parte de ella en la verificación en lugar de leer todos los tests sobre su propio contexto |
 | Sin gasto de Claude | La revisión corre en `agy` con la cuenta de Antigravity del usuario. El orquestador solo recibe una tabla corta |
 
-Lo que **no** hace: no escribe código ni tests, no ejecuta la suite, no sustituye al reviewer interno ni al [review bot](REVIEW_BOT.md).
+Lo que **no** hace: no escribe código ni tests, no ejecuta la suite y no sustituye al [review bot](REVIEW_BOT.md).
 
 ## Activarlo
 
@@ -27,6 +32,7 @@ Lo que **no** hace: no escribe código ni tests, no ejecuta la suite, no sustitu
 | `model` | `gemini-4-argon` | Modelo de `agy` (lista: `agy models`) |
 | `timeout_seconds` | `300` | Tiempo máximo de una revisión |
 | `min_diff_lines` | `50` | En `standard`, no revisa diffs con menos líneas cambiadas (`0` lo desactiva) |
+| `internal_review` | `true` | En `critical`, Gemini es el reviewer interno obligatorio y absorbe al reviewer `opus` (con caída a `opus` si `agy` falla) |
 
 El esfuerzo sale de la clase del ticket: `medium` en `standard`, `high` en `critical`.
 
@@ -61,7 +67,7 @@ En `critical` siempre revisa. Con `--force` revisa aunque esté desactivado, el 
 
 ### Cuando no hay revisión
 
-El script termina con código 1 y una línea que dice por qué. La corrida sigue como si estuviera desactivado y se anota en LÍMITES.
+El script termina con código 1 y una línea que dice por qué. En `standard` (o con `internal_review: false`) la corrida sigue como si estuviera desactivado; en `critical` con `internal_review: true` el orquestador lanza el reviewer interno de Claude (`ROLE: reviewer · CLASS: review`, `opus`, `templates/REVIEW_BRIEF.md`). En ambos casos se anota en LÍMITES.
 
 | Estado | Causa |
 | --- | --- |
@@ -83,7 +89,7 @@ El procedimiento está en [`references/engine.md`](../references/engine.md), pas
 
 ## Cómo saber si merece la pena
 
-`close_run.py` añade a la línea de métricas el campo `second_review` (ver [METRICS.md](METRICS.md)): llamadas (`calls`), llamadas sin revisión (`degraded`), revisiones omitidas (`skipped`), cambios pedidos (`changes_requested`), hallazgos, aceptados, descartados, tokens de Gemini y segundos.
+`close_run.py` añade a la línea de métricas el campo `second_review` (ver [METRICS.md](METRICS.md)): llamadas (`calls`), llamadas como reviewer interno (`internal`), llamadas sin revisión (`degraded`), revisiones omitidas (`skipped`), cambios pedidos (`changes_requested`), hallazgos, aceptados, descartados, tokens de Gemini y segundos.
 
 | Señal | Qué mirar en la tuning wave |
 | --- | --- |

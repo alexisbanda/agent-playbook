@@ -35,6 +35,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PLUGIN_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
 sys.path.insert(0, SCRIPT_DIR)
 import close_run  # noqa: E402
+import gemini_reader  # noqa: E402
 import route  # noqa: E402
 import second_review  # noqa: E402
 
@@ -453,6 +454,30 @@ def check_second_reviewer(cwd="."):
     }
 
 
+def check_gemini_readers(cwd="."):
+    """Checks `agy` availability only when `gemini_readers.enabled` is true."""
+    try:
+        cfg = gemini_reader.load_config(cwd)
+    except (OSError, ValueError):
+        cfg = {}
+    conf = gemini_reader.settings(cfg)
+    if not conf["enabled"]:
+        return None
+    if shutil.which("agy"):
+        return {
+            "id": "gemini_readers",
+            "status": "ok",
+            "model": conf["model"],
+            "detail": f"agy disponible · modelo {conf['model']} ({conf['effort']})",
+        }
+    return {
+        "id": "gemini_readers",
+        "status": "warn",
+        "model": conf["model"],
+        "detail": "gemini_readers.enabled pero agy no está en el PATH: se caerá a lectores Claude haiku",
+    }
+
+
 def format_markdown(checks):
     badge = {"ok": "OK", "warn": "AVISO", "fail": "FALLO"}
     labels = {
@@ -465,6 +490,7 @@ def format_markdown(checks):
         "context": "7. Contexto de la sesión",
         "merge_permission": "8. Permiso de merge",
         "second_reviewer": "9. Segundo reviewer",
+        "gemini_readers": "10. Lectores Gemini",
     }
     return "\n".join(
         f"- {labels.get(c['id'], c['id'])}: **{badge[c['status']]}** — {c['detail']}"
@@ -502,6 +528,9 @@ def run_preflight(session_model, cwd=".", override_model=None, open_run=None, se
     second_check = check_second_reviewer(cwd=cwd)
     if second_check is not None:
         checks.append(second_check)
+    readers_check = check_gemini_readers(cwd=cwd)
+    if readers_check is not None:
+        checks.append(readers_check)
     ok = not any(c["status"] == "fail" for c in checks)
     return {
         "ok": ok,
