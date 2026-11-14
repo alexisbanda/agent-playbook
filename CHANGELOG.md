@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.2
+
+- **Preflight con Jira.** Hasta ahora el preflight solo comprobaba el conector de Notion. Con `tracker.type: "jira"` se comprueba también el de Atlassian (`references/preflight.md`, sección 4):
+  1. el conector responde (`getAccessibleAtlassianResources`);
+  2. el sitio configurado (`cloud_id` o `site_url`) es accesible;
+  3. `project_key` aparece en `getVisibleJiraProjects`;
+  4. el `cloudId` queda anotado en `RUN_STATE.md` para el adaptador.
+
+  Si algo falla, la corrida se detiene antes de tocar el ticket. `preflight.py` no puede comprobar conectores MCP: `resolve-issue` y `resolve-epic` piden ahora hacerlo a mano después del script, tanto con Notion como con Jira.
+- `references/trackers/jira.md`: documenta `tracker.jira.cloud_id`, que ya estaba en el esquema.
+
 ## 1.6.1
 
 Documentación al día, sin cambios de comportamiento.
