@@ -135,6 +135,42 @@ class PreflightTest(unittest.TestCase):
                                            do_fetch=False, remote_version=False, keep_session=True)
             self.assertEqual(kept["checks"][5]["opened_run"], "42")
 
+    def test_second_reviewer_check_omitted_when_disabled_and_warns_without_agy(self):
+        self.write_config()
+        self.assertIsNone(preflight.check_second_reviewer(cwd=self.tmp))
+
+        ok = lambda check_id: (lambda *a, **k: {"id": check_id, "status": "ok", "detail": ""})
+        with mock.patch.object(preflight, "check_tools", ok("tools")), \
+             mock.patch.object(preflight, "check_git_state", ok("git_state")), \
+             mock.patch.object(preflight, "check_session_model", ok("session_model")), \
+             mock.patch.object(preflight, "check_session_context", ok("context")), \
+             mock.patch.object(preflight, "check_merge_permission", ok("merge_permission")):
+            disabled = preflight.run_preflight("opus", cwd=self.tmp, do_fetch=False, remote_version=False)
+            self.assertNotIn("second_reviewer", [c["id"] for c in disabled["checks"]])
+
+            self.write_config({
+                "version": 1,
+                "profile": "reduced",
+                "tracker": {"type": "github"},
+                "second_reviewer": {"enabled": True, "model": "gemini-4-argon"},
+            })
+            with mock.patch.object(preflight.shutil, "which", return_value="/usr/local/bin/agy"):
+                found = preflight.run_preflight("opus", cwd=self.tmp, do_fetch=False, remote_version=False)
+                sec_ok = [c for c in found["checks"] if c["id"] == "second_reviewer"][0]
+                self.assertEqual(sec_ok["status"], "ok")
+                self.assertIn("gemini-4-argon", sec_ok["detail"])
+                self.assertIn("9. Segundo reviewer", found["markdown"])
+
+            with mock.patch.object(preflight.shutil, "which", return_value=None):
+                missing = preflight.run_preflight("opus", cwd=self.tmp, do_fetch=False, remote_version=False)
+                self.assertTrue(missing["ok"])
+                sec_warn = [c for c in missing["checks"] if c["id"] == "second_reviewer"][0]
+                self.assertEqual(sec_warn["status"], "warn")
+                self.assertEqual(
+                    sec_warn["detail"],
+                    "second_reviewer.enabled pero agy no está en el PATH: la corrida seguirá sin segundo reviewer",
+                )
+
 
 if __name__ == "__main__":
     unittest.main()

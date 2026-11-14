@@ -26,6 +26,7 @@ import argparse
 import base64
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -35,6 +36,7 @@ PLUGIN_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
 sys.path.insert(0, SCRIPT_DIR)
 import close_run  # noqa: E402
 import route  # noqa: E402
+import second_review  # noqa: E402
 
 CONFIG_CANDIDATES = (
     ".agent-playbook.json",
@@ -427,6 +429,30 @@ def check_merge_permission(cwd=".", home=None):
     }
 
 
+def check_second_reviewer(cwd="."):
+    """Checks `agy` availability only when `second_reviewer.enabled` is true."""
+    try:
+        cfg = second_review.load_config(cwd)
+    except (OSError, ValueError):
+        cfg = {}
+    conf = second_review.settings(cfg)
+    if not conf["enabled"]:
+        return None
+    if shutil.which("agy"):
+        return {
+            "id": "second_reviewer",
+            "status": "ok",
+            "model": conf["model"],
+            "detail": f"agy disponible · modelo {conf['model']}",
+        }
+    return {
+        "id": "second_reviewer",
+        "status": "warn",
+        "model": conf["model"],
+        "detail": "second_reviewer.enabled pero agy no está en el PATH: la corrida seguirá sin segundo reviewer",
+    }
+
+
 def format_markdown(checks):
     badge = {"ok": "OK", "warn": "AVISO", "fail": "FALLO"}
     labels = {
@@ -438,6 +464,7 @@ def format_markdown(checks):
         "hooks": "6. Hooks y corrida activa",
         "context": "7. Contexto de la sesión",
         "merge_permission": "8. Permiso de merge",
+        "second_reviewer": "9. Segundo reviewer",
     }
     return "\n".join(
         f"- {labels.get(c['id'], c['id'])}: **{badge[c['status']]}** — {c['detail']}"
@@ -472,6 +499,9 @@ def run_preflight(session_model, cwd=".", override_model=None, open_run=None, se
     )
 
     checks = [*preliminary, hooks_check, context_check, check_merge_permission(cwd=cwd)]
+    second_check = check_second_reviewer(cwd=cwd)
+    if second_check is not None:
+        checks.append(second_check)
     ok = not any(c["status"] == "fail" for c in checks)
     return {
         "ok": ok,

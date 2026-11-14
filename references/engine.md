@@ -51,16 +51,27 @@ Cuando el coder termina, tú verificas:
 1. **Tests sin duplicación innecesaria:** comprueba que el worktree está limpio (`git status --porcelain` vacío) y que el coder ejecutó el comando de tests del worktree sobre el SHA actual de `HEAD` sin fallas nuevas respecto al baseline. Si el informe del coder incluye la salida en verde sobre ese mismo SHA y no se ha tocado ningún archivo después, no re-ejecutes toda la suite completa por segunda vez; si no la corrió sobre el commit final, hubo cambios posteriores o hay cualquier duda, corre el comando de tests del worktree (paso 2) y compara con el baseline. Cualquier falla nueva vuelve al coder.
 2. Revisa el diff contra el plan aprobado (`git diff origin/<rama-base>...HEAD`). Si se salió del plan, vuelve al coder o, si el cambio es razonable, avísalo al usuario.
 3. **Chequeos de aceptación:** el informe del coder trae, por cada chequeo que no es «solo en cierre», el valor observado sobre el SHA de `HEAD`. Si falta alguno, lo corrió sobre otro commit o no coincide con el esperado, vuelve al coder antes de seguir. Si tienes la menor duda, ejecuta tú ese chequeo (uno a uno, no la suite): es barato y es exactamente lo que fallaría en el cierre.
-4. Contrasta el cuerpo del PR con el código: cada fila de la tabla criterio → prueba tiene que señalar un test o un assert que exista y compruebe lo que dice. Si el PR afirma más de lo que los tests prueban, pide al coder el assert que falta o corrige la tabla, y cubre la diferencia en la prueba en vivo del cierre.
+4. Contrasta el cuerpo del PR con el código: cada fila de la tabla criterio → prueba tiene que señalar un test o un assert que exista y compruebe lo que dice. Si el PR afirma más de lo que los tests prueban, pide al coder el assert que falta o corrige la tabla, y cubre la diferencia en la prueba en vivo del cierre. Con el segundo reviewer activo (paso 5), parte de su tabla de cobertura en lugar de leer todos los tests.
+5. **Segundo reviewer** (solo si `second_reviewer.enabled`; detalle en `docs/SECOND_REVIEWER.md`). Un modelo de otro proveedor (Gemini, vía `agy`) revisa el diff en solo lectura. Es **consultivo**: nunca aprueba ni bloquea por sí mismo, y el gate de merge no lo mira.
+   1. En cuanto el paso 1 pasa, lánzalo en segundo plano desde la raíz del clon principal mientras haces los pasos 2 y 3. El script reúne él mismo el plan (`RUN_STATE.md`), el cuerpo del PR y el ticket:
+      ```bash
+      python3 <plugin>/scripts/second_review.py <ticket> --worktree <worktree> --base origin/<rama-base>
+      ```
+   2. **Cobertura de criterios.** Para el paso 4, lee tú solo los tests de las filas `partial` o `missing` y los de las filas donde su tabla y la del PR no coinciden.
+   3. **Hallazgos.** Solo devuelve `blocker` y `major`. Comprueba cada uno leyendo las líneas que cita (no el archivo entero). Si es real, vuelve al coder con ese hallazgo: cuenta como una ronda de review. Si no lo es o está marcado «no existe en el worktree», descártalo.
+   4. Pega en la tabla «Segundo reviewer» de `RUN_STATE.md` la fila que imprime el script y complétala con cuántos hallazgos aceptaste y cuántos descartaste, con el motivo. `close_run.py` lee esa tabla; no hay otro registro que hacer.
+   5. En `standard` revisa una sola vez por ticket: no lo relances tras una corrección. En `critical`, relánzalo una vez sobre el nuevo `HEAD` después de cada corrección.
+   6. **Omitido** (código 0, sin tabla): en `standard` el script no revisa diffs pequeños ni cambios solo de documentación. Haz el paso 4 completo; no es un límite.
+   7. **Sin revisión** (código de salida 1: `agy` no instalado, sin sesión, tiempo agotado, comando denegado o respuesta inválida): la corrida sigue como si estuviera desactivado, haces el paso 4 completo y lo anotas para LÍMITES. No reintentes ni lo sustituyas por otro agente.
 
 ## 5. Review
 
 | Clase | Review | Orden con el review bot |
 | --- | --- | --- |
-| `standard` | Tu verificación más el review bot si `review_bot.enabled` | Concurrente: promueves en cuanto tu verificación pasa y el bot revisa mientras tanto |
-| `critical` | Reviewer independiente (`ROLE: reviewer · CLASS: review`, `model: opus` porque revisa trabajo crítico, prompt `templates/REVIEW_BRIEF.md`) más el review bot si está activado | En serie: primero el reviewer interno da `APPROVE`, después promueves para que corra el bot |
+| `standard` | Tu verificación, el segundo reviewer si `second_reviewer.enabled` (consultivo) y el review bot si `review_bot.enabled` | Concurrente: promueves en cuanto tu verificación pasa y el bot revisa mientras tanto |
+| `critical` | Reviewer independiente (`ROLE: reviewer · CLASS: review`, `model: opus` porque revisa trabajo crítico, prompt `templates/REVIEW_BRIEF.md`), el segundo reviewer si está activado (consultivo) y el review bot si está activado | En serie: primero el reviewer interno da `APPROVE`, después promueves para que corra el bot |
 
-Hacen falta las dos aprobaciones en cualquier caso; lo concurrente solo ahorra la espera.
+Hacen falta las dos aprobaciones en cualquier caso; lo concurrente solo ahorra la espera. El segundo reviewer no es una de ellas: en `critical` corre a la vez que el reviewer interno y no sustituye a ninguno. No le pases sus hallazgos al reviewer interno, para que las dos revisiones sigan siendo independientes; los juntas tú.
 
 El reviewer ve el ticket, los criterios y el diff. Devuelve solo `APPROVE` o `CHANGES_REQUESTED` con la lista de problemas. Las sugerencias menores no bloquean y nunca toca código. Con `CHANGES_REQUESTED`, el coder corrige y el reviewer revisa de nuevo. **Máximo 3 rondas**: si no converge, detente y muéstralo.
 
@@ -93,7 +104,7 @@ Resultados: código 0 = listo (imprime el comando de merge exacto, con `--match-
 
 Con el gate en 0, muestra su tabla y el SHA, pide el OK y ejecuta el comando que imprimió. `--match-head-commit` ata el merge al commit revisado: si alguien empujó después, falla.
 
-Si el modo automático de Claude Code deniega el merge, no lo esquives: dale al usuario ese mismo comando para que lo ejecute él, y sugiere añadir la regla de permisos del paso 10 de `setup-project` para que la próxima vez no haga falta (ver [Problemas conocidos](preflight.md#problemas-conocidos)) y sigue con el cierre cuando confirme. La telemetría lo cuenta como `prs_merged_outside`.
+Si el modo automático de Claude Code deniega el merge, no lo esquives: dale al usuario ese mismo comando para que lo ejecute él, y sugiere añadir la regla de permisos del paso 11 de `setup-project` para que la próxima vez no haga falta (ver [Problemas conocidos](preflight.md#problemas-conocidos)) y sigue con el cierre cuando confirme. La telemetría lo cuenta como `prs_merged_outside`.
 
 ## 8. Nada de agentes estacionados ni sesiones interminables
 

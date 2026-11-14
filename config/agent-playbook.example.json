@@ -14,6 +14,9 @@
   "review_bot": {
     "enabled": false
   },
+  "second_reviewer": {
+    "enabled": false
+  },
   "environment": {
     "dev_url": "",
     "test_command": "",

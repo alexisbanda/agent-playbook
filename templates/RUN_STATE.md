@@ -46,6 +46,13 @@
 | Repo | PR | HEAD revisado | promoted_at | Review | Checks | Mergeado |
 | --- | --- | --- | --- | --- | --- | --- |
 
+## Segundo reviewer
+
+<!-- Solo si second_reviewer.enabled. Pega la fila que imprime second_review.py y completa aceptados y descartados: close_run.py lee esta tabla. Sin revisión: anótalo también en LÍMITES. -->
+
+| HEAD | Veredicto | Hallazgos | Aceptados | Descartados (motivo) |
+| --- | --- | --- | --- | --- |
+
 ## Fallas preexistentes
 
 <!-- Del baseline. Dónde se reportaron (comentario o ticket nuevo). -->
