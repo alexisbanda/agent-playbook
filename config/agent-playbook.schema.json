@@ -188,6 +188,34 @@
         }
       }
     },
+    "second_reviewer": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Si es true, tras los tests del coder el orquestador lanza scripts/second_review.py; es consultivo y merge_gate.py no lo mira. Ver docs/SECOND_REVIEWER.md."
+        },
+        "model": {
+          "type": "string",
+          "default": "gemini-4-argon",
+          "description": "Modelo de agy (ver agy models)."
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 30,
+          "default": 300,
+          "description": "Tiempo máximo en segundos de una revisión de agy."
+        },
+        "min_diff_lines": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 50,
+          "description": "En tickets standard no se revisan diffs con menos líneas cambiadas; 0 lo desactiva."
+        }
+      }
+    },
     "environment": {
       "type": "object",
       "additionalProperties": false,

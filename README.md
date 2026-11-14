@@ -36,6 +36,7 @@ Activa la auto-actualización del marketplace en `/plugin` → Marketplaces para
 | `hooks.production_patterns` | expresiones de comandos que tocan producción | `[]` |
 | `hooks.coder_ctx_handback_k` | miles de tokens de contexto a partir de los cuales el coder deja `HANDBACK.md` y sigue uno nuevo | `150` |
 | `review_bot.enabled` | `true`, `false` (ver [docs/REVIEW_BOT.md](docs/REVIEW_BOT.md)) | `false` |
+| `second_reviewer.enabled` | `true`, `false`: segundo reviewer consultivo con Gemini vía `agy` (ver [docs/SECOND_REVIEWER.md](docs/SECOND_REVIEWER.md)) | `false` |
 | `environment` | `dev_url`, `test_command`, `worktree_test_command`, `deploy_check` | vacío |
 | `journeys` | lista de `{name, command}` | `[]` |
 
@@ -54,8 +55,8 @@ hooks/            model_gate.py y safety_gate.py (gates de modelos y de segurida
 routing/          tabla de ruteo de modelos (routing.json con runtime_aliases claude/agy), su esquema y su explicación
 metrics/          precios para el coste estimado y umbrales (tripwires) de la tuning wave
 config/           esquema y ejemplo de la configuración por repo (.agent-playbook.json o .claude/agent-playbook.json)
-docs/             escalado, gestores de tickets, hooks, review bot, métricas
-scripts/          utilidades de CI y de las corridas (preflight.py: controles iniciales en un paso; repo_map.py: mapa de arquitectura; route.py: modelo de cada subagente; ticket_check.py: contrato de ticket opcional; merge_gate.py: condiciones de merge; run_journeys.py: regresión; close_run.py y metrics_report.py: métricas y exportación sanitizada)
+docs/             escalado, gestores de tickets, hooks, review bot, segundo reviewer, métricas
+scripts/          utilidades de CI y de las corridas (preflight.py: controles iniciales en un paso; repo_map.py: mapa de arquitectura; route.py: modelo de cada subagente; ticket_check.py: contrato de ticket opcional; second_review.py: segundo reviewer consultivo con Gemini vía agy; merge_gate.py: condiciones de merge; run_journeys.py: regresión; close_run.py y metrics_report.py: métricas y exportación sanitizada)
 tests/            tests de los scripts
 ```
 
@@ -78,6 +79,7 @@ tests/            tests de los scripts
 | 1.4 | Agente `coder` propio, vigilante de contexto (`context_guard.py`) y métricas del bucle del coder | Hecho |
 | 1.5 | Chequeos de aceptación ejecutables antes del PR y modelo del orquestador recomendado por carril | Hecho |
 | 1.6 | Permiso de merge en `setup-project`, aviso del trabajo en segundo plano y esperas medidas sin ausencias (`human_stops`) | Hecho |
+| 1.7 | Segundo reviewer consultivo en solo lectura con Gemini vía `agy` (`scripts/second_review.py`, [docs/SECOND_REVIEWER.md](docs/SECOND_REVIEWER.md)) y métrica `second_review` | Hecho |
 
 ### Límites conocidos
 

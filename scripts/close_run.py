@@ -22,6 +22,7 @@ import subprocess
 import sys
 
 import route
+import second_review
 
 STATE_DIR = ".agent-playbook"
 # A wait longer than this is the human being away, not the process making them wait.
@@ -326,6 +327,7 @@ def build_metrics(run, events, e2e_first_pass, root=None):
         "e2e_first_pass": e2e_first_pass,
         "e2e_first_pass_source": "declared",
         "ticket_quality": ticket_quality(root, run) if root else None,
+        "second_review": second_review.summarize(os.path.join(root, STATE_DIR, "runs", run)) if root else None,
     }
 
 

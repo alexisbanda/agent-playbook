@@ -10,9 +10,9 @@ Ejecuta todos los controles de golpe y abre `.agent-playbook/active-run` si no h
 python3 <plugin>/scripts/preflight.py --session-model <id del modelo de la sesión> --open-run <ticket> [--override-model "<motivo>"]
 ```
 
-El script devuelve un JSON con `ok` (`true` si ningún control dio `fail`), la lista `checks`, metadatos detectados (`profile`, `tracker_type`, `base_branch`, `origin_sha`, `gh_env_prefix`) y el bloque `markdown` listo para pegar en `RUN_STATE.md`. Si `checks` incluye avisos (`warn`) que requieren decisión del usuario (cambios sin commitear en el clon principal, commits locales sin push en la rama base, un `active-run` de otro ticket o una sesión con demasiado contexto), pregúntale antes de seguir. El aviso del permiso de merge (control 8) no requiere decisión: menciónalo y sigue.
+El script devuelve un JSON con `ok` (`true` si ningún control dio `fail`), la lista `checks`, metadatos detectados (`profile`, `tracker_type`, `base_branch`, `origin_sha`, `gh_env_prefix`) y el bloque `markdown` listo para pegar en `RUN_STATE.md`. Si `checks` incluye avisos (`warn`) que requieren decisión del usuario (cambios sin commitear en el clon principal, commits locales sin push en la rama base, un `active-run` de otro ticket o una sesión con demasiado contexto), pregúntale antes de seguir. Los avisos del permiso de merge (control 8) y del segundo reviewer (control 9) no requieren decisión: menciónalos y sigue.
 
-A continuación se detalla qué comprueba cada uno de los 8 controles:
+A continuación se detalla qué comprueba cada control:
 
 ## 1. Modelo de la sesión
 
@@ -89,6 +89,13 @@ Cada ticket se resuelve en una sesión nueva. El orquestador relee todo su conte
 - sin regla: AVISO que **no requiere decisión**. No te detengas por él; menciónalo al presentar el plan y sugiere `setup-project` para añadir `Bash(gh pr merge * --match-head-commit *)`.
 
 La regla no debilita el control: el OK explícito del usuario y `merge_gate.py` siguen siendo obligatorios, y el gate de seguridad bloquea un `gh pr merge` sin `--match-head-commit` o lanzado desde un subagente.
+
+## 9. Segundo reviewer (solo si `second_reviewer.enabled`)
+
+Si `second_reviewer.enabled` no es `true` en la configuración del repo, este control se omite y no aparece en la tabla. Si está activado, `preflight.py` comprueba si `agy` está en el `PATH`:
+
+- con `agy` disponible: OK, indicando el modelo configurado (`second_reviewer.model`);
+- sin `agy` en el `PATH`: AVISO (`second_reviewer.enabled pero agy no está en el PATH: la corrida seguirá sin segundo reviewer`). Nunca da `FALLO` ni requiere decisión: menciónalo y sigue.
 
 ## Problemas conocidos
 

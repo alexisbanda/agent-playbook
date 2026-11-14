@@ -449,6 +449,47 @@ class CloseRunTest(HookTestCase):
         metrics = self.close_with_fake_gh("12", 'import sys\nsys.stderr.write("network down")\nsys.exit(1)\n')
         self.assertEqual((metrics["prs_merged"], metrics["prs_merged_outside"]), (0, 0))
 
+    def test_records_second_review_summary_or_null(self):
+        self.start_run("17")
+        self.hook("telemetry.py", {"hook_event_name": "UserPromptSubmit", "prompt": "hola"})
+        no_sr = self.close_with_fake_gh("17", 'import sys\nsys.exit(1)\n')
+        self.assertIsNone(no_sr["second_review"])
+
+        run_dir = os.path.join(self.repo, ".agent-playbook", "runs", "17")
+        os.makedirs(run_dir, exist_ok=True)
+        with open(os.path.join(run_dir, "second-review.jsonl"), "w") as fh:
+            fh.write(json.dumps({
+                "ts": "2026-11-14T10:00:00Z", "event": "review", "head": "abc", "model": "gemini-4-argon",
+                "status": "ok", "attempts": 1, "verdict": "CHANGES_REQUESTED", "findings": 2,
+                "seconds": 9.4, "tokens": 1100,
+            }) + "\n")
+        with open(os.path.join(run_dir, "RUN_STATE.md"), "w") as fh:
+            fh.write(
+                "# Corrida 17\n\n"
+                "## Segundo reviewer\n\n"
+                "| HEAD | Veredicto | Hallazgos | Aceptados | Descartados (motivo) |\n"
+                "| --- | --- | --- | --- | --- |\n"
+                "| abc | CHANGES_REQUESTED | 2 | 1 | 1 (falso positivo) |\n"
+            )
+        with_sr = self.close_with_fake_gh("17", 'import sys\nsys.exit(1)\n')
+        self.assertEqual(
+            with_sr["second_review"],
+            {
+                "calls": 1, "degraded": 0, "skipped": 0, "changes_requested": 1, "findings": 2,
+                "accepted": 1, "discarded": 1, "tokens": 1100, "seconds": 9.4,
+            },
+        )
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import close_run  # noqa: E402
+        try:
+            import jsonschema
+        except ImportError:
+            jsonschema = None
+        if jsonschema is not None:
+            self.assertIsNone(close_run.validate(with_sr))
+            self.assertIsNone(close_run.validate(no_sr))
+        self.assertIsNone(close_run.build_metrics("17", self.events(), "na", root=None)["second_review"])
+
 
 class TranscriptUsageTest(unittest.TestCase):
     def test_sums_usage_by_model_once_per_message(self):

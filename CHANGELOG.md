@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.7.0
+
+Segundo reviewer **opcional y consultivo** con Gemini en solo lectura a través del CLI `agy` (`docs/SECOND_REVIEWER.md`). Nunca aprueba ni bloquea por sí mismo, y `merge_gate.py` no lo mira.
+
+- **`scripts/second_review.py` (nuevo):** reúne sus propias entradas (`RUN_STATE.md`, cuerpo del PR e issue vía `gh`), construye el paquete de revisión (`second-review-input.md`), invoca `agy` en modo plan con `--sandbox`, esquema JSON estricto y lista de permisos de solo lectura por llamada, normaliza rutas, conserva solo hallazgos `blocker` y `major` (descarta el resto y corrige el veredicto si queda alguno), en `standard` revisa una sola vez por ticket y omite diffs vacíos, pequeños (`min_diff_lines`) o solo de documentación, registra `second-review.json` y `second-review.jsonl`, imprime la fila para `RUN_STATE.md` y resume totales para métricas (leyendo el triaje de `RUN_STATE.md`, incluyendo `skipped`).
+- **Configuración (`config/agent-playbook.schema.json`, `config/agent-playbook.example.json`):** añade `second_reviewer` (`enabled`, por defecto `false`; `model`, por defecto `"gemini-4-argon"`; `timeout_seconds`, por defecto `300`; `min_diff_lines`, por defecto `50`).
+- **Preflight (`scripts/preflight.py`, `references/preflight.md`):** añade el control 9 (`second_reviewer`), que solo aparece cuando `second_reviewer.enabled` es `true` (OK si `agy` está en el `PATH`, AVISO si falta sin bloquear nunca la corrida).
+- **Motor, plantilla y setup:**
+  - `references/engine.md` (verificación paso 5 y tabla de la sección 5): lanza el segundo reviewer tras pasar los tests sin preparar archivos previos, parte de su tabla de cobertura de criterios, tria hallazgos `blocker` y `major` en la tabla de `RUN_STATE.md`, hace una sola revisión por ticket en `standard` y realiza el paso 4 completo cuando se omite en diffs pequeños o solo de documentación.
+  - `templates/RUN_STATE.md`: añade la sección `## Segundo reviewer`, donde se pega la fila que imprime el script y se registran aceptados y descartados que lee `close_run.py`.
+  - `skills/setup-project/SKILL.md`: añade el paso 10 («Segundo reviewer», solo ofrecido si `agy` está en el `PATH`, avisando de qué datos salen hacia Google) y renumera los pasos 11 y 12.
+- **Métricas (`config/metrics.schema.json`, `scripts/close_run.py`, `docs/METRICS.md`):** añade el campo opcional `second_review` en `metrics.jsonl` con los totales de `second_review.summarize(...)` (incluyendo `skipped`, o `null` si no hubo llamadas ni revisiones omitidas).
+
 ## 1.6.2
 
 - **Preflight con Jira.** Hasta ahora el preflight solo comprobaba el conector de Notion. Con `tracker.type: "jira"` se comprueba también el de Atlassian (`references/preflight.md`, sección 4):
