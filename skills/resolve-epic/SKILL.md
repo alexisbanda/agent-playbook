@@ -23,6 +23,7 @@ Eres el **orquestador de olas** (Wave Runner). Una épica (`type:epic`) no se re
 
 1. **Preflight y Mapa de Arquitectura.**
    - Ejecuta `python3 <plugin>/scripts/preflight.py --session-model <id del modelo de la sesión> --open-run epic-<id>`. La épica empieza en una sesión nueva: si el control de contexto avisa, propón `/clear` y repetir el preflight (`--keep-session` solo si el usuario decide seguir así).
+   - Si el tracker es `notion` o `jira`, comprueba su conector como dice `references/preflight.md` (sección 4) antes de leer la épica.
    - Si no existe `.agent-playbook/repo-map.md` (o quedó desactualizado), ejecuta `python3 <plugin>/scripts/repo_map.py` para construir el mapa persistente del repositorio. Léelo junto con `docs/product/BRIEF.md` y `docs/product/TECH.md` si existen.
 
 2. **Lectura de la épica y sus tickets hijos.**

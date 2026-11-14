@@ -49,6 +49,11 @@ Si `installed` es menor que `latest`, avisa: el usuario debe actualizar el plugi
 - `gh auth status` en verde, con el scope `repo`. Si falla por un token de entorno, `preflight.py` reintenta sin `GITHUB_TOKEN`/`GH_TOKEN` y devuelve `gh_env_prefix: "env -u GITHUB_TOKEN -u GH_TOKEN"` (ver [Problemas conocidos](#problemas-conocidos)).
 - `git remote get-url origin` apunta a GitHub.
 - Si el tracker es `notion`, el conector de Notion responde (por ejemplo, una búsqueda de la base de datos configurada). Si no está autorizado, detente y pide al usuario que lo autorice en los conectores de claude.ai.
+- Si el tracker es `jira`, el conector de Atlassian responde y llega al proyecto. `preflight.py` no puede comprobarlo (es un conector MCP), así que lo haces tú:
+  1. `getAccessibleAtlassianResources`. Si falla o no está autorizado, detente y pide al usuario que autorice el conector de Atlassian en los conectores de claude.ai.
+  2. Elige el sitio: el de `tracker.jira.cloud_id` o el de `tracker.jira.site_url` si están configurados; si no, el único accesible. Si hay varios y la configuración no dice cuál, pregunta. Si el configurado no aparece entre los accesibles, detente: la cuenta autorizada no tiene acceso a ese sitio.
+  3. `getVisibleJiraProjects` sobre ese sitio: `tracker.jira.project_key` tiene que aparecer. Si no, detente y dilo (clave mal escrita o sin permiso en el proyecto).
+  4. Anota el `cloudId` en `RUN_STATE.md` y úsalo en todas las llamadas del adaptador (`references/trackers/jira.md`).
 
 ## 5. Estado del clon principal
 
