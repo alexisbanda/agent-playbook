@@ -12,6 +12,7 @@ Por defecto (`tracker.jira.use_labels_for_metadata: true`), el adaptador usa las
 | --- | --- |
 | `tracker.jira.project_key` | *(obligatorio, p. ej. `PROJ`)* |
 | `tracker.jira.site_url` | URL base del sitio (`https://miempresa.atlassian.net`) |
+| `tracker.jira.cloud_id` | Cloud ID del sitio; si falta, el preflight lo resuelve con `getAccessibleAtlassianResources` y lo anota en `RUN_STATE.md` |
 | `tracker.jira.in_progress_status` | `In Progress` |
 | `tracker.jira.done_status` | `Done` |
 | `tracker.jira.use_labels_for_metadata` | `true` |
