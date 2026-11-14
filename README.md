@@ -21,7 +21,7 @@ Activa la auto-actualización del marketplace en `/plugin` → Marketplaces para
 
 ## Uso en un repositorio
 
-1. Abre Claude Code en el repo y ejecuta `/agent-playbook:setup-project`. Crea `.claude/agent-playbook.json`.
+1. Abre Claude Code en el repo y ejecuta `/agent-playbook:setup-project`. Crea `.claude/agent-playbook.json` (también se lee `.agent-playbook.json` en la raíz).
 2. Versiona ese archivo para que todo el equipo use la misma configuración.
 3. Para resolver un ticket: `/agent-playbook:resolve-issue <número o URL>`. También se activa solo si pides resolver o implementar un issue. Al presentar el plan recomienda el modelo de la sesión según el carril: `sonnet` para tickets pequeños sin riesgo y `opus` para los críticos (se cambia con `/model`).
 4. Cada semana, o cada 10 corridas: `/agent-playbook:tuning-wave` para revisar las métricas y mejorar los manuales. Ver [docs/METRICS.md](docs/METRICS.md).
@@ -48,9 +48,9 @@ El esquema completo está en [config/agent-playbook.schema.json](config/agent-pl
 plugin.json       manifiesto en raíz compatible con Google Antigravity (agy)
 skills/           procedimientos que se invocan (setup-project, resolve-issue, resolve-epic, tuning-wave)
 references/       capítulos compartidos que los skills leen por fases: preflight, motor, cierre, adaptadores de trackers (github, notion, jira)
-agents/           subagente coder del plugin (herramientas mínimas y esfuerzo medio)
+agents/           coder.md: subagente coder del plugin (solo Bash, Read, Edit, Write, Grep y Glob; esfuerzo medium, high en critical)
 templates/        RUN_STATE, HANDBACK, briefs de coder y reviewer, cuerpo de PR, evidencia, workflow del review bot
-hooks/            gate de modelos, gate de seguridad, vigilante de contexto del coder y telemetría dual-runtime (ver docs/HOOKS.md)
+hooks/            model_gate.py y safety_gate.py (gates de modelos y de seguridad), context_guard.py (vigilante de contexto del coder) y telemetry.py (telemetría dual-runtime); ver docs/HOOKS.md
 routing/          tabla de ruteo de modelos (routing.json con runtime_aliases claude/agy), su esquema y su explicación
 metrics/          precios para el coste estimado y umbrales (tripwires) de la tuning wave
 config/           esquema y ejemplo de la configuración por repo (.agent-playbook.json o .claude/agent-playbook.json)
@@ -74,6 +74,22 @@ tests/            tests de los scripts
 | 1.0 | MVP: GitHub Issues y Notion probados en real; con ticket-studio, del kickoff al PR mergeado con evidencia | Hecho |
 | 1.1 | Eficiencia operativa: `preflight.py` en un paso, caché de baseline por SHA base y carril Fast-Track (`size: S` + `risk: ninguno`) | Hecho |
 | 1.2 | Adaptador Jira Zero-Admin, soporte Dual-Runtime (`Claude Code` + `Google Antigravity agy`), `repo_map.py`, `resolve-epic` con paralelismo intra-repo por archivos disjuntos y `--export-sanitized` | Hecho |
+| 1.3 | Cada ticket en una sesión nueva: control de contexto inicial en el preflight y tripwire `orchestrator_ctx_start_k_max` | Hecho |
+| 1.4 | Agente `coder` propio, vigilante de contexto (`context_guard.py`) y métricas del bucle del coder | Hecho |
+| 1.5 | Chequeos de aceptación ejecutables antes del PR y modelo del orquestador recomendado por carril | Hecho |
+| 1.6 | Permiso de merge en `setup-project`, aviso del trabajo en segundo plano y esperas medidas sin ausencias (`human_stops`) | Hecho |
+
+### Límites conocidos
+
+Todas las corridas reales registradas usan GitHub Issues y el perfil `reduced`. Falta probar en real:
+
+- **Jira:** el adaptador existe desde la 1.2, pero no hay corridas con `tracker.type: "jira"`. Notion se probó en la 1.0.
+- **Perfil `full`:** descrito y con su tabla de ruteo, sin corridas.
+- **`resolve-epic` y los coders en paralelo:** sin corridas registradas.
+- **Google Antigravity `agy`:** los hooks y el ruteo lo contemplan, sin corridas registradas.
+- **Entorno desplegado:** las pruebas en vivo se han hecho contra el entorno local (`dev_url` vacío); el gate de deploy no se ha ejercitado.
+- **Review bot, criterios `e2e` con navegador y journeys:** sin probar a fondo (un solo repo tiene un journey).
+- **Proyecto desde cero:** el ticket 0 de un repo sin código se resolvió una vez (kickoff-demo#2, Next.js); falta repetirlo con otro stack.
 
 ## Cómo cambiar el playbook
 

@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.1
+
+Documentación al día, sin cambios de comportamiento.
+
+- **README:**
+  - roadmap con la 1.3, 1.4, 1.5 y 1.6;
+  - vuelve la sección «Límites conocidos», que desapareció en la 1.2, con lo que aún no se ha probado en real (Jira, perfil `full`, `resolve-epic`, `agy`, entorno desplegado, review bot, journeys);
+  - la sección «Estructura» nombra `agents/coder.md` y los cuatro hooks;
+  - el paso 1 menciona también `.agent-playbook.json`.
+- **`docs/SCALING.md`:** la regla «los agentes nunca mergean» dice ahora que los subagentes nunca mergean y que el orquestador sí, solo con OK humano, `merge_gate.py` y `--match-head-commit` (como desde la 1.6.0).
+
 ## 1.6.0
 
 Tuning wave del 2026-11-08 sobre 36 corridas (30 de castkit y recuerdos-artesanales, todas 1.2.0; aún ninguna con la 1.3.0–1.5.0). Saltan tres tripwires:

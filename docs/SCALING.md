@@ -5,7 +5,7 @@ El playbook arranca en **perfil reducido** (`"profile": "reduced"` en `.claude/a
 ## Reglas que no cambian con el tamaño
 
 - Un solo escritor por rama y un worktree por tarea.
-- Nadie mergea su propio trabajo, y los agentes nunca mergean.
+- Nadie mergea su propio trabajo: los subagentes (coder, reviewer, lectores) nunca mergean. Solo el orquestador ejecuta el merge, después del OK explícito del humano, con `scripts/merge_gate.py` en verde y `--match-head-commit` (el gate de seguridad bloquea cualquier otro camino).
 - Ningún agente espera más de unos 5 minutos: termina su turno y deja un `HANDBACK.md`.
 - El plan se aprueba antes de construir.
 - Lo que no se pudo probar se declara en la sección LÍMITES.
