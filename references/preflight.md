@@ -10,7 +10,7 @@ Ejecuta todos los controles de golpe y abre `.agent-playbook/active-run` si no h
 python3 <plugin>/scripts/preflight.py --session-model <id del modelo de la sesión> --open-run <ticket> [--override-model "<motivo>"]
 ```
 
-El script devuelve un JSON con `ok` (`true` si ningún control dio `fail`), la lista `checks`, metadatos detectados (`profile`, `tracker_type`, `base_branch`, `origin_sha`, `gh_env_prefix`) y el bloque `markdown` listo para pegar en `RUN_STATE.md`. Si `checks` incluye avisos (`warn`) que requieren decisión del usuario (cambios sin commitear en el clon principal, commits locales sin push en la rama base, un `active-run` de otro ticket o una sesión con demasiado contexto), pregúntale antes de seguir. Los avisos del permiso de merge (control 8) y del segundo reviewer (control 9) no requieren decisión: menciónalos y sigue.
+El script devuelve un JSON con `ok` (`true` si ningún control dio `fail`), la lista `checks`, metadatos detectados (`profile`, `tracker_type`, `base_branch`, `origin_sha`, `gh_env_prefix`) y el bloque `markdown` listo para pegar en `RUN_STATE.md`. Si `checks` incluye avisos (`warn`) que requieren decisión del usuario (cambios sin commitear en el clon principal, commits locales sin push en la rama base, un `active-run` de otro ticket o una sesión con demasiado contexto), pregúntale antes de seguir. Los avisos del permiso de merge (control 8), del segundo reviewer (control 9) y de los lectores Gemini (control 10) no requieren decisión: menciónalos y sigue.
 
 A continuación se detalla qué comprueba cada control:
 
@@ -96,6 +96,13 @@ Si `second_reviewer.enabled` no es `true` en la configuración del repo, este co
 
 - con `agy` disponible: OK, indicando el modelo configurado (`second_reviewer.model`);
 - sin `agy` en el `PATH`: AVISO (`second_reviewer.enabled pero agy no está en el PATH: la corrida seguirá sin segundo reviewer`). Nunca da `FALLO` ni requiere decisión: menciónalo y sigue.
+
+## 10. Lectores Gemini (solo si `gemini_readers.enabled`)
+
+Si `gemini_readers.enabled` no es `true`, este control se omite. Si está activado, `preflight.py` comprueba si `agy` está en el `PATH`:
+
+- con `agy` disponible: OK, indicando el modelo y esfuerzo configurados (`gemini_readers.model`, `gemini_readers.effort`);
+- sin `agy` en el `PATH`: AVISO (`gemini_readers.enabled pero agy no está en el PATH: se caerá a lectores Claude haiku`). Nunca da `FALLO` ni requiere decisión: menciónalo y sigue.
 
 ## Problemas conocidos
 

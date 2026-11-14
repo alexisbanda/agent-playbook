@@ -52,26 +52,28 @@ Cuando el coder termina, tú verificas:
 2. Revisa el diff contra el plan aprobado (`git diff origin/<rama-base>...HEAD`). Si se salió del plan, vuelve al coder o, si el cambio es razonable, avísalo al usuario.
 3. **Chequeos de aceptación:** el informe del coder trae, por cada chequeo que no es «solo en cierre», el valor observado sobre el SHA de `HEAD`. Si falta alguno, lo corrió sobre otro commit o no coincide con el esperado, vuelve al coder antes de seguir. Si tienes la menor duda, ejecuta tú ese chequeo (uno a uno, no la suite): es barato y es exactamente lo que fallaría en el cierre.
 4. Contrasta el cuerpo del PR con el código: cada fila de la tabla criterio → prueba tiene que señalar un test o un assert que exista y compruebe lo que dice. Si el PR afirma más de lo que los tests prueban, pide al coder el assert que falta o corrige la tabla, y cubre la diferencia en la prueba en vivo del cierre. Con el segundo reviewer activo (paso 5), parte de su tabla de cobertura en lugar de leer todos los tests.
-5. **Segundo reviewer** (solo si `second_reviewer.enabled`; detalle en `docs/SECOND_REVIEWER.md`). Un modelo de otro proveedor (Gemini, vía `agy`) revisa el diff en solo lectura. Es **consultivo**: nunca aprueba ni bloquea por sí mismo, y el gate de merge no lo mira.
+5. **Segundo reviewer y reviewer interno con Gemini** (solo si `second_reviewer.enabled`; detalle en `docs/SECOND_REVIEWER.md`). Un modelo de otro proveedor (Gemini, vía `agy`) revisa el diff en solo lectura.
+   - En `standard` (o en `critical` si `second_reviewer.internal_review` es `false`) es **consultivo**: nunca aprueba ni bloquea por sí mismo, y el gate de merge no lo mira.
+   - En `critical` con `second_reviewer.internal_review: true` (por defecto), **es el reviewer interno obligatorio**: su `APPROVE` sobre el `HEAD` actual cuenta como la aprobación interna y absorbe la revisión de `opus` (una sola revisión de Gemini por ronda). Si `second_review.py` sale con código 1 (`missing`, `timeout`, `denied`, `invalid` o `error`), se cae al reviewer interno de Claude (`ROLE: reviewer · CLASS: review`, `opus`, `templates/REVIEW_BRIEF.md`) y se anota en LÍMITES.
    1. En cuanto el paso 1 pasa, lánzalo en segundo plano desde la raíz del clon principal mientras haces los pasos 2 y 3. El script reúne él mismo el plan (`RUN_STATE.md`), el cuerpo del PR y el ticket:
       ```bash
       python3 <plugin>/scripts/second_review.py <ticket> --worktree <worktree> --base origin/<rama-base>
       ```
    2. **Cobertura de criterios.** Para el paso 4, lee tú solo los tests de las filas `partial` o `missing` y los de las filas donde su tabla y la del PR no coinciden.
-   3. **Hallazgos.** Solo devuelve `blocker` y `major`. Comprueba cada uno leyendo las líneas que cita (no el archivo entero). Si es real, vuelve al coder con ese hallazgo: cuenta como una ronda de review. Si no lo es o está marcado «no existe en el worktree», descártalo.
+   3. **Hallazgos.** Solo devuelve `blocker` y `major`. Comprueba cada uno leyendo las líneas que cita (no el archivo entero). Si es real, vuelve al coder con ese hallazgo: cuenta como una ronda de review. Si no lo es o está marcado «no existe en el worktree», descártalo con el motivo en `RUN_STATE.md` (en `critical`, con todos los hallazgos descartados así sobre el `HEAD` actual, la revisión interna queda aprobada sin relanzar sobre el mismo commit).
    4. Pega en la tabla «Segundo reviewer» de `RUN_STATE.md` la fila que imprime el script y complétala con cuántos hallazgos aceptaste y cuántos descartaste, con el motivo. `close_run.py` lee esa tabla; no hay otro registro que hacer.
    5. En `standard` revisa una sola vez por ticket: no lo relances tras una corrección. En `critical`, relánzalo una vez sobre el nuevo `HEAD` después de cada corrección.
    6. **Omitido** (código 0, sin tabla): en `standard` el script no revisa diffs pequeños ni cambios solo de documentación. Haz el paso 4 completo; no es un límite.
-   7. **Sin revisión** (código de salida 1: `agy` no instalado, sin sesión, tiempo agotado, comando denegado o respuesta inválida): la corrida sigue como si estuviera desactivado, haces el paso 4 completo y lo anotas para LÍMITES. No reintentes ni lo sustituyas por otro agente.
+   7. **Sin revisión** (código de salida 1: `agy` no instalado, sin sesión, tiempo agotado, comando denegado o respuesta inválida): en `standard` la corrida sigue como si estuviera desactivado; en `critical` con `internal_review: true`, lanza el reviewer interno de Claude (`opus`) en su lugar. En ambos casos haces el paso 4 completo y lo anotas para LÍMITES.
 
 ## 5. Review
 
 | Clase | Review | Orden con el review bot |
 | --- | --- | --- |
 | `standard` | Tu verificación, el segundo reviewer si `second_reviewer.enabled` (consultivo) y el review bot si `review_bot.enabled` | Concurrente: promueves en cuanto tu verificación pasa y el bot revisa mientras tanto |
-| `critical` | Reviewer independiente (`ROLE: reviewer · CLASS: review`, `model: opus` porque revisa trabajo crítico, prompt `templates/REVIEW_BRIEF.md`), el segundo reviewer si está activado (consultivo) y el review bot si está activado | En serie: primero el reviewer interno da `APPROVE`, después promueves para que corra el bot |
+| `critical` | Si `second_reviewer.enabled` y `second_reviewer.internal_review` (por defecto `true`): Gemini (`scripts/second_review.py`, `effort: high`) como reviewer interno único; si falla (código 1), cae al subagente `opus` (`ROLE: reviewer · CLASS: review`, `templates/REVIEW_BRIEF.md`). Si `second_reviewer.enabled` es `false` o `internal_review` es `false`: el subagente `opus` (más Gemini en paralelo si `second_reviewer.enabled`). Y el review bot si `review_bot.enabled` | En serie: primero el reviewer interno da `APPROVE`, después promueves para que corra el bot |
 
-Hacen falta las dos aprobaciones en cualquier caso; lo concurrente solo ahorra la espera. El segundo reviewer no es una de ellas: en `critical` corre a la vez que el reviewer interno y no sustituye a ninguno. No le pases sus hallazgos al reviewer interno, para que las dos revisiones sigan siendo independientes; los juntas tú.
+Hacen falta las dos aprobaciones en cualquier caso; lo concurrente solo ahorra la espera. Cuando `internal_review` es `false` y ambos corren en `critical`, no le pases al subagente `opus` los hallazgos de Gemini, para que las dos revisiones sigan siendo independientes; los juntas tú.
 
 El reviewer ve el ticket, los criterios y el diff. Devuelve solo `APPROVE` o `CHANGES_REQUESTED` con la lista de problemas. Las sugerencias menores no bloquean y nunca toca código. Con `CHANGES_REQUESTED`, el coder corrige y el reviewer revisa de nuevo. **Máximo 3 rondas**: si no converge, detente y muéstralo.
 

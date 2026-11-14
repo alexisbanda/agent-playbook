@@ -34,6 +34,7 @@ class SettingsTest(unittest.TestCase):
             "model": sr.DEFAULT_MODEL,
             "timeout": sr.DEFAULT_TIMEOUT,
             "min_diff_lines": sr.DEFAULT_MIN_DIFF_LINES,
+            "internal_review": True,
         }
         self.assertEqual(sr.settings({}), expected)
         self.assertEqual(sr.settings({"second_reviewer": None}), expected)
@@ -45,12 +46,16 @@ class SettingsTest(unittest.TestCase):
                 "model": "gemini-3.1-pro",
                 "timeout_seconds": 120,
                 "min_diff_lines": 0,
+                "internal_review": False,
             }
         }
         self.assertEqual(
             sr.settings(cfg),
-            {"enabled": True, "model": "gemini-3.1-pro", "timeout": 120, "min_diff_lines": 0},
+            {"enabled": True, "model": "gemini-3.1-pro", "timeout": 120, "min_diff_lines": 0, "internal_review": False},
         )
+        self.assertEqual(sr.role_for("standard", {"internal_review": True}), "advisory")
+        self.assertEqual(sr.role_for("critical", {"internal_review": True}), "internal")
+        self.assertEqual(sr.role_for("critical", {"internal_review": False}), "advisory")
 
     def test_example_config_is_valid_against_schema(self):
         with open(os.path.join(ROOT, "config", "agent-playbook.example.json"), encoding="utf-8") as fh:
@@ -435,9 +440,10 @@ class TriageSummarizeAndReportTest(unittest.TestCase):
                     "discarded": 0,
                     "tokens": 0,
                     "seconds": 0.0,
+                    "internal": 0,
                 },
             )
-            sr.append_log(tmp, {"event": "review", "status": "ok", "verdict": "CHANGES_REQUESTED", "findings": 3, "tokens": 1000, "seconds": 10.2})
+            sr.append_log(tmp, {"event": "review", "role": "internal", "status": "ok", "verdict": "CHANGES_REQUESTED", "findings": 3, "tokens": 1000, "seconds": 10.2})
             sr.append_log(tmp, {"event": "review", "status": "timeout"})
             sr.append_log(tmp, {"event": "review", "status": "ok", "verdict": "APPROVE", "findings": 1, "tokens": 500, "seconds": 5.3})
             with open(os.path.join(tmp, sr.STATE_NAME), "w", encoding="utf-8") as fh:
@@ -460,6 +466,7 @@ class TriageSummarizeAndReportTest(unittest.TestCase):
                     "discarded": 2,
                     "tokens": 1500,
                     "seconds": 15.5,
+                    "internal": 1,
                 },
             )
 
@@ -493,6 +500,23 @@ class TriageSummarizeAndReportTest(unittest.TestCase):
         self.assertIn("| C1 | partial | test_a |", ok)
         self.assertIn("Fila para «Segundo reviewer» de RUN_STATE.md (completa aceptados y descartados):", ok)
         self.assertIn("| 1234567 | CHANGES_REQUESTED | 1 | | |", ok)
+
+        internal_ok = sr.report({
+            "status": "ok",
+            "role": "internal",
+            "model": "gemini-4-argon",
+            "verdict": "APPROVE",
+            "head": "1234567890",
+            "seconds": 5.0,
+            "tokens": 900,
+            "summary": "Listo.",
+            "findings": [],
+            "criteria": [],
+        })
+        self.assertIn("reviewer interno, obligatorio", internal_ok)
+        self.assertIn("Su APPROVE sobre el HEAD actual es el del reviewer interno", internal_ok)
+        internal_fail = sr.report({"status": "timeout", "role": "internal", "error": "agy no respondió"})
+        self.assertIn("ROLE: reviewer · CLASS: review", internal_fail)
 
 
 class MainHelpersTest(unittest.TestCase):

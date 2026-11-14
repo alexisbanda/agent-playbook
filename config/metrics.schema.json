@@ -269,6 +269,39 @@
         "seconds": {
           "type": "number",
           "minimum": 0
+        },
+        "internal": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "gemini_readers": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "description": "Totales de los lectores Gemini en la corrida, tal como los devuelve gemini_reader.summarize; null si no hubo.",
+      "required": [
+        "calls",
+        "degraded",
+        "tokens",
+        "seconds"
+      ],
+      "properties": {
+        "calls": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "degraded": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "seconds": {
+          "type": "number",
+          "minimum": 0
         }
       }
     }

@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.8.0
+
+Lectores de código con Gemini vía `agy` (`docs/GEMINI_READERS.md`) y Gemini como **reviewer interno obligatorio** en tickets `critical` cuando `second_reviewer.enabled` es `true` (`second_reviewer.internal_review`, por defecto `true`), con caída automática a los agentes de Claude si `agy` falla.
+
+- **`scripts/gemini_reader.py` (nuevo):** ejecuta un lector en solo lectura sobre el repositorio con `agy` (por defecto `gemini-3.8-flash` y `effort: "low"`), esquema JSON (`summary`, `files`, `risks`, `tests`), lista cerrada de permisos por llamada (`cat`, `ls`, `grep`, `git log`, `git show`), normalización de rutas, registro en `gemini-readers.jsonl` y tabla compacta para el orquestador. Si sale con código 1, indica caer a un lector Claude (`haiku`) y anotarlo en LÍMITES.
+- **`scripts/second_review.py`:** añade `second_reviewer.internal_review` (por defecto `true`) y el rol de revisión (`role: "advisory"` en `standard`; `role: "internal"` en `critical` con `internal_review: true`). En modo `internal` su `APPROVE` sobre el `HEAD` actual es el del reviewer interno obligatorio y absorbe la revisión de `opus` (una sola revisión de Gemini por ronda); si sale con código 1, indica lanzar el reviewer `opus` de Claude y anotarlo en LÍMITES. `summarize()` añade el contador `internal`.
+- **Configuración (`config/agent-playbook.schema.json`, `config/agent-playbook.example.json`):** añade `second_reviewer.internal_review` y la sección `gemini_readers` (`enabled`, `model`, `effort`, `timeout_seconds`).
+- **Preflight (`scripts/preflight.py`, `references/preflight.md`):** añade el control 10 (`gemini_readers`) cuando `gemini_readers.enabled` es `true`.
+- **Skills, motor y documentación (`skills/resolve-issue/SKILL.md`, `skills/resolve-epic/SKILL.md`, `skills/setup-project/SKILL.md`, `references/engine.md`, `docs/SECOND_REVIEWER.md`, `docs/GEMINI_READERS.md`, `docs/METRICS.md`, `README.md`):** integran los lectores Gemini y el rol de reviewer interno obligatorio con sus caídas a Claude.
+- **Métricas (`config/metrics.schema.json`, `scripts/close_run.py`):** añade `gemini_readers` en `metrics.jsonl` y el campo opcional `internal` dentro de `second_review`.
+
 ## 1.7.0
 
 Segundo reviewer **opcional y consultivo** con Gemini en solo lectura a través del CLI `agy` (`docs/SECOND_REVIEWER.md`). Nunca aprueba ni bloquea por sí mismo, y `merge_gate.py` no lo mira.
