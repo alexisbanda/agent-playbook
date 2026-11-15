@@ -17,6 +17,9 @@
   "second_reviewer": {
     "enabled": false
   },
+  "gemini_readers": {
+    "enabled": false
+  },
   "environment": {
     "dev_url": "",
     "test_command": "",

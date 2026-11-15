@@ -476,9 +476,18 @@ class CloseRunTest(HookTestCase):
             with_sr["second_review"],
             {
                 "calls": 1, "degraded": 0, "skipped": 0, "changes_requested": 1, "findings": 2,
-                "accepted": 1, "discarded": 1, "tokens": 1100, "seconds": 9.4,
+                "accepted": 1, "discarded": 1, "tokens": 1100, "seconds": 9.4, "internal": 0,
             },
         )
+        self.assertIsNone(with_sr["gemini_readers"])
+        with open(os.path.join(run_dir, "gemini-readers.jsonl"), "w") as fh:
+            fh.write(json.dumps({
+                "ts": "2026-11-14T10:00:00Z", "event": "reader", "question": "q1",
+                "model": "gemini-3.8-flash", "status": "ok", "attempts": 1,
+                "files": 2, "risks": 1, "tests": 1, "seconds": 3.2, "tokens": 800,
+            }) + "\n")
+        with_sr = self.close_with_fake_gh("17", 'import sys\nsys.exit(1)\n')
+        self.assertEqual(with_sr["gemini_readers"], {"calls": 1, "degraded": 0, "tokens": 800, "seconds": 3.2})
         sys.path.insert(0, os.path.join(ROOT, "scripts"))
         import close_run  # noqa: E402
         try:

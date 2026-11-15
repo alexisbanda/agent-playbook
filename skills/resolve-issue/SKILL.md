@@ -29,10 +29,10 @@ La tabla de clases y modelos está en `<plugin>/routing/ROUTING.md` (fuente de v
 
 | Clase | Modelo por defecto (Claude Code) | Modelo por defecto (`agy`) | Subagente equivalente |
 | --- | --- | --- | --- |
-| `reader` | `haiku` | `flash` | `Agent` (`subagent_type: Explore`) / `invoke_subagent` (`TypeName: research`) |
+| `reader` | `haiku` (o `gemini_reader.py` si `gemini_readers.enabled`) | `flash` | `scripts/gemini_reader.py` / `Agent` (`subagent_type: Explore`) / `invoke_subagent` (`TypeName: research`) |
 | `standard` | `sonnet` | `inherit` | `Agent` (`agent-playbook:coder`) / `invoke_subagent` (`TypeName: self`) |
 | `critical` (dinero, contratos, seguridad, migraciones de datos, causa desconocida) | `opus` | `pro` | `Agent` (`agent-playbook:coder`, `effort: high`) / `invoke_subagent` (`TypeName: self`) |
-| `review` | `sonnet`; `opus` si revisa trabajo `critical` | `inherit`; `pro` si revisa trabajo `critical` | `Agent` (`general-purpose`) / `invoke_subagent` (`TypeName: research` o `self`) |
+| `review` | `sonnet`; en `critical`, `second_review.py` si `second_reviewer.enabled` e `internal_review` (cae a `opus` si falla), o `opus` | `inherit`; `pro` si revisa trabajo `critical` | `scripts/second_review.py` / `Agent` (`general-purpose`) / `invoke_subagent` (`TypeName: research` o `self`) |
 
 Cada lanzamiento de subagente empieza con la línea `ROLE: <rol> · CLASS: <clase>` y pasa `model` / `Model` explícitamente. `fable` nunca escribe código. Para salirte de la tabla, añade `OVERRIDE: <motivo>` en la segunda línea y anótalo en `RUN_STATE.md`. Para preguntar al usuario usa `AskUserQuestion` (Claude Code) o `ask_question` (`agy`).
 
@@ -44,7 +44,7 @@ Cada lanzamiento de subagente empieza con la línea `ROLE: <rol> · CLASS: <clas
    - Si el ticket sigue el contrato (secciones `## Historia` y `## Especificación`), usa sus criterios tal cual para la tabla criterio → chequeo, y lleva al plan cada pregunta abierta sin resolver para que la decida el usuario.
 3. **Medir el terreno.** Si existen `docs/product/BRIEF.md`, `docs/product/TECH.md` o `.agent-playbook/repo-map.md`, léelos primero: son el contexto de producto, técnico y de arquitectura del proyecto (si no existe `.agent-playbook/repo-map.md` en un proyecto mediano/grande, puedes generarlo con `python3 <plugin>/scripts/repo_map.py`).
    - **Carril Fast-Track (`size: S` y `risk: ninguno` sin preguntas abiertas):** localiza tú mismo los archivos afectados con hasta 3 búsquedas directas (`Grep`/`Glob` o `grep_search`/`find_by_name`) sin lanzar subagentes lectores, para ahorrar latencia y tokens de arranque.
-   - **Carril Estándar o Crítico (`size: M/L` o con riesgo):** lanza 1 a 3 lectores (`ROLE: reader · CLASS: reader`, `subagent_type: Explore` o `TypeName: research`) en el mismo mensaje. Cada uno devuelve archivos afectados, riesgos y tests existentes. No leas el repositorio entero tú mismo.
+   - **Carril Estándar o Crítico (`size: M/L` o con riesgo):** lanza 1 a 3 lectores en paralelo. Si `gemini_readers.enabled` es `true`, ejecuta `python3 <plugin>/scripts/gemini_reader.py <ticket> --question "<ámbito o pregunta>"` (uno por ámbito, en el mismo mensaje; detalle en `docs/GEMINI_READERS.md`); si alguno sale con código 1, cae a un lector Claude (`ROLE: reader · CLASS: reader`, `subagent_type: Explore`, `haiku`) para ese ámbito y anótalo para LÍMITES. Si `gemini_readers.enabled` es `false` (o el runtime ya es `agy`), lanza subagentes (`ROLE: reader · CLASS: reader`, `subagent_type: Explore` o `TypeName: research`) en el mismo mensaje. Cada uno devuelve archivos afectados, riesgos y tests existentes. No leas el repositorio entero tú mismo.
 4. **Plan y aprobación.** Copia `templates/RUN_STATE.md` a la carpeta de la corrida y rellénalo. Presenta al usuario:
    - la clase del ticket y por qué;
    - qué cambia y en qué archivos;

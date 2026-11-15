@@ -21,6 +21,7 @@ import os
 import subprocess
 import sys
 
+import gemini_reader
 import route
 import second_review
 
@@ -328,6 +329,7 @@ def build_metrics(run, events, e2e_first_pass, root=None):
         "e2e_first_pass_source": "declared",
         "ticket_quality": ticket_quality(root, run) if root else None,
         "second_review": second_review.summarize(os.path.join(root, STATE_DIR, "runs", run)) if root else None,
+        "gemini_readers": gemini_reader.summarize(os.path.join(root, STATE_DIR, "runs", run)) if root else None,
     }
 
 

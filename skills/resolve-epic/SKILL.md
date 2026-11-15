@@ -36,7 +36,7 @@ Eres el **orquestador de olas** (Wave Runner). Una épica (`type:epic`) no se re
      - **Ola $k$:** tickets cuyas dependencias quedan resueltas en olas $\le k - 1$.
    - Para los tickets de la ola actual, determina qué archivos toca cada uno:
      - Tickets `size: S` + `risk: ninguno`: hasta 3 búsquedas directas sobre `.agent-playbook/repo-map.md` y el código.
-     - Tickets `size: M/L` o con riesgo: lanza lectores (`ROLE: reader · CLASS: reader`) en un solo mensaje pasando el resumen de `.agent-playbook/repo-map.md`.
+     - Tickets `size: M/L` o con riesgo: lanza lectores en un solo mensaje pasando el resumen de `.agent-playbook/repo-map.md`. Si `gemini_readers.enabled` es `true`, usa `python3 <plugin>/scripts/gemini_reader.py epic-<id> --question "<ticket y ámbito>"` (si sale con código 1, cae a un subagente `ROLE: reader · CLASS: reader`, `haiku`, y anótalo en LÍMITES); si no, subagentes `ROLE: reader · CLASS: reader`.
    - **Partición de paralelismo intra-repo:** dos tickets de la misma ola pueden ejecutarse con coders en paralelo (cada uno en su propio worktree `../<repo>.worktrees/<ticket>-<slug>`) **únicamente si** la intersección de sus archivos tocados (`archivos que toca`) es vacía y no modifican la misma migración o configuración global. Si hay solapamiento de archivos, colócalos en sub-turnos secuenciales dentro de la ola.
 
 4. **Plan Maestro de la Ola y aprobación.**

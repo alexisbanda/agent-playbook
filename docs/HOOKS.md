@@ -91,6 +91,7 @@ Al cerrar, `scripts/close_run.py <ticket>` cruza los eventos con los transcripts
 - subagentes por modelo, PRs abiertos, promovidos y mergeados, worktrees, compactaciones;
 - decisiones de los gates y overrides;
 - tokens por modelo (entrada, salida, lectura y escritura de caché), leídos de los transcripts;
+- `second_review` y `gemini_readers` (llamadas, degradadas, tokens y segundos de Gemini vía `agy`, leídos de `second-review.jsonl`, `RUN_STATE.md` y `gemini-readers.jsonl`, ya que corren por CLI y no pasan por `model_gate.py`);
 - `e2e_first_pass`, el único campo declarado por el orquestador, marcado como tal.
 
 ## Errores de los hooks

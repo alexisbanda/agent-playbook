@@ -36,7 +36,8 @@ Activa la auto-actualización del marketplace en `/plugin` → Marketplaces para
 | `hooks.production_patterns` | expresiones de comandos que tocan producción | `[]` |
 | `hooks.coder_ctx_handback_k` | miles de tokens de contexto a partir de los cuales el coder deja `HANDBACK.md` y sigue uno nuevo | `150` |
 | `review_bot.enabled` | `true`, `false` (ver [docs/REVIEW_BOT.md](docs/REVIEW_BOT.md)) | `false` |
-| `second_reviewer.enabled` | `true`, `false`: segundo reviewer consultivo con Gemini vía `agy` (ver [docs/SECOND_REVIEWER.md](docs/SECOND_REVIEWER.md)) | `false` |
+| `second_reviewer.enabled` | `true`, `false`: segundo reviewer en `standard` y reviewer interno obligatorio en `critical` con Gemini vía `agy` (ver [docs/SECOND_REVIEWER.md](docs/SECOND_REVIEWER.md)) | `false` |
+| `gemini_readers.enabled` | `true`, `false`: lectores de código con Gemini vía `agy` y caída automática a `haiku` (ver [docs/GEMINI_READERS.md](docs/GEMINI_READERS.md)) | `false` |
 | `environment` | `dev_url`, `test_command`, `worktree_test_command`, `deploy_check` | vacío |
 | `journeys` | lista de `{name, command}` | `[]` |
 
@@ -55,8 +56,8 @@ hooks/            model_gate.py y safety_gate.py (gates de modelos y de segurida
 routing/          tabla de ruteo de modelos (routing.json con runtime_aliases claude/agy), su esquema y su explicación
 metrics/          precios para el coste estimado y umbrales (tripwires) de la tuning wave
 config/           esquema y ejemplo de la configuración por repo (.agent-playbook.json o .claude/agent-playbook.json)
-docs/             escalado, gestores de tickets, hooks, review bot, segundo reviewer, métricas
-scripts/          utilidades de CI y de las corridas (preflight.py: controles iniciales en un paso; repo_map.py: mapa de arquitectura; route.py: modelo de cada subagente; ticket_check.py: contrato de ticket opcional; second_review.py: segundo reviewer consultivo con Gemini vía agy; merge_gate.py: condiciones de merge; run_journeys.py: regresión; close_run.py y metrics_report.py: métricas y exportación sanitizada)
+docs/             escalado, gestores de tickets, hooks, review bot, segundo reviewer, lectores Gemini, métricas
+scripts/          utilidades de CI y de las corridas (preflight.py: controles iniciales en un paso; repo_map.py: mapa de arquitectura; gemini_reader.py: lectores Gemini vía agy; route.py: modelo de cada subagente; ticket_check.py: contrato de ticket opcional; second_review.py: segundo reviewer y reviewer interno con Gemini vía agy; merge_gate.py: condiciones de merge; run_journeys.py: regresión; close_run.py y metrics_report.py: métricas y exportación sanitizada)
 tests/            tests de los scripts
 ```
 
@@ -80,6 +81,7 @@ tests/            tests de los scripts
 | 1.5 | Chequeos de aceptación ejecutables antes del PR y modelo del orquestador recomendado por carril | Hecho |
 | 1.6 | Permiso de merge en `setup-project`, aviso del trabajo en segundo plano y esperas medidas sin ausencias (`human_stops`) | Hecho |
 | 1.7 | Segundo reviewer consultivo en solo lectura con Gemini vía `agy` (`scripts/second_review.py`, [docs/SECOND_REVIEWER.md](docs/SECOND_REVIEWER.md)) y métrica `second_review` | Hecho |
+| 1.8 | Lectores de código con Gemini vía `agy` (`scripts/gemini_reader.py`, [docs/GEMINI_READERS.md](docs/GEMINI_READERS.md)) y Gemini como reviewer interno obligatorio en tickets `critical` (`second_reviewer.internal_review`) con caída a Claude | Hecho |
 
 ### Límites conocidos
 
@@ -88,7 +90,7 @@ Todas las corridas reales registradas usan GitHub Issues y el perfil `reduced`. 
 - **Jira:** el adaptador existe desde la 1.2, pero no hay corridas con `tracker.type: "jira"`. Notion se probó en la 1.0.
 - **Perfil `full`:** descrito y con su tabla de ruteo, sin corridas.
 - **`resolve-epic` y los coders en paralelo:** sin corridas registradas.
-- **Google Antigravity `agy`:** los hooks y el ruteo lo contemplan, sin corridas registradas.
+- **Google Antigravity `agy`:** los hooks y el ruteo lo contemplan, y el segundo reviewer (`second_reviewer`, consultivo en `standard` e interno obligatorio en `critical`) y los lectores Gemini (`gemini_readers`) lo invocan en solo lectura, sin corridas reales registradas todavía.
 - **Entorno desplegado:** las pruebas en vivo se han hecho contra el entorno local (`dev_url` vacío); el gate de deploy no se ha ejercitado.
 - **Review bot, criterios `e2e` con navegador y journeys:** sin probar a fondo (un solo repo tiene un journey).
 - **Proyecto desde cero:** el ticket 0 de un repo sin código se resolvió una vez (kickoff-demo#2, Next.js); falta repetirlo con otro stack.

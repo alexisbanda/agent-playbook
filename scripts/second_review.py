@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
-"""Second reviewer: an advisory, read-only review of a ticket's diff by a model
-from another vendor (Gemini, through the `agy` CLI).
+"""Second reviewer: a read-only review of a ticket's diff by a model from
+another vendor (Gemini, through the `agy` CLI).
 
 It gathers its own inputs (the run's RUN_STATE.md as the plan, the PR body and,
 on GitHub, the issue, both through `gh`), writes a review packet into the run
 folder, asks `agy` to read it with a reduced, per-call permission list, and
 validates the structured answer: a verdict, findings and a criterion ->
-test coverage table. The orchestrator triages the findings in RUN_STATE.md;
-nothing here blocks a merge.
+test coverage table. The orchestrator triages the findings in RUN_STATE.md.
+
+Role: in a `critical` ticket with `second_reviewer.internal_review` (default
+true) Gemini is the internal reviewer and its APPROVE on the current HEAD is
+required before promoting; if it gives no review, the orchestrator falls back
+to the Claude `opus` reviewer. Otherwise the review is advisory. merge_gate.py
+reads neither.
 
 Usage (from the main clone):
   second_review.py <run> --worktree PATH [--base origin/main] [--force] [--root .]
@@ -53,6 +58,9 @@ RESULT_NAME = "second-review.json"
 LOG_NAME = "second-review.jsonl"
 STATE_NAME = "RUN_STATE.md"
 STATE_SECTION = "segundo reviewer"
+# advisory: a second opinion; internal: the binding reviewer of a critical ticket.
+ROLES = ("advisory", "internal")
+ROLE_LABEL = {"advisory": "consultivo", "internal": "reviewer interno, obligatorio"}
 
 SCHEMA = {
     "type": "object",
@@ -128,7 +136,14 @@ def settings(config):
         "timeout": int(section.get("timeout_seconds") or DEFAULT_TIMEOUT),
         "min_diff_lines": DEFAULT_MIN_DIFF_LINES if section.get("min_diff_lines") is None
         else int(section["min_diff_lines"]),
+        "internal_review": bool(section.get("internal_review", True)),
     }
+
+
+def role_for(ticket_class, conf):
+    """Gemini is the binding internal reviewer only in critical tickets with
+    internal_review on; everywhere else it is advisory."""
+    return "internal" if ticket_class == "critical" and conf.get("internal_review") else "advisory"
 
 
 def run_dir(root, run):
@@ -321,7 +336,7 @@ def append_log(directory, entry):
 
 
 def review(run, worktree, ticket, plan="", pr_body="", base="origin/main", model=DEFAULT_MODEL,
-           effort="medium", timeout=DEFAULT_TIMEOUT, root=".", runner=run_agy):
+           effort="medium", timeout=DEFAULT_TIMEOUT, root=".", runner=run_agy, role="advisory"):
     """Runs one review and records it. Returns the result dict (status "ok" or a
     degraded status with "error")."""
     worktree = os.path.abspath(worktree)
@@ -335,7 +350,8 @@ def review(run, worktree, ticket, plan="", pr_body="", base="origin/main", model
         handle.write(build_packet(ticket, plan, pr_body, stat, diff, base, head))
     command = build_command(model, effort, timeout, packet_path, directory)
 
-    result = {"ts": now_iso(), "run": run, "head": head, "base": base, "model": model, "effort": effort}
+    result = {"ts": now_iso(), "run": run, "head": head, "base": base, "model": model, "effort": effort,
+              "role": role}
     attempts = 0
     while True:
         attempts += 1
@@ -360,7 +376,7 @@ def review(run, worktree, ticket, plan="", pr_body="", base="origin/main", model
     with open(os.path.join(directory, RESULT_NAME), "w", encoding="utf-8") as handle:
         json.dump(result, handle, ensure_ascii=False, indent=2)
         handle.write("\n")
-    entry = {k: result[k] for k in ("ts", "head", "model", "status", "attempts")}
+    entry = {k: result[k] for k in ("ts", "head", "model", "role", "status", "attempts")}
     entry["event"] = "review"
     if status == "ok":
         entry.update({
@@ -400,10 +416,18 @@ def state_class(root, run):
     return class_from_state(read_optional(path) if os.path.isfile(path) else "")
 
 
-def no_review(directory, status, message):
+def fallback_text(role):
+    """What the orchestrator does when there is no review."""
+    if role == "internal":
+        return ("Lanza el reviewer interno de Claude (`ROLE: reviewer · CLASS: review`, `opus`, "
+                "`templates/REVIEW_BRIEF.md`) como en `critical` sin Gemini y anótalo en LÍMITES.")
+    return "La corrida sigue sin él; anótalo en LÍMITES."
+
+
+def no_review(directory, status, message, role="advisory"):
     """Records a call that gave no review, so it counts as degraded in the metrics."""
-    append_log(directory, {"ts": now_iso(), "event": "review", "status": status})
-    print(f"**Segundo reviewer: sin revisión** ({status}): {message}.\nLa corrida sigue sin él; anótalo en LÍMITES.")
+    append_log(directory, {"ts": now_iso(), "event": "review", "role": role, "status": status})
+    print(f"**Segundo reviewer: sin revisión** ({status}): {message}.\n{fallback_text(role)}")
     return 1
 
 
@@ -439,7 +463,7 @@ def triage_from_state(directory):
 def summarize(directory):
     """Totals of a run's second reviews for metrics.jsonl, or None if there were none."""
     totals = {"calls": 0, "degraded": 0, "skipped": 0, "changes_requested": 0, "findings": 0,
-              "accepted": 0, "discarded": 0, "tokens": 0, "seconds": 0.0}
+              "accepted": 0, "discarded": 0, "tokens": 0, "seconds": 0.0, "internal": 0}
     for entry in log_entries(directory):
         if entry.get("event") != "review":
             continue
@@ -447,6 +471,7 @@ def summarize(directory):
             totals["skipped"] += 1
             continue
         totals["calls"] += 1
+        totals["internal"] += entry.get("role") == "internal"
         if entry.get("status") != "ok":
             totals["degraded"] += 1
             continue
@@ -467,11 +492,15 @@ def cell(text):
 
 def report(result):
     """Compact Markdown for the orchestrator: no raw model prose."""
+    role = result.get("role", "advisory")
     if result["status"] != "ok":
         return (f"**Segundo reviewer: sin revisión** ({result['status']}): {result['error']}.\n"
-                "La corrida sigue sin él; anótalo en LÍMITES.")
+                + fallback_text(role))
     lines = [f"**Segundo reviewer ({result['model']}): {result['verdict']}** sobre `{result['head'][:7]}` · "
-             f"{result['seconds']} s · {result['tokens']} tokens · consultivo"]
+             f"{result['seconds']} s · {result['tokens']} tokens · {ROLE_LABEL[role]}"]
+    if role == "internal":
+        lines.append("Su APPROVE sobre el HEAD actual es el del reviewer interno: sin él no promuevas. "
+                     "Un hallazgo solo se descarta comprobado, con el motivo en RUN_STATE.md.")
     if result["summary"]:
         lines.append(result["summary"])
     if result["findings"]:
@@ -516,8 +545,10 @@ def main():
         print("Segundo reviewer desactivado (second_reviewer.enabled). Sin revisión.")
         return 1
     directory = run_dir(args.root, args.run)
+    role = "advisory"
     try:
         ticket_class = args.ticket_class or state_class(args.root, args.run)
+        role = role_for(ticket_class, conf)
         if ticket_class == "standard" and not args.force:
             if already_reviewed(directory):
                 print("Segundo reviewer: este ticket ya tiene su revisión; en `standard` no se repite.")
@@ -530,17 +561,17 @@ def main():
                 print(f"Segundo reviewer: omitido ({reason}). Haz el paso 4 completo; no es un límite.")
                 return 0
         if not shutil.which("agy"):
-            return no_review(directory, "missing", "agy no está instalado o no está en el PATH")
+            return no_review(directory, "missing", "agy no está instalado o no está en el PATH", role)
         # Only now: the gh reads are the slow part and a skipped review does not need them.
         ticket, plan, pr_body = gather_inputs(
             args.run, args.worktree, args.root, config, args.ticket_file, args.plan_file, args.pr_body_file)
         result = review(
             args.run, args.worktree, ticket, plan, pr_body, base=args.base, model=args.model or conf["model"],
             effort=args.effort or EFFORT_BY_CLASS[ticket_class],
-            timeout=args.timeout or conf["timeout"], root=args.root,
+            timeout=args.timeout or conf["timeout"], root=args.root, role=role,
         )
     except (RuntimeError, OSError) as error:
-        return no_review(directory, "error", error)
+        return no_review(directory, "error", error, role)
     print(report(result))
     return 0 if result["status"] == "ok" else 1
 

@@ -213,6 +213,39 @@
           "minimum": 0,
           "default": 50,
           "description": "En tickets standard no se revisan diffs con menos líneas cambiadas; 0 lo desactiva."
+        },
+        "internal_review": {
+          "type": "boolean",
+          "default": true,
+          "description": "Si es true (por defecto), en tickets critical Gemini actúa como el reviewer interno obligatorio (su APPROVE cuenta y absorbe la revisión interna); si agy falla, se cae al reviewer opus de Claude."
+        }
+      }
+    },
+    "gemini_readers": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Si es true, los lectores de código de la fase de exploración corren con Gemini vía scripts/gemini_reader.py; si agy falla, se cae a lectores Claude haiku. Ver docs/GEMINI_READERS.md."
+        },
+        "model": {
+          "type": "string",
+          "default": "gemini-3.8-flash",
+          "description": "Modelo de agy para los lectores (ver agy models)."
+        },
+        "effort": {
+          "type": "string",
+          "enum": ["low", "medium", "high"],
+          "default": "low",
+          "description": "Nivel de esfuerzo de agy para los lectores."
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 30,
+          "default": 180,
+          "description": "Tiempo máximo en segundos de un lector de agy."
         }
       }
     },

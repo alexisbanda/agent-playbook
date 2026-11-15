@@ -42,6 +42,8 @@ El perfil sale de `profile` en `.claude/agent-playbook.json`.
 
 Las clases del perfil completo también se aceptan en el reducido y se traducen: `mechanical` y `port` → `standard`; `root-cause`, `contract`, `money` y `security` → `critical`. Así un encabezado escrito pensando en el perfil completo sigue funcionando.
 
+Cuando `gemini_readers.enabled` o `second_reviewer.enabled` están activos, los lectores (`scripts/gemini_reader.py`, modelo `gemini-3.8-flash` con `effort: low`) y el reviewer (`scripts/second_review.py`, modelo `gemini-4-argon`, consultivo en `standard` e interno obligatorio en `critical` con `internal_review: true`) se ejecutan vía CLI `agy` en lugar de como subagentes de Claude; si `agy` falla, se cae a los subagentes `haiku` y `opus` de esta tabla.
+
 ### `full`
 
 | Clase | Para qué | Por defecto | Permitidos |
