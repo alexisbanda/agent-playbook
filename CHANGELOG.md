@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.8.1
+
+Endurece los permisos de los lectores Gemini en `scripts/gemini_reader.py` (#27) para evitar abortos silenciosos de `agy` al intentar ejecutar intérpretes o herramientas no permitidas y recuperar automáticamente una vez los comandos no listados.
+
+- **`scripts/gemini_reader.py`:** amplía `ALLOWED_COMMANDS` (`cat`, `ls`, `grep`, `head`, `tail`, `wc`, `git log`, `git show`, `git diff`, `git ls-files`) y añade `DENIED_COMMANDS` (`node`, `python`, `npm`, `pnpm`, `sed`, `find`, `gh`, `docker`, etc.) en `permissions.deny` para que `agy` devuelva una denegación suave sin cortar el turno. Refuerza el prompt para leer código/lockfiles o anotar dudas en `risks`, detecta también `denied_actions` sin `structured_output` en `parse_result()`, extrae el último `run_command` del transcript con `denied_command()`, guarda los últimos 4000 caracteres del stderr en `gemini-reader-<n>-stderr.log`, reintenta una vez avisando del comando denegado, registra `denied` en `gemini-readers.jsonl`, cuenta `recovered` en `summarize()` y lo muestra en `report()`.
+- **Métricas (`config/metrics.schema.json`, `docs/METRICS.md`):** añade el campo opcional `recovered` dentro de `gemini_readers`.
+- **Documentación y skills (`docs/GEMINI_READERS.md`, `skills/resolve-issue/SKILL.md`, `skills/resolve-epic/SKILL.md`):** documenta `allow` vs `deny` vs comandos no listados, el reintento único y cómo formular las preguntas («dónde está / qué dice», no «comprueba si funciona»).
+- **Tests (`tests/test_gemini_reader.py`, `tests/test_hooks.py`):** cubren `build_command`, `parse_result` con `denied_actions`, `denied_command`, recuperación y doble denegación en `read_repo` y el contador `recovered` en `summarize`.
+
 ## 1.8.0
 
 Lectores de código con Gemini vía `agy` (`docs/GEMINI_READERS.md`) y Gemini como **reviewer interno obligatorio** en tickets `critical` cuando `second_reviewer.enabled` es `true` (`second_reviewer.internal_review`, por defecto `true`), con caída automática a los agentes de Claude si `agy` falla.

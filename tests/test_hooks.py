@@ -487,7 +487,10 @@ class CloseRunTest(HookTestCase):
                 "files": 2, "risks": 1, "tests": 1, "seconds": 3.2, "tokens": 800,
             }) + "\n")
         with_sr = self.close_with_fake_gh("17", 'import sys\nsys.exit(1)\n')
-        self.assertEqual(with_sr["gemini_readers"], {"calls": 1, "degraded": 0, "tokens": 800, "seconds": 3.2})
+        self.assertEqual(
+            with_sr["gemini_readers"],
+            {"calls": 1, "degraded": 0, "recovered": 0, "tokens": 800, "seconds": 3.2},
+        )
         sys.path.insert(0, os.path.join(ROOT, "scripts"))
         import close_run  # noqa: E402
         try:

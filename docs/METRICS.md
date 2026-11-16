@@ -28,7 +28,7 @@ Una línea por corrida en `.agent-playbook/metrics.jsonl`, escrita por `scripts/
 | Versión del playbook | Para comparar antes y después de un cambio en los manuales |
 | Calidad del ticket (`ticket_quality`) | Solo con `tickets.contract: true`. Puntuación de Ticket Studio, o cumplimiento mínimo si no está instalado, y si el ticket llegó marcado como listo. Cruzada con E2E a la primera y rondas de revisión, dice si los tickets incompletos cuestan retrabajo |
 | Segundo reviewer (`second_review`) | Totales del segundo reviewer y reviewer interno con Gemini en la corrida (`calls`, `internal`, `degraded`, `skipped`, `changes_requested`, `findings`, `accepted`, `discarded`, `tokens`, `seconds`), o `null` si no hubo. La precisión (`accepted / (accepted + discarded)`) es la señal para decidir si se mantiene (ver [SECOND_REVIEWER.md](SECOND_REVIEWER.md)) |
-| Lectores Gemini (`gemini_readers`) | Totales de los lectores Gemini en la corrida (`calls`, `degraded`, `tokens`, `seconds`), o `null` si no hubo (ver [GEMINI_READERS.md](GEMINI_READERS.md)) |
+| Lectores Gemini (`gemini_readers`) | Totales de los lectores Gemini en la corrida (`calls`, `degraded`, `recovered`, `tokens`, `seconds`), o `null` si no hubo (ver [GEMINI_READERS.md](GEMINI_READERS.md)) |
 
 El coste es una **estimación** con las tarifas de la API de [`metrics/prices.json`](../metrics/prices.json). No refleja descuentos ni un plan de suscripción.
 
