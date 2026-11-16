@@ -73,7 +73,152 @@ class GeminiReaderTest(unittest.TestCase):
             gr.no_reader(directory, "timeout", "agy no respondió", "Otra pregunta")
             self.assertEqual(
                 gr.summarize(directory),
-                {"calls": 2, "degraded": 1, "tokens": 900, "seconds": 3.4},
+                {"calls": 2, "degraded": 1, "recovered": 0, "tokens": 900, "seconds": 3.4},
+            )
+
+    def test_build_command_permissions_and_avoid(self):
+        cmd = gr.build_command("gemini-3.8-flash", "low", 180, "/tmp/p.md", "/tmp/dir")
+        settings = json.loads(cmd[cmd.index("--settings") + 1])
+        allow = settings["permissions"]["allow"]
+        deny = settings["permissions"]["deny"]
+        self.assertIn("command(head)", allow)
+        self.assertNotIn("command(sed)", allow)
+        self.assertNotIn("command(find)", allow)
+        self.assertIn("command(node)", deny)
+        self.assertEqual(cmd[-2], "-p")
+        self.assertNotIn("Un intento anterior", cmd[-1])
+
+        retry_cmd = gr.build_command("gemini-3.8-flash", "low", 180, "/tmp/p.md", "/tmp/dir", avoid="node -v")
+        self.assertEqual(retry_cmd[-2], "-p")
+        self.assertIn("`node -v`", retry_cmd[-1])
+
+    def test_parse_result_detects_denied(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            status, _ = gr.parse_result("", "jetski: auto-denied command", tmp)
+            self.assertEqual(status, "denied")
+
+            stdout = json.dumps({
+                "conversation_id": "c1",
+                "status": "SUCCESS",
+                "response": "",
+                "denied_actions": [{"action": "command", "display_name": "Bash"}],
+            })
+            status, _ = gr.parse_result(stdout, "", tmp)
+            self.assertEqual(status, "denied")
+
+    def test_denied_command_reads_last_run_command_and_handles_errors(self):
+        with tempfile.TemporaryDirectory() as brain:
+            logs_dir = os.path.join(brain, "conv-1", ".system_generated", "logs")
+            os.makedirs(logs_dir)
+            transcript = os.path.join(logs_dir, "transcript.jsonl")
+            step1 = json.dumps({
+                "type": "PLANNER_RESPONSE",
+                "tool_calls": [{"name": "run_command", "args": {"CommandLine": '"ls -la"'}}],
+            })
+            step2 = (
+                '{"type": "PLANNER_RESPONSE", "tool_calls": ['
+                '{"name": "run_command", "args": {"CommandLine": "\\"node -e \\\\\\"x\\\\\\"\\""}}'
+                ']}'
+            )
+            with open(transcript, "w", encoding="utf-8") as fh:
+                fh.write(step1 + "\n" + step2 + "\n")
+
+            stdout = json.dumps({"conversation_id": "conv-1"})
+            self.assertEqual(gr.denied_command(stdout, brain_dir=brain), 'node -e "x"')
+            self.assertIsNone(gr.denied_command("not-json", brain_dir=brain))
+            self.assertIsNone(gr.denied_command(json.dumps({"conversation_id": "missing"}), brain_dir=brain))
+
+    def _write_transcript(self, brain, conv_id, cmd_line):
+        logs_dir = os.path.join(brain, conv_id, ".system_generated", "logs")
+        os.makedirs(logs_dir, exist_ok=True)
+        step = {
+            "type": "PLANNER_RESPONSE",
+            "tool_calls": [{"name": "run_command", "args": {"CommandLine": json.dumps(cmd_line)}}],
+        }
+        with open(os.path.join(logs_dir, "transcript.jsonl"), "w", encoding="utf-8") as fh:
+            fh.write(json.dumps(step) + "\n")
+
+    def test_read_repo_retries_once_on_denied_and_recovers(self):
+        with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as brain:
+            with open(os.path.join(tmp, "app.py"), "w", encoding="utf-8") as fh:
+                fh.write("x = 1\n")
+            self._write_transcript(brain, "conv-denied", 'node -e "x"')
+            denied_out = json.dumps({
+                "conversation_id": "conv-denied",
+                "status": "SUCCESS",
+                "response": "",
+                "denied_actions": [{"action": "command", "display_name": "Bash"}],
+            })
+            responses = iter([
+                (denied_out, "auto-denied detail", None),
+                (agy_reader_response(), "", None),
+            ])
+            commands = []
+
+            def fake_runner(command, cwd, timeout):
+                commands.append(command)
+                return next(responses)
+
+            res = gr.read_repo("42", "Explora app", root=tmp, runner=fake_runner, brain_dir=brain)
+            self.assertEqual(res["status"], "ok")
+            self.assertEqual(res["attempts"], 2)
+            self.assertEqual(res["denied"], ['node -e "x"'])
+            self.assertEqual(len(commands), 2)
+            self.assertEqual(commands[1][-2], "-p")
+            self.assertIn('node -e "x"', commands[1][-1])
+
+            directory = gr.run_dir(tmp, "42")
+            stderr_log = os.path.join(directory, "gemini-reader-1-stderr.log")
+            self.assertTrue(os.path.isfile(stderr_log))
+            with open(stderr_log, encoding="utf-8") as fh:
+                self.assertEqual(fh.read(), "auto-denied detail")
+
+            entries = gr.log_entries(directory)
+            self.assertEqual(len(entries), 1)
+            self.assertEqual(entries[0]["denied"], ['node -e "x"'])
+            self.assertIn('Reintento tras denegar: `node -e "x"`', gr.report(res))
+
+    def test_read_repo_denied_twice_fails_with_command_in_error(self):
+        with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as brain:
+            self._write_transcript(brain, "conv-1", "python3 -V")
+            self._write_transcript(brain, "conv-2", "ruby -v")
+            out1 = json.dumps({
+                "conversation_id": "conv-1",
+                "status": "SUCCESS",
+                "denied_actions": [{"action": "command"}],
+            })
+            out2 = json.dumps({
+                "conversation_id": "conv-2",
+                "status": "SUCCESS",
+                "denied_actions": [{"action": "command"}],
+            })
+            responses = iter([(out1, "err1", None), (out2, "err2", None)])
+
+            def fake_runner(command, cwd, timeout):
+                return next(responses)
+
+            res = gr.read_repo("42", "Explora app", root=tmp, runner=fake_runner, brain_dir=brain)
+            self.assertEqual(res["status"], "denied")
+            self.assertEqual(res["attempts"], 2)
+            self.assertEqual(res["denied"], ["python3 -V", "ruby -v"])
+            self.assertIn("ruby -v", res["error"])
+            entries = gr.log_entries(gr.run_dir(tmp, "42"))
+            self.assertEqual(entries[0]["denied"], ["python3 -V", "ruby -v"])
+
+    def test_summarize_counts_recovered(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            gr.append_log(tmp, {
+                "event": "reader", "status": "ok", "denied": ["node -v"], "tokens": 500, "seconds": 2.0,
+            })
+            gr.append_log(tmp, {
+                "event": "reader", "status": "ok", "tokens": 300, "seconds": 1.0,
+            })
+            gr.append_log(tmp, {
+                "event": "reader", "status": "denied", "denied": ["python3 -V", "ruby -v"],
+            })
+            self.assertEqual(
+                gr.summarize(tmp),
+                {"calls": 3, "degraded": 1, "recovered": 1, "tokens": 800, "seconds": 3.0},
             )
 
 
