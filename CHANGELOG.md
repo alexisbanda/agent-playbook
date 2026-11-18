@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.8.2
+
+Amplía la lista permitida de los lectores Gemini con los comandos de solo lectura que causaron las últimas denegaciones en `epic-2` (`git grep` en #8, `git status` en #7) y con `find` y `sed -n`.
+
+- **`scripts/gemini_reader.py`:** añade `find`, `sed -n`, `git grep` y `git status` a `ALLOWED_COMMANDS`. Quita `sed` y `find` de `DENIED_COMMANDS`: en `agy` el `deny` gana al `allow` y se empareja por prefijo de palabras, así que bloqueaban también `sed -n` y `find` (comprobado con `agy`). En su lugar deniega `sed -i`, `sed -e`, `sed -E`, `sed -r` y `sed --in-place` (denegación suave). El prompt limita `sed` a `sed -n 'A,Bp'` y `find` a listar (sin `-exec`, `-execdir`, `-ok`, `-delete` ni `-fprint`); el sandbox bloquea igualmente sus escrituras.
+- **Documentación (`docs/GEMINI_READERS.md`):** lista nueva y cómo empareja `agy` los permisos.
+- **Tests (`tests/test_gemini_reader.py`):** cubren los nuevos `allow`, que `sed` y `find` no estén enteros en `deny` y la regla de `find` en el prompt.
+
 ## 1.8.1
 
 Endurece los permisos de los lectores Gemini en `scripts/gemini_reader.py` (#27) para evitar abortos silenciosos de `agy` al intentar ejecutar intérpretes o herramientas no permitidas y recuperar automáticamente una vez los comandos no listados.

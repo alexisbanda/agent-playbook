@@ -82,9 +82,15 @@ class GeminiReaderTest(unittest.TestCase):
         allow = settings["permissions"]["allow"]
         deny = settings["permissions"]["deny"]
         self.assertIn("command(head)", allow)
+        for name in ("find", "sed -n", "git grep", "git status"):
+            self.assertIn(f"command({name})", allow)
         self.assertNotIn("command(sed)", allow)
-        self.assertNotIn("command(find)", allow)
+        # deny gana a allow por prefijo: sed y find enteros no pueden estar en deny
+        self.assertNotIn("command(sed)", deny)
+        self.assertNotIn("command(find)", deny)
+        self.assertIn("command(sed -i)", deny)
         self.assertIn("command(node)", deny)
+        self.assertIn("-exec", cmd[-1])
         self.assertEqual(cmd[-2], "-p")
         self.assertNotIn("Un intento anterior", cmd[-1])
 
