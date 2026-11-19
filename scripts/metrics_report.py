@@ -99,6 +99,7 @@ def summarise(runs, prices):
             "model_blocks": (run.get("gate_events") or {}).get("model_block", 0),
             "tokens_measured": run.get("tokens_measured", False),
             "ticket": run.get("ticket_quality"),
+            "gemini_readers": run.get("gemini_readers"),
         })
     return rows
 
@@ -163,6 +164,17 @@ def check_tripwires(rows, config):
 
     blocks = statistics.mean(r["model_blocks"] for r in window)
     add("model_blocks_per_run_max", round(blocks, 2), blocks > wires["model_blocks_per_run_max"]["value"], "media por corrida")
+
+    if "gemini_readers_degraded_share_max" in wires:
+        readers = [r["gemini_readers"] for r in window
+                   if isinstance(r.get("gemini_readers"), dict) and (r["gemini_readers"].get("calls") or 0) > 0]
+        reader_calls = sum(int(g.get("calls") or 0) for g in readers)
+        degraded = sum(int(g.get("degraded") or 0) for g in readers)
+        if reader_calls > 0:
+            share = degraded / reader_calls
+            add("gemini_readers_degraded_share_max", round(share, 2),
+                share > wires["gemini_readers_degraded_share_max"]["value"],
+                f"lectores degradados / llamadas ({reader_calls} lectores en {len(readers)} corridas)")
 
     untracked = sum(not r["tokens_measured"] for r in window)
     add("untracked_runs_max", untracked, untracked > wires["untracked_runs_max"]["value"], "corridas sin tokens medidos")

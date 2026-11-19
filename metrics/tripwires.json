@@ -13,6 +13,7 @@
     "coder_ctx_peak_k_max": { "value": 200, "why": "El contexto del coder crece demasiado y el coste de cada llamada con él: revisar el vigilante de contexto (hooks.coder_ctx_handback_k), las lecturas y la salida de los tests." },
     "overrides_per_run_max": { "value": 1.0, "why": "Muchos overrides: la tabla de ruteo no encaja con el trabajo real, o se está saltando." },
     "model_blocks_per_run_max": { "value": 1.0, "why": "El gate de modelos bloquea a menudo: el manual no deja claro qué modelo usar." },
+    "gemini_readers_degraded_share_max": { "value": 0.2, "why": "Demasiados lectores Gemini sin respuesta (denegados, timeout o respuesta inválida): revisar la lista de comandos permitidos, las reglas del prompt y los transcripts de agy." },
     "untracked_runs_max": { "value": 0, "why": "Corridas sin tokens medidos: la telemetría está rota." }
   }
 }

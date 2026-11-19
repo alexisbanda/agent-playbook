@@ -106,6 +106,19 @@ class TripwireTest(unittest.TestCase):
         result, _ = wires([run(i) for i in range(1, 4)])
         self.assertNotIn("orchestrator_ctx_start_k_max", result)
 
+    def test_degraded_gemini_readers_trip(self):
+        readers = [{"calls": 2, "degraded": 1}, {"calls": 2, "degraded": 1}, {"calls": 1, "degraded": 0}]
+        runs = [run(i, gemini_readers=g) for i, g in enumerate(readers, start=1)]
+        result, _ = mr.check_tripwires(mr.summarise(runs, PRICES), TRIPWIRES)
+        [wire] = [w for w in result if w["name"] == "gemini_readers_degraded_share_max"]
+        self.assertEqual(wire["observed"], 0.4)
+        self.assertTrue(wire["tripped"])
+        self.assertIn("5 lectores en 3 corridas", wire["detail"])
+
+    def test_runs_without_gemini_readers_skip_that_wire(self):
+        result, _ = wires([run(i) for i in range(1, 4)])
+        self.assertNotIn("gemini_readers_degraded_share_max", result)
+
     def test_report_renders(self):
         rows = mr.summarise([run(i) for i in range(1, 4)], PRICES)
         result, note = mr.check_tripwires(rows, TRIPWIRES)

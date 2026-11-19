@@ -20,7 +20,7 @@ Exploración de código en solo lectura con Gemini a través del CLI `agy` de An
 
 ## Cómo funciona
 
-El orquestador lanza de 1 a 3 llamadas en paralelo (una por pregunta o ámbito):
+El orquestador lanza de 1 a 3 llamadas en paralelo (una por pregunta o ámbito). No hace falta lanzarlas en serie: cada lector reserva su número `<n>` de forma atómica al crear su paquete, así que dos lectores simultáneos no comparten índice ni se pisan el encargo, y las líneas de `gemini-readers.jsonl` se escriben con bloqueo:
 
 ```bash
 python3 <plugin>/scripts/gemini_reader.py <ticket> --question "<ámbito o pregunta>"
@@ -28,9 +28,10 @@ python3 <plugin>/scripts/gemini_reader.py <ticket> --question "<ámbito o pregun
 
 - Escribe el encargo en `.agent-playbook/runs/<ticket>/gemini-reader-<n>-input.md`.
 - Invoca `agy` desde la raíz del repo con `--mode plan`, `--sandbox`, salida JSON con esquema (`summary`, `files`, `risks`, `tests`) y permisos por llamada en `--settings` (`allow` y `deny`), quitando `GEMINI_API_KEY` y `GOOGLE_API_KEY` del entorno:
-  - **Lista permitida (`allow`):** `cat`, `ls`, `grep`, `head`, `tail`, `wc`, `find` (solo para listar: sin `-exec`, `-delete` ni `-fprint`), `sed -n`, `git log`, `git show`, `git diff`, `git ls-files`, `git grep`, `git status`, además de la herramienta nativa de lectura de archivos (`read_file`, sin permisos de terminal).
-  - **Lista denegada (`deny`):** intérpretes, gestores de paquetes, shells, red y escritura (`node`, `npx`, `npm`, `pnpm`, `yarn`, `bun`, `deno`, `python`, `python3`, `pip`, `pip3`, `uv`, `ruby`, `perl`, `php`, `go`, `cargo`, `rustc`, `java`, `javac`, `make`, `sh`, `bash`, `zsh`, `curl`, `wget`, `rm`, `mv`, `cp`, `tee`, `touch`, `mkdir`, `gh`, `docker`, `sed -i`, `sed -e`, `sed -E`, `sed -r`, `sed --in-place`). Producen **denegación suave**: el modelo recibe el error de herramienta y el turno continúa sin abortar.
+  - **Lista permitida (`allow`):** `cat`, `ls`, `grep`, `head`, `tail`, `wc`, `find` (solo para listar: sin `-exec`, `-delete` ni `-fprint`), `sed -n`, `git log`, `git show`, `git diff`, `git ls-files`, `git grep`, `git status`, `git branch` (para listar ramas), además de la herramienta nativa de lectura de archivos (`read_file`, sin permisos de terminal).
+  - **Lista denegada (`deny`):** intérpretes, gestores de paquetes, shells, red y escritura (`node`, `npx`, `npm`, `pnpm`, `yarn`, `bun`, `deno`, `python`, `python3`, `pip`, `pip3`, `uv`, `ruby`, `perl`, `php`, `go`, `cargo`, `rustc`, `java`, `javac`, `make`, `sh`, `bash`, `zsh`, `curl`, `wget`, `rm`, `mv`, `cp`, `tee`, `touch`, `mkdir`, `gh`, `docker`, `sed -i`, `sed -e`, `sed -E`, `sed -r`, `sed --in-place`, y las formas de escritura de `git branch`: `git branch -d`, `git branch -D`, `git branch -m`, `git branch -M`, `git branch --delete`). Producen **denegación suave**: el modelo recibe el error de herramienta y el turno continúa sin abortar.
   - **Emparejamiento:** `agy` compara por prefijo de palabras (`command(sed -n)` permite `sed -n 1,40p x`, pero no `sed -e …`) y `deny` gana a `allow`. Por eso `sed` y `find` no están enteros en `deny`: bloquearían también `sed -n` y `find`. Las formas de `find` que escriben o ejecutan (`-exec`, `-delete`) no se pueden expresar como prefijo; el sandbox las frena, pero como comando no permitido abortan el turno (con reintento), así que el prompt las prohíbe.
+  - **Comodines con `git`:** comprobado con `agy` 1.5.11 el 2026-11-19, las comillas no son el problema; lo que `agy` deniega es un comodín de shell sin comillas en un comando `git` (`git grep -n X docs/G*`, `git log -- docs/G*`), aunque el comando esté en `allow`. Con `ls`, `grep` o `sed -n` el comodín sí pasa. El prompt pide pasar un directorio (`git grep -n X -- docs/`) o el pathspec entre comillas (`git grep -n X -- 'docs/G*'`), y el reintento tras una denegación repite estas reglas de forma.
   - **Comandos no listados:** cualquier comando que no está ni en `allow` ni en `deny` aborta el turno en modo sin interfaz (`auto-denied` en stderr o `denied_actions` sin `structured_output` en stdout). En ese caso el script lee el último `run_command` del transcript de `agy`, guarda los últimos 4000 caracteres del stderr en `.agent-playbook/runs/<ticket>/gemini-reader-<n>-stderr.log`, hace un **único reintento** avisando en el prompt de que no repita ese comando y registra la lista `denied` en `gemini-readers.jsonl`.
 - Normaliza las rutas, marca si algún archivo no existe en el repo, añade una línea a `gemini-readers.jsonl` e imprime una tabla compacta para el orquestador (con una línea `Reintento tras denegar: <cmd>` si se recuperó tras un comando denegado).
 - Si sale con código 1 (`missing`, `timeout`, `denied`, `invalid` o `error`), el script indica lanzar un lector Claude (`ROLE: reader · CLASS: reader`, `haiku`) para ese ámbito y anotarlo en LÍMITES.
@@ -42,3 +43,5 @@ Formula cada pregunta como **«dónde está / qué dice»**, no como **«comprue
 ## Métricas
 
 `close_run.py` añade a la línea de métricas el campo `gemini_readers` (ver [METRICS.md](METRICS.md)): llamadas (`calls`), llamadas degradadas (`degraded`), lecturas recuperadas tras reintento por denegación (`recovered`, opcional), tokens de Gemini (`tokens`) y segundos (`seconds`), o `null` si no hubo.
+
+El tripwire `gemini_readers_degraded_share_max` (0,2) salta cuando, en la ventana del informe, más del 20 % de los lectores Gemini quedan sin respuesta (denegados, timeout o respuesta inválida): es la señal para revisar la lista de comandos permitidos, las reglas del prompt y los transcripts de `agy`.
