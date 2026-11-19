@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.8.3
+
+Corrige los índices duplicados de los lectores Gemini lanzados en paralelo (#30) y reduce sus denegaciones (#31). La hipótesis de que las comillas causaban las denegaciones se descartó con `agy` real: la causa es un comodín de shell sin comillas en un comando `git`.
+
+- **`scripts/gemini_reader.py`:** nueva `reserve_packet()`, que reserva el número del lector de forma atómica (`O_CREAT | O_EXCL`, saltando a `n + 1` si el paquete ya existe) y la usa `read_repo()`; `append_log()` escribe cada línea con bloqueo `fcntl.flock` (se omite si `fcntl` no existe, en Windows). Añade `git branch` a `ALLOWED_COMMANDS` y deniega sus formas de escritura (`git branch -d`, `-D`, `-m`, `-M`, `--delete`; denegación suave, prefijos más largos que `git branch`). Nueva constante `SHAPE_RULES` en el prompt: con `git`, nada de comodines sin comillas (pasar `-- docs/` o `-- 'docs/08*'`) ni subcomandos fuera de la lista. El aviso del reintento tras una denegación repite las reglas de forma.
+- **`scripts/metrics_report.py` y `metrics/tripwires.json`:** nuevo tripwire `gemini_readers_degraded_share_max` (0,2): lectores degradados / llamadas en la ventana, solo si alguna corrida tuvo lectores Gemini.
+- **Documentación (`docs/GEMINI_READERS.md`, `docs/METRICS.md`):** `git branch` en la lista permitida, la regla de comodines con `git` (comprobada con `agy` 1.5.11), la reserva atómica de números en paralelo y el tripwire nuevo.
+- **Tests (`tests/test_gemini_reader.py`, `tests/test_metrics.py`):** cubren `git branch` en `allow` y sus formas de escritura en `deny`, las reglas de forma en el prompt y en el reintento, dos `read_repo()` simultáneos con índices distintos, `reserve_packet()` sin sobrescribir paquetes existentes y el tripwire nuevo (salta con 2 de 5 lectores degradados; no aparece sin lectores).
+
 ## 1.8.2
 
 Amplía la lista permitida de los lectores Gemini con los comandos de solo lectura que causaron las últimas denegaciones en `epic-2` (`git grep` en #8, `git status` en #7) y con `find` y `sed -n`.

@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import tempfile
+import threading
 import unittest
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -82,8 +83,10 @@ class GeminiReaderTest(unittest.TestCase):
         allow = settings["permissions"]["allow"]
         deny = settings["permissions"]["deny"]
         self.assertIn("command(head)", allow)
-        for name in ("find", "sed -n", "git grep", "git status"):
+        for name in ("find", "sed -n", "git grep", "git status", "git branch"):
             self.assertIn(f"command({name})", allow)
+        self.assertIn("command(git branch -D)", deny)
+        self.assertNotIn("command(git branch)", deny)
         self.assertNotIn("command(sed)", allow)
         # deny gana a allow por prefijo: sed y find enteros no pueden estar en deny
         self.assertNotIn("command(sed)", deny)
@@ -93,10 +96,76 @@ class GeminiReaderTest(unittest.TestCase):
         self.assertIn("-exec", cmd[-1])
         self.assertEqual(cmd[-2], "-p")
         self.assertNotIn("Un intento anterior", cmd[-1])
+        self.assertIn("-- 'docs/08*'", cmd[-1])
+        self.assertEqual(cmd[-1].count(gr.SHAPE_RULES), 1)
 
         retry_cmd = gr.build_command("gemini-3.8-flash", "low", 180, "/tmp/p.md", "/tmp/dir", avoid="node -v")
         self.assertEqual(retry_cmd[-2], "-p")
         self.assertIn("`node -v`", retry_cmd[-1])
+
+        glob_cmd = gr.build_command("gemini-3.8-flash", "low", 180, "/tmp/p.md", "/tmp/dir",
+                                    avoid="git grep -n X docs/08*")
+        self.assertIn("`git grep -n X docs/08*`", glob_cmd[-1])
+        self.assertIn("sin comodines sin comillas", glob_cmd[-1])
+        self.assertIn("Un intento anterior se abortó por usar un comando no permitido", glob_cmd[-1])
+
+    def test_parallel_read_repo_gets_distinct_indexes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            barrier = threading.Barrier(2)
+
+            def fake_runner(command, cwd, timeout):
+                barrier.wait(timeout=5)
+                marker = "Lee el encargo en: "
+                line = next(l for l in command[-1].splitlines() if marker in l)
+                packet = line.split(marker, 1)[1].strip()
+                with open(packet, encoding="utf-8") as fh:
+                    return agy_reader_response(summary=fh.read()), "", None
+
+            questions = ["Pregunta alfa sobre auth", "Pregunta beta sobre pagos"]
+            results = {}
+            errors = []
+
+            def worker(question):
+                try:
+                    results[question] = gr.read_repo("epic-9", question, root=tmp, runner=fake_runner)
+                except Exception as error:  # pragma: no cover - se informa abajo
+                    errors.append(error)
+
+            threads = [threading.Thread(target=worker, args=(q,)) for q in questions]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join(timeout=10)
+            self.assertEqual(errors, [])
+
+            directory = gr.run_dir(tmp, "epic-9")
+            contents = []
+            for index in (1, 2):
+                path = os.path.join(directory, f"gemini-reader-{index}-input.md")
+                self.assertTrue(os.path.isfile(path), path)
+                with open(path, encoding="utf-8") as fh:
+                    contents.append(fh.read())
+            for question in questions:
+                self.assertEqual(sum(question in c for c in contents), 1)
+                self.assertEqual(results[question]["status"], "ok")
+                self.assertIn(question, results[question]["summary"])
+            other = {questions[0]: questions[1], questions[1]: questions[0]}
+            for question in questions:
+                self.assertNotIn(other[question], results[question]["summary"])
+            self.assertEqual(len(gr.log_entries(directory)), 2)
+
+    def test_reserve_packet_skips_existing_packets(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            existing = os.path.join(tmp, "gemini-reader-1-input.md")
+            with open(existing, "w", encoding="utf-8") as fh:
+                fh.write("original")
+            index, path = gr.reserve_packet(tmp, "nuevo")
+            self.assertEqual(index, 2)
+            self.assertEqual(path, os.path.join(tmp, "gemini-reader-2-input.md"))
+            with open(existing, encoding="utf-8") as fh:
+                self.assertEqual(fh.read(), "original")
+            with open(path, encoding="utf-8") as fh:
+                self.assertEqual(fh.read(), "nuevo")
 
     def test_parse_result_detects_denied(self):
         with tempfile.TemporaryDirectory() as tmp:

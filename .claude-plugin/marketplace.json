@@ -9,7 +9,7 @@
     {
       "name": "agent-playbook",
       "description": "Manuales versionados, ruteo de modelos, hooks y cierre con evidencia para orquestar el desarrollo de software con agentes (Claude Code y Google Antigravity agy).",
-      "version": "1.8.2",
+      "version": "1.8.3",
       "source": "./",
       "category": "development"
     },

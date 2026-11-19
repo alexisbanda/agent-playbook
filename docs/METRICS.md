@@ -56,6 +56,7 @@ Umbrales en [`metrics/tripwires.json`](../metrics/tripwires.json). Que uno salte
 | `coder_ctx_peak_k_max` | 200 | La mediana del contexto máximo de un coder supera 200k tokens |
 | `overrides_per_run_max` | 1 | Más de un override de ruteo por corrida de media |
 | `model_blocks_per_run_max` | 1 | El gate de modelos bloquea más de una vez por corrida de media |
+| `gemini_readers_degraded_share_max` | 0,2 | Más del 20 % de los lectores Gemini de la ventana quedan sin respuesta (denegados, timeout o respuesta inválida). Solo se evalúa si alguna corrida tuvo lectores Gemini |
 | `untracked_runs_max` | 0 | Alguna corrida sin tokens medidos (telemetría rota) |
 
 Hacen falta al menos 3 corridas para evaluarlos. Los umbrales son un punto de partida: la propia tuning wave puede proponer recalibrarlos.
