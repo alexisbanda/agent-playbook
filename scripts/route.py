@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Alexis Banda. Todos los derechos reservados.
+# Software propietario: uso sujeto a LICENSE, prohibida su redistribución.
 """Resolves which model a subagent launch may use, from routing/routing.json.
 
 Pure decision logic shared by the model-gate hook (fase 3) and the tests.

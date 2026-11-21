@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Alexis Banda. Todos los derechos reservados. Software propietario: uso sujeto a LICENSE, prohibida su redistribución. -->
+
 # Cómo escalar el playbook
 
 El playbook arranca en **perfil reducido** (`"profile": "reduced"` en `.claude/agent-playbook.json`) y está pensado para crecer sin reescribirse. Lo que escala hacia abajo son los principios; lo que escala hacia arriba es la maquinaria. Este documento dice qué cambia en cada capa y qué señal indica que conviene dar el paso.

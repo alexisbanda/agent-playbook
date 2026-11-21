@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Alexis Banda. Todos los derechos reservados.
+# Software propietario: uso sujeto a LICENSE, prohibida su redistribución.
 """Closes a run: crosses the hook events with the transcripts and appends one
 validated line to .agent-playbook/metrics.jsonl. Then removes the active-run marker.
 

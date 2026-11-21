@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Alexis Banda. Todos los derechos reservados.
+# Software propietario: uso sujeto a LICENSE, prohibida su redistribución.
 import datetime
 import json
 import os

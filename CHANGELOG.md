@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.9.0
+
+Licenciamiento: agent-playbook pasa a ser **software propietario** bajo licencia comercial, para su distribución en marketplaces de terceros. No cambia el comportamiento del plugin.
+
+- **Documentos legales nuevos:**
+  - `LICENSE`: licencia comercial propietaria (titularidad, licencia de uso no exclusiva e intransferible, restricciones, resultados del usuario, servicios de terceros, ausencia de garantía, limitación de responsabilidad, terminación y relación con el marketplace).
+  - `NOTICE`: aviso de copyright, alcance (ticket-studio queda fuera) y marcas de terceros.
+  - `THIRD_PARTY.md`: servicios externos, qué datos les llegan y qué paga el usuario.
+  - `PRIVACY.md`: qué datos guarda el plugin y dónde; ninguno se envía al autor.
+- **Manifiestos (`plugin.json`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`):** `license` pasa de `UNLICENSED` a `SEE LICENSE IN LICENSE`.
+- **Avisos de copyright:** en las primeras líneas de los archivos de `hooks/`, `scripts/`, `tests/`, `skills/`, `agents/`, `references/`, `routing/` y `docs/`. Las plantillas de `templates/` no lo llevan, porque se copian en los repositorios y PRs de los usuarios.
+- **`README.md`:** aviso de software propietario al inicio, sección «Licencia y uso», nota de que ticket-studio no está cubierto y los documentos nuevos en «Estructura».
+- **Tests (`tests/test_license.py`, nuevo):** exige los documentos legales, el campo `license` de los manifiestos y el aviso de copyright en todos los archivos cubiertos.
+
 ## 1.8.3
 
 Corrige los índices duplicados de los lectores Gemini lanzados en paralelo (#30) y reduce sus denegaciones (#31). La hipótesis de que las comillas causaban las denegaciones se descartó con `agy` real: la causa es un comodín de shell sin comillas en un comando `git`.

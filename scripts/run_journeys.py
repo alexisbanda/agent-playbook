@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Alexis Banda. Todos los derechos reservados.
+# Software propietario: uso sujeto a LICENSE, prohibida su redistribución.
 """Runs the regression journeys of .claude/agent-playbook.json and prints the
 evidence table. Logs go to .agent-playbook/runs/<ticket>/journeys/.
 

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Alexis Banda. Todos los derechos reservados.
+# Software propietario: uso sujeto a LICENSE, prohibida su redistribución.
 """Summarises .agent-playbook/metrics.jsonl and checks the tripwires.
 
 Usage: metrics_report.py [metrics.jsonl ...] [--window N] [--json]

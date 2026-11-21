@@ -1,11 +1,11 @@
 {
   "name": "agent-playbook",
-  "version": "1.8.3",
+  "version": "1.9.0",
   "description": "Manuales versionados, ruteo de modelos, hooks y cierre con evidencia para orquestar el desarrollo de software con agentes (Claude Code y Google Antigravity agy).",
   "author": {
     "name": "Alexis Banda"
   },
   "repository": "https://github.com/alexisbanda/agent-playbook",
-  "license": "UNLICENSED",
+  "license": "SEE LICENSE IN LICENSE",
   "keywords": ["orchestration", "skills", "hooks", "routing", "workflow", "antigravity", "claude-code"]
 }

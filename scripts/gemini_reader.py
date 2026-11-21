@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Alexis Banda. Todos los derechos reservados.
+# Software propietario: uso sujeto a LICENSE, prohibida su redistribución.
 """Gemini reader: a read-only exploration call through the `agy` CLI.
 
 Runs one reader over the repository for a question or scope, validates the

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Alexis Banda. Todos los derechos reservados.
+# Software propietario: uso sujeto a LICENSE, prohibida su redistribución.
 """Consolidated preflight checker for agent-playbook runs.
 
 Replaces 7-9 separate bash invocations at the start of `resolve-issue` with a

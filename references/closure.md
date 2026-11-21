@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Alexis Banda. Todos los derechos reservados. Software propietario: uso sujeto a LICENSE, prohibida su redistribución. -->
+
 # Cierre: qué significa "terminado"
 
 Un ticket está terminado cuando se probó en vivo, quedó evidencia en el ticket y no se rompió nada más. Mergear o tener los tests en verde no basta.

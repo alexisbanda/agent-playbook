@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Alexis Banda. Todos los derechos reservados.
+# Software propietario: uso sujeto a LICENSE, prohibida su redistribución.
 """PreToolUse (Bash): stops irreversible or out-of-process actions.
 
 Active in every repository that has the playbook configured, inside or outside a run.

@@ -2,6 +2,8 @@
 
 Plugin de Claude Code para orquestar el desarrollo de software con agentes: manuales versionados, ruteo de modelos por clase de tarea, hooks que hacen cumplir las reglas, un motor de ejecución con worktrees aislados y un cierre con evidencia.
 
+> **Software propietario.** Copyright © 2026 Alexis Banda. Todos los derechos reservados. Su uso está sujeto a la [licencia comercial](LICENSE); queda prohibida su copia, redistribución o reventa. Ver [Licencia y uso](#licencia-y-uso).
+
 Sirve para proyectos nuevos y para construir features o corregir bugs en proyectos existentes. Arranca en un perfil reducido, pensado para un dev en solitario o un equipo pequeño, y escala al modelo completo cambiando configuración. Ver [docs/SCALING.md](docs/SCALING.md).
 
 ## Instalación
@@ -15,7 +17,7 @@ En Claude Code:
 /plugin install agent-playbook@agent-playbook
 ```
 
-El mismo marketplace publica [ticket-studio](https://github.com/alexisbanda/ticket-studio), para que el PM escriba tickets que cumplan el contrato que este playbook espera (`/plugin install ticket-studio@agent-playbook`).
+El mismo marketplace publica [ticket-studio](https://github.com/alexisbanda/ticket-studio) (producto aparte, con sus propios términos y fuera de la licencia de agent-playbook), para que el PM escriba tickets que cumplan el contrato que este playbook espera (`/plugin install ticket-studio@agent-playbook`).
 
 Activa la auto-actualización del marketplace en `/plugin` → Marketplaces para que cada versión nueva llegue sola.
 
@@ -58,7 +60,11 @@ metrics/          precios para el coste estimado y umbrales (tripwires) de la tu
 config/           esquema y ejemplo de la configuración por repo (.agent-playbook.json o .claude/agent-playbook.json)
 docs/             escalado, gestores de tickets, hooks, review bot, segundo reviewer, lectores Gemini, métricas
 scripts/          utilidades de CI y de las corridas (preflight.py: controles iniciales en un paso; repo_map.py: mapa de arquitectura; gemini_reader.py: lectores Gemini vía agy; route.py: modelo de cada subagente; ticket_check.py: contrato de ticket opcional; second_review.py: segundo reviewer y reviewer interno con Gemini vía agy; merge_gate.py: condiciones de merge; run_journeys.py: regresión; close_run.py y metrics_report.py: métricas y exportación sanitizada)
-tests/            tests de los scripts
+tests/            tests de los scripts (test_license.py exige el aviso de copyright y los documentos legales)
+LICENSE           licencia comercial propietaria
+NOTICE            aviso de copyright, alcance de la licencia y marcas de terceros
+THIRD_PARTY.md    servicios externos de los que depende y qué datos les llegan
+PRIVACY.md        qué datos guarda el plugin y dónde
 ```
 
 ## Roadmap
@@ -95,6 +101,19 @@ Todas las corridas reales registradas usan GitHub Issues y el perfil `reduced`. 
 - **Review bot, criterios `e2e` con navegador y journeys:** sin probar a fondo (un solo repo tiene un journey).
 - **Proyecto desde cero:** el ticket 0 de un repo sin código se resolvió una vez (kickoff-demo#2, Next.js); falta repetirlo con otro stack.
 
+## Licencia y uso
+
+agent-playbook es software propietario de Alexis Banda, distribuido bajo la [licencia comercial](LICENSE). En resumen, y sin sustituir el texto de la licencia:
+
+- **Se permite:** instalarlo y usarlo para desarrollar tus propios proyectos o los de tu organización, dentro del número de usuarios contratado, y adaptar la configuración para uso interno.
+- **No se permite:** copiar, redistribuir, revender o sublicenciar el plugin o partes de él (incluidos skills, agentes, prompts, manuales, plantillas y tablas de ruteo); ofrecerlo como servicio; usarlo para crear un producto competidor; ni quitar los avisos de copyright.
+- **El código que generes es tuyo.** Los PRs, commits y demás resultados que el plugin produzca en tus proyectos te pertenecen, y su revisión y despliegue son tu responsabilidad.
+- **Sin garantía.** El plugin orquesta agentes de IA que escriben código, ejecutan comandos y pueden fusionar PRs si lo configuras así. Los hooks y gates reducen riesgos pero no los eliminan: revisa todo antes de desplegar.
+- **Servicios de terceros.** Claude Code, Gemini/`agy`, GitHub, Notion y Jira se contratan y pagan aparte, y se rigen por sus propios términos. Ver [THIRD_PARTY.md](THIRD_PARTY.md).
+- **Privacidad.** El plugin no envía datos a su autor; todo lo que mide queda en `.agent-playbook/` dentro de tu repositorio. Ver [PRIVACY.md](PRIVACY.md).
+
+Para licencias adicionales o permisos de uso, ver la cláusula 12.7 de [LICENSE](LICENSE).
+
 ## Cómo cambiar el playbook
 
-Cambiar cómo trabajan los agentes es editar Markdown: rama, PR, review y **bump de versión** en `plugin.json`, `.claude-plugin/plugin.json` y `.claude-plugin/marketplace.json`. La CI rechaza un PR sin bump o con las versiones desalineadas. Anota el cambio en [CHANGELOG.md](CHANGELOG.md).
+Cambiar cómo trabajan los agentes es editar Markdown: rama, PR, review y **bump de versión** en `plugin.json`, `.claude-plugin/plugin.json` y `.claude-plugin/marketplace.json`. La CI rechaza un PR sin bump o con las versiones desalineadas. Anota el cambio en [CHANGELOG.md](CHANGELOG.md). Todo archivo nuevo de código o de prompts (`hooks/`, `scripts/`, `tests/`, `skills/`, `agents/`, `references/`, `routing/`, `docs/`) debe llevar el aviso de copyright en sus primeras líneas, o `tests/test_license.py` falla.

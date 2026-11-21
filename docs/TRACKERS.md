@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Alexis Banda. Todos los derechos reservados. Software propietario: uso sujeto a LICENSE, prohibida su redistribución. -->
+
 # Gestores de tickets
 
 Los skills nunca llaman directamente a un gestor de tickets. Usan un conjunto fijo de **operaciones**, y cada gestor las implementa en un adaptador (`references/trackers/<tipo>.md`). El gestor se elige con `tracker.type` en `.claude/agent-playbook.json`.

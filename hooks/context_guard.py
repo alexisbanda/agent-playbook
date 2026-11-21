@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Alexis Banda. Todos los derechos reservados.
+# Software propietario: uso sujeto a LICENSE, prohibida su redistribución.
 """PostToolUse inside a coder (or patriot): warns when its context grows too large.
 
 Every call of an agent re-reads its whole context, so a coder that reaches

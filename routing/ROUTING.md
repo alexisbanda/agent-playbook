@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Alexis Banda. Todos los derechos reservados. Software propietario: uso sujeto a LICENSE, prohibida su redistribución. -->
+
 # Ruteo de modelos
 
 Qué modelo hace cada trabajo. La fuente de verdad es [`routing.json`](routing.json); este documento la explica, pero si discrepan, manda el JSON. El hook de la fase 3 y `scripts/route.py` leen el JSON directamente.

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Alexis Banda. Todos los derechos reservados.
+# Software propietario: uso sujeto a LICENSE, prohibida su redistribución.
 """Merge gate: checks the four conditions before merging a PR and prints the exact
 merge command, tied to the reviewed commit.
 

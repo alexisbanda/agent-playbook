@@ -4,6 +4,8 @@ description: Revisión periódica del playbook a partir de las métricas de las 
 argument-hint: "[rutas a metrics.jsonl de otros repos]"
 ---
 
+<!-- Copyright (c) 2026 Alexis Banda. Todos los derechos reservados. Software propietario: uso sujeto a LICENSE, prohibida su redistribución. -->
+
 # tuning-wave
 
 Cierra el ciclo de mejora continua: las corridas dejan métricas medidas por los hooks, esta revisión las convierte en cambios a los manuales, y la siguiente versión del plugin los lleva a todos.

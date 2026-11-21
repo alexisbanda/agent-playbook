@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Alexis Banda. Todos los derechos reservados.
+# Software propietario: uso sujeto a LICENSE, prohibida su redistribución.
 """Checks that plugin.json and marketplace.json agree on the version and,
 when a base ref is given, that the version was bumped against it.
 

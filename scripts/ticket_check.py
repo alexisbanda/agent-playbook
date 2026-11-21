@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Alexis Banda. Todos los derechos reservados.
+# Software propietario: uso sujeto a LICENSE, prohibida su redistribución.
 """Checks a GitHub issue against the ticket contract, only when the repository
 opts in with `tickets.contract: true` in .claude/agent-playbook.json.
 

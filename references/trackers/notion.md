@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Alexis Banda. Todos los derechos reservados. Software propietario: uso sujeto a LICENSE, prohibida su redistribución. -->
+
 # Adaptador: Notion
 
 Implementa las operaciones de `docs/TRACKERS.md` con el conector de Notion. Los tickets son páginas de la base de datos `tracker.notion.database_url`. Nombres de configuración:
