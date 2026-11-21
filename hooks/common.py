@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Alexis Banda. Todos los derechos reservados.
+# Software propietario: uso sujeto a LICENSE, prohibida su redistribución.
 """Shared helpers for the agent-playbook hooks.
 
 Every hook is a no-op outside a repository that has .claude/agent-playbook.json,

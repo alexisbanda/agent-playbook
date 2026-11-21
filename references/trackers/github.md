@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Alexis Banda. Todos los derechos reservados. Software propietario: uso sujeto a LICENSE, prohibida su redistribución. -->
+
 # Adaptador: GitHub Issues
 
 Implementa las operaciones de `docs/TRACKERS.md` con `gh`. `<repo>` es `tracker.github.repo` o, si falta, el remoto `origin`. `<label>` es `tracker.github.in_progress_label` (por defecto `in-progress`).

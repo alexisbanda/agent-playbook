@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Alexis Banda. Todos los derechos reservados.
+# Software propietario: uso sujeto a LICENSE, prohibida su redistribución.
 """Second reviewer: a read-only review of a ticket's diff by a model from
 another vendor (Gemini, through the `agy` CLI).
 

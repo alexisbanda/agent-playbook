@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Alexis Banda. Todos los derechos reservados.
+# Software propietario: uso sujeto a LICENSE, prohibida su redistribución.
 """PreToolUse (Agent|Task): enforces routing/routing.json on every subagent launch.
 
 Only active while a run is open (.agent-playbook/active-run exists). Outside a run

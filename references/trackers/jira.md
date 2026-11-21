@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Alexis Banda. Todos los derechos reservados. Software propietario: uso sujeto a LICENSE, prohibida su redistribución. -->
+
 # Adaptador: Jira (modo Zero-Admin)
 
 Implementa las operaciones de `docs/TRACKERS.md` con el conector MCP de Atlassian (o `acli` / API REST) sobre el proyecto `tracker.jira.project_key`.

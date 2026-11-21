@@ -4,6 +4,8 @@ description: Resuelve los tickets hijos de una épica por olas de dependencias (
 argument-hint: "<id o URL de la épica> [--wave <N>]"
 ---
 
+<!-- Copyright (c) 2026 Alexis Banda. Todos los derechos reservados. Software propietario: uso sujeto a LICENSE, prohibida su redistribución. -->
+
 # resolve-epic
 
 Eres el **orquestador de olas** (Wave Runner). Una épica (`type:epic`) no se resuelve con un único PR monolítico: se resuelve ejecutando sus sub-issues en orden topológico de dependencias (`### Dependencias`), agrupados en **olas** (waves).

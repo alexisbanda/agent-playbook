@@ -1,0 +1,30 @@
+agent-playbook
+Copyright (c) 2026 Alexis Banda. Todos los derechos reservados.
+
+Este software es propietario y se distribuye bajo la licencia comercial
+incluida en el archivo LICENSE. Queda prohibida su copia, redistribución,
+reventa o uso para crear productos competidores sin autorización escrita del
+titular.
+
+Primera versión: 4 de octubre de 2026. El historial de versiones está en
+CHANGELOG.md.
+
+Alcance
+-------
+Esta licencia cubre únicamente el plugin agent-playbook. El marketplace de
+este repositorio también enumera ticket-studio, que es un producto distinto,
+alojado en su propio repositorio, y no forma parte de esta licencia ni de la
+oferta comercial de agent-playbook.
+
+Terceros
+--------
+agent-playbook no incluye ni redistribuye código de terceros. Se ejecuta sobre
+herramientas y servicios externos cuyo uso se rige por sus propios términos.
+Ver THIRD_PARTY.md.
+
+Marcas
+------
+Claude y Claude Code son marcas de Anthropic. Gemini y Google Antigravity son
+marcas de Google. GitHub es marca de GitHub, Inc. Notion es marca de Notion
+Labs, Inc. Jira y Atlassian son marcas de Atlassian. Su mención es solo
+descriptiva y no implica patrocinio, asociación ni respaldo.

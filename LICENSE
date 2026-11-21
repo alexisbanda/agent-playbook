@@ -1,0 +1,212 @@
+LICENCIA COMERCIAL PROPIETARIA DE AGENT-PLAYBOOK
+
+Copyright (c) 2026 Alexis Banda. Todos los derechos reservados.
+
+Versión de la licencia: 1.0, vigente desde la versión 1.9.0 de agent-playbook.
+
+Esta licencia es un contrato entre usted (persona física o jurídica, en adelante
+el "Licenciatario") y Alexis Banda (en adelante el "Titular"). Al instalar,
+copiar, ejecutar o usar de cualquier forma el Software, el Licenciatario acepta
+estos términos. Si no los acepta, no debe instalar ni usar el Software.
+
+
+1. DEFINICIONES
+
+1.1 "Software": el plugin agent-playbook en su totalidad, incluidos, sin
+    limitación, su código fuente y objeto, scripts, hooks, skills, agentes,
+    prompts, instrucciones, manuales, referencias, plantillas, tablas de ruteo,
+    esquemas, configuraciones de ejemplo, umbrales y métricas, documentación,
+    y cualquier actualización, corrección o versión posterior que el Titular
+    entregue.
+
+1.2 "Contenido de Instrucciones": los prompts, skills, agentes, manuales,
+    referencias, plantillas y tablas de ruteo del Software, que constituyen
+    obra original y protegida del Titular aunque estén escritos en lenguaje
+    natural.
+
+1.3 "Marketplace": la plataforma o tienda de terceros a través de la cual el
+    Licenciatario haya adquirido u obtenido el Software.
+
+1.4 "Resultados": el código, los commits, los pull requests, los comentarios y
+    los demás artefactos que el Software ayude a generar en los proyectos del
+    Licenciatario.
+
+
+2. TITULARIDAD
+
+2.1 El Software es una obra protegida por las leyes de derechos de autor y los
+    tratados internacionales. El Titular conserva la titularidad exclusiva de
+    todos los derechos de propiedad intelectual sobre el Software. El Software
+    se licencia, no se vende.
+
+2.2 Ninguna disposición de esta licencia transfiere al Licenciatario derecho
+    alguno sobre el Software, sus marcas, nombres o signos distintivos, salvo
+    la licencia de uso limitada de la cláusula 3.
+
+2.3 Todos los derechos no otorgados expresamente quedan reservados al Titular.
+
+
+3. LICENCIA DE USO
+
+3.1 Sujeto al cumplimiento de esta licencia y al pago de las tarifas aplicables,
+    el Titular otorga al Licenciatario una licencia limitada, no exclusiva,
+    intransferible, no sublicenciable y revocable para instalar y usar el
+    Software únicamente para orquestar el desarrollo de sus propios proyectos
+    de software o los de la organización para la que trabaja.
+
+3.2 El número de usuarios, puestos u organizaciones autorizados y la duración
+    de la licencia son los que figuren en la compra realizada a través del
+    Marketplace o en el acuerdo escrito con el Titular. A falta de indicación,
+    la licencia cubre a un solo usuario.
+
+3.3 El Licenciatario puede modificar la configuración por repositorio
+    (`.claude/agent-playbook.json` o `.agent-playbook.json`) y adaptar el
+    Software para su uso interno. Toda adaptación sigue sujeta a esta licencia
+    y no puede distribuirse.
+
+
+4. RESTRICCIONES
+
+Salvo autorización previa y por escrito del Titular, el Licenciatario no puede:
+
+4.1 copiar, reproducir, publicar, distribuir, vender, revender, alquilar,
+    prestar, sublicenciar o poner a disposición de terceros el Software, en
+    todo o en parte, incluido el Contenido de Instrucciones;
+
+4.2 ofrecer el Software o su funcionalidad a terceros como servicio, producto,
+    plugin, marketplace, plantilla o curso, ni integrarlo en un producto o
+    servicio comercial propio;
+
+4.3 usar el Software, su estructura o su Contenido de Instrucciones para crear,
+    entrenar, evaluar o mejorar un producto, plugin, agente o modelo que compita
+    con el Software;
+
+4.4 traducir, adaptar, parafrasear o reescribir el Contenido de Instrucciones
+    con el fin de eludir esta licencia; la obra resultante se considera obra
+    derivada sujeta a esta licencia;
+
+4.5 eliminar, ocultar o alterar avisos de copyright, de licencia, de marca o
+    cualquier otra indicación de titularidad del Software;
+
+4.6 eludir los mecanismos de licenciamiento, instalación o actualización que
+    establezcan el Titular o el Marketplace;
+
+4.7 usar el Software para fines ilícitos o en infracción de los términos de los
+    servicios de terceros indicados en la cláusula 7.
+
+
+5. RESULTADOS
+
+5.1 El Titular no reclama derechos sobre los Resultados que el Licenciatario
+    genere con el Software en sus propios proyectos. Su revisión, uso y
+    despliegue son responsabilidad exclusiva del Licenciatario.
+
+5.2 La cláusula 5.1 no se extiende al Software ni al Contenido de Instrucciones,
+    aunque fragmentos de este aparezcan en los Resultados.
+
+
+6. ACTUALIZACIONES Y SOPORTE
+
+6.1 El Titular puede publicar actualizaciones, sin obligación de hacerlo, y
+    estas se rigen por la versión de esta licencia que las acompañe.
+
+6.2 Esta licencia no incluye soporte, mantenimiento ni niveles de servicio,
+    salvo que se pacten por escrito o los ofrezca el Marketplace.
+
+
+7. SERVICIOS DE TERCEROS
+
+7.1 El Software funciona sobre herramientas y servicios de terceros, entre
+    ellos Claude Code (Anthropic), Google Antigravity `agy` y los modelos
+    Gemini (Google), GitHub, Notion y Jira (Atlassian). El Software no incluye
+    licencias, cuentas, créditos ni acceso a esos servicios.
+
+7.2 El Licenciatario es el único responsable de obtener esas cuentas, aceptar y
+    cumplir sus términos y políticas, y pagar sus costes de uso, incluido el
+    consumo de API y de tokens.
+
+7.3 El Titular no controla esos servicios ni responde por su disponibilidad,
+    sus cambios, sus costes, sus resultados ni el tratamiento que hagan de los
+    datos que el Licenciatario les envíe. El detalle está en THIRD_PARTY.md.
+
+
+8. AUSENCIA DE GARANTÍA
+
+8.1 EL SOFTWARE SE ENTREGA "TAL CUAL" Y "SEGÚN DISPONIBILIDAD", SIN GARANTÍAS
+    DE NINGÚN TIPO, EXPRESAS O IMPLÍCITAS, INCLUIDAS, SIN LIMITACIÓN, LAS DE
+    COMERCIABILIDAD, IDONEIDAD PARA UN FIN DETERMINADO, EXACTITUD, AUSENCIA DE
+    ERRORES Y NO INFRACCIÓN, EN LA MEDIDA MÁXIMA PERMITIDA POR LA LEY.
+
+8.2 El Software orquesta agentes de inteligencia artificial que generan y
+    modifican código, ejecutan comandos, abren pull requests y, si el
+    Licenciatario lo configura así, los fusionan. Esos agentes pueden cometer
+    errores. Los controles del Software (hooks, gates, revisiones) reducen
+    riesgos pero no los eliminan. El Licenciatario debe revisar todo Resultado
+    antes de usarlo o desplegarlo, y es el único responsable de las acciones
+    que autorice y de los permisos que conceda.
+
+
+9. LIMITACIÓN DE RESPONSABILIDAD
+
+9.1 EN LA MEDIDA MÁXIMA PERMITIDA POR LA LEY, EL TITULAR NO SERÁ RESPONSABLE
+    DE DAÑOS INDIRECTOS, INCIDENTALES, ESPECIALES, CONSECUENTES O PUNITIVOS, NI
+    DE LUCRO CESANTE, PÉRDIDA DE DATOS, DE CÓDIGO, DE INGRESOS O DE NEGOCIO,
+    INTERRUPCIONES, INCIDENTES DE SEGURIDAD O COSTES DE SERVICIOS DE TERCEROS,
+    DERIVADOS DEL USO O LA IMPOSIBILIDAD DE USO DEL SOFTWARE, AUN SI SE LE
+    ADVIRTIÓ DE SU POSIBILIDAD.
+
+9.2 LA RESPONSABILIDAD TOTAL DEL TITULAR POR CUALQUIER CONCEPTO SE LIMITA AL
+    IMPORTE QUE EL LICENCIATARIO HAYA PAGADO POR EL SOFTWARE EN LOS DOCE (12)
+    MESES ANTERIORES AL HECHO QUE ORIGINE LA RECLAMACIÓN.
+
+9.3 Nada en esta licencia excluye la responsabilidad que no pueda excluirse
+    según la ley aplicable.
+
+
+10. INDEMNIDAD
+
+El Licenciatario mantendrá indemne al Titular frente a reclamaciones de terceros
+derivadas del uso del Software en infracción de esta licencia, de los términos
+de los servicios de terceros o de la ley, o derivadas de los Resultados que el
+Licenciatario use o despliegue.
+
+
+11. TERMINACIÓN
+
+11.1 Esta licencia termina automáticamente, sin necesidad de aviso, si el
+     Licenciatario incumple cualquiera de sus cláusulas, o al vencer el plazo
+     contratado.
+
+11.2 Al terminar, el Licenciatario debe dejar de usar el Software y eliminar
+     todas sus copias, incluidas las adaptaciones internas.
+
+11.3 Las cláusulas 2, 4, 5, 8, 9, 10, 11 y 12 subsisten a la terminación.
+
+
+12. DISPOSICIONES GENERALES
+
+12.1 Relación con el Marketplace. Si el Licenciatario obtuvo el Software a
+     través de un Marketplace, los términos del Marketplace rigen la compra, el
+     pago y los reembolsos. En lo relativo a la propiedad intelectual y al uso
+     del Software, prevalece esta licencia en todo lo que no contradiga
+     disposiciones imperativas de esos términos.
+
+12.2 Ley aplicable y jurisdicción. Esta licencia se rige por las leyes de
+     [PAÍS]. Toda controversia se someterá a los jueces competentes de
+     [CIUDAD, PAÍS], salvo que la ley aplicable al consumidor disponga otra
+     cosa.
+
+12.3 Divisibilidad. Si alguna cláusula es inválida o inaplicable, se ajustará
+     en la medida mínima necesaria y las demás seguirán vigentes.
+
+12.4 Acuerdo íntegro. Esta licencia, junto con la compra realizada y cualquier
+     acuerdo escrito firmado por el Titular, constituye el acuerdo íntegro sobre
+     el Software. Solo puede modificarse por escrito firmado por el Titular.
+
+12.5 Renuncia. Que el Titular no ejerza un derecho no implica renuncia a él.
+
+12.6 Cesión. El Licenciatario no puede ceder esta licencia sin el
+     consentimiento escrito del Titular. El Titular puede cederla libremente.
+
+12.7 Contacto y permisos. Solicitudes de licencias adicionales, permisos o
+     avisos legales: [CORREO DE CONTACTO].

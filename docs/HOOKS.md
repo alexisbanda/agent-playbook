@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Alexis Banda. Todos los derechos reservados. Software propietario: uso sujeto a LICENSE, prohibida su redistribución. -->
+
 # Hooks
 
 Un skill es un manual que el modelo elige seguir. Un hook es un script que Claude Code ejecuta solo cuando ocurre un evento, lo quiera el modelo o no. Lo que de verdad importa del playbook está en los dos sitios: explicado en los skills y garantizado por estos hooks.

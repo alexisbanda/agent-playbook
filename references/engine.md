@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Alexis Banda. Todos los derechos reservados. Software propietario: uso sujeto a LICENSE, prohibida su redistribución. -->
+
 # Motor de ejecución (perfil `reduced`)
 
 Reglas para construir, revisar y mergear una vez aprobado el plan. Las comparten todos los skills que escriben código. El perfil `full` (coders en paralelo, patriots, gate concurrente, tiers) se describe en `docs/SCALING.md` y se añade aquí sin cambiar estas reglas.

@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Alexis Banda. Todos los derechos reservados. Software propietario: uso sujeto a LICENSE, prohibida su redistribución. -->
+
 # Review bot
 
 Un inspector externo que revisa cada PR desde la CI del repositorio, con [Claude Code Action](https://github.com/anthropics/claude-code-action). Solo revisa: nunca escribe código ni mergea. Es opcional y se monta o desmonta por configuración.

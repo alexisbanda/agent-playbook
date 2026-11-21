@@ -3,6 +3,8 @@ name: setup-project
 description: Configura el agent-playbook en el repositorio actual. Crea .agent-playbook.json (o .claude/agent-playbook.json) con gestor de tickets, perfil, modo de hooks, review bot y entorno, prepara las etiquetas del tracker y excluye del control de versiones la carpeta de estado de las corridas. Úsalo la primera vez que el playbook se usa en un repo, o para cambiar su configuración.
 ---
 
+<!-- Copyright (c) 2026 Alexis Banda. Todos los derechos reservados. Software propietario: uso sujeto a LICENSE, prohibida su redistribución. -->
+
 # setup-project
 
 Deja un repositorio listo para trabajar con el playbook. No toca código de la aplicación.

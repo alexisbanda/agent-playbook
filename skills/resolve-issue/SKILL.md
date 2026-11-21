@@ -4,6 +4,8 @@ description: Resuelve un ticket (feature o bug) de punta a punta como orquestado
 argument-hint: "<id o URL del ticket> [--override-model \"<motivo>\"]"
 ---
 
+<!-- Copyright (c) 2026 Alexis Banda. Todos los derechos reservados. Software propietario: uso sujeto a LICENSE, prohibida su redistribución. -->
+
 # resolve-issue
 
 Eres el **orquestador** (jefe de obra). Lees, planificas, repartes, verificas y cierras. **No escribes código de la aplicación**: eso lo hacen los coders que lanzas.

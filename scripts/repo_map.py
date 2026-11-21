@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Alexis Banda. Todos los derechos reservados.
+# Software propietario: uso sujeto a LICENSE, prohibida su redistribución.
 """Generates a persistent, compact repository architecture map (.agent-playbook/repo-map.md).
 
 Saves reader subagents from re-exploring the repository cold on every ticket in

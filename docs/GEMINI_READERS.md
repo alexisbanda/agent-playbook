@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Alexis Banda. Todos los derechos reservados. Software propietario: uso sujeto a LICENSE, prohibida su redistribución. -->
+
 # Lectores Gemini
 
 Exploración de código en solo lectura con Gemini a través del CLI `agy` de Antigravity (`scripts/gemini_reader.py`). Sustituye a los subagentes lectores de Claude (`haiku`) en la fase «Medir el terreno» de `resolve-issue` y `resolve-epic` sin gastar tokens de Claude ni engordar el contexto de subagentes. Si una llamada falla, el orquestador cae automáticamente a un lector Claude (`haiku`) para ese ámbito y lo anota en LÍMITES.

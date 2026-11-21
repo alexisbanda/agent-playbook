@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Alexis Banda. Todos los derechos reservados.
+# Software propietario: uso sujeto a LICENSE, prohibida su redistribución.
 """Telemetry for every hook event the plugin registers. Measures, never intervenes.
 
 Writes one line per event to <repo>/.agent-playbook/events.jsonl. Prompt and

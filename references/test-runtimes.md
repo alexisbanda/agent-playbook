@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Alexis Banda. Todos los derechos reservados. Software propietario: uso sujeto a LICENSE, prohibida su redistribución. -->
+
 # Entornos de tests
 
 Cómo deducir `environment.test_command` y `environment.worktree_test_command`. Los dos se ejecutan **desde la raíz del clon principal**. En `worktree_test_command`, `{worktree}` se sustituye por la ruta absoluta del worktree.

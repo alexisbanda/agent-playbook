@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Alexis Banda. Todos los derechos reservados. Software propietario: uso sujeto a LICENSE, prohibida su redistribución. -->
+
 # Segundo reviewer y reviewer interno con Gemini
 
 Una revisión del diff de cada ticket por un modelo de otro proveedor: Gemini, a través del CLI `agy` de Antigravity. Revisa en solo lectura, antes de promover el PR. Es opcional y se activa por configuración.

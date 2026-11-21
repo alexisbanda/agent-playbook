@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Alexis Banda. Todos los derechos reservados. Software propietario: uso sujeto a LICENSE, prohibida su redistribución. -->
+
 # Métricas y mejora continua
 
 El sistema aprende de sus propias corridas. Lo que miden los hooks alimenta cambios en los manuales, y esos cambios llegan a todos con la siguiente versión del plugin.
